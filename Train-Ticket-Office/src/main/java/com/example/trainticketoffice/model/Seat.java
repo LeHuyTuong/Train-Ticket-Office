@@ -20,10 +20,10 @@ public class Seat {
     @Id
     @Column(name = "seat_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String seatId;
+    private Long seatId;
 
     @ManyToOne
-    @JoinColumn(name = "seat_id", nullable = false)
+    @JoinColumn(name = "carriage_id", nullable = false)
     private Carriage carriage;
 
     @Enumerated(EnumType.STRING)
