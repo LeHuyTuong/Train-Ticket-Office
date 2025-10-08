@@ -3,13 +3,15 @@ package com.example.trainticketoffice.controller;
 import com.example.trainticketoffice.model.Train;
 import com.example.trainticketoffice.service.TrainService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/trains")
+@Controller
+@RequestMapping("/trains") // URL chính để quản lý tàu, ví dụ: http://localhost:8080/trains
 public class TrainController {
 
     private final TrainService trainService;
@@ -20,70 +22,73 @@ public class TrainController {
     }
 
     /**
-     * API để tạo một tàu mới.
-     * POST /api/trains
-     * @param train Dữ liệu của tàu mới trong body của request.
-     * @return Tàu đã được tạo và lưu vào DB.
-     */
-    @PostMapping
-    public Train createTrain(@RequestBody Train train) {
-        return trainService.createTrain(train);
-    }
-
-    /**
-     * API để lấy danh sách tất cả các tàu.
-     * GET /api/trains
-     * @return Danh sách tất cả các tàu.
+     * Hiển thị trang danh sách tất cả các tàu.
+     * Tương ứng với chức năng Read (All).
      */
     @GetMapping
-    public List<Train> getAllTrains() {
-        return trainService.getAllTrains();
+    public String listTrains(Model model) {
+        List<Train> trainList = trainService.getAllTrains();
+        model.addAttribute("trains", trainList); // Đưa danh sách tàu vào model để HTML sử dụng
+        return "train/list"; // Trả về file: templates/train/list.html
     }
 
     /**
-     * API để lấy thông tin một tàu cụ thể bằng ID.
-     * GET /api/trains/{trainId}
-     * @param trainId ID của tàu cần tìm.
-     * @return Trả về tàu nếu tìm thấy (200 OK), ngược lại trả về 404 Not Found.
+     * Hiển thị form để tạo một tàu mới.
      */
-    @GetMapping("/{trainId}")
-    public ResponseEntity<Train> getTrainById(@PathVariable int trainId) {
-        return trainService.getTrainById(trainId)
-                .map(ResponseEntity::ok) // Nếu tìm thấy, trả về 200 OK với body là train
-                .orElse(ResponseEntity.notFound().build()); // Nếu không tìm thấy, trả về 404 Not Found
+    @GetMapping("/new")
+    public String showCreateForm(Model model) {
+        model.addAttribute("train", new Train()); // Tạo một đối tượng Train rỗng cho form
+        return "train/form"; // Trả về file: templates/train/form.html
     }
 
     /**
-     * API để cập nhật thông tin một tàu đã có.
-     * PUT /api/trains/{trainId}
-     * @param trainId ID của tàu cần cập nhật.
-     * @param trainDetails Thông tin mới của tàu trong body request.
-     * @return Tàu với thông tin đã được cập nhật.
+     * Hiển thị form để chỉnh sửa một tàu đã có, dựa vào ID.
+     * Tương ứng với chức năng Read (by ID) để lấy dữ liệu cho form Update.
      */
-    @PutMapping("/{trainId}")
-    public ResponseEntity<Train> updateTrain(@PathVariable int trainId, @RequestBody Train trainDetails) {
-        try {
-            Train updatedTrain = trainService.updateTrain(trainId, trainDetails);
-            return ResponseEntity.ok(updatedTrain);
-        } catch (RuntimeException e) {
-            // Service sẽ throw exception nếu không tìm thấy tàu, bắt lại và trả về 404
-            return ResponseEntity.notFound().build();
+    @GetMapping("/edit/{id}")
+    public String showEditForm(@PathVariable("id") int id, Model model) {
+        Optional<Train> trainOptional = trainService.getTrainById(id);
+        if (trainOptional.isPresent()) {
+            model.addAttribute("train", trainOptional.get()); // Gửi tàu tìm được vào form
+            return "train/form"; // Tái sử dụng cùng một form cho cả Thêm và Sửa
         }
+        // Nếu không tìm thấy tàu, chuyển hướng về trang danh sách
+        return "redirect:/trains";
     }
 
     /**
-     * API để xóa một tàu bằng ID.
-     * DELETE /api/trains/{trainId}
-     * @param trainId ID của tàu cần xóa.
-     * @return Trả về 204 No Content nếu xóa thành công.
+     * Xử lý dữ liệu từ form gửi lên để lưu (cả tạo mới và cập nhật).
+     * Tương ứng với chức năng Create và Update.
      */
-    @DeleteMapping("/{trainId}")
-    public ResponseEntity<Void> deleteTrain(@PathVariable int trainId) {
-        try {
-            trainService.deleteTrain(trainId);
-            return ResponseEntity.noContent().build(); // Trả về 204 No Content - là tiêu chuẩn cho API xóa thành công
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+    @PostMapping("/save")
+    public String saveTrain(@ModelAttribute("train") Train train) {
+        // @ModelAttribute sẽ tự động lấy dữ liệu từ form và gán vào đối tượng 'train'
+
+        // Kiểm tra xem train đã có ID chưa.
+        // Nếu có (trainId != 0), nghĩa là đang cập nhật.
+        // Nếu không có, nghĩa là đang tạo mới.
+        if (train.getTrainId() != 0) {
+            trainService.updateTrain(train.getTrainId(), train);
+        } else {
+            trainService.createTrain(train);
         }
+
+        // Sau khi lưu xong, chuyển hướng về trang danh sách
+        return "redirect:/trains";
+    }
+
+    /**
+     * Xử lý yêu cầu xóa một tàu dựa vào ID.
+     * Tương ứng với chức năng Delete.
+     */
+    @GetMapping("/delete/{id}")
+    public String deleteTrain(@PathVariable("id") int id) {
+        try {
+            trainService.deleteTrain(id);
+        } catch (RuntimeException e) {
+            // Có thể thêm log hoặc thông báo lỗi ở đây
+            System.err.println("Lỗi khi xóa tàu ID " + id + ": " + e.getMessage());
+        }
+        return "redirect:/trains";
     }
 }
