@@ -30,4 +30,5 @@ public class Seat {
     @Column(name = "status")
     private SeatStatus status;
 
+
 }
