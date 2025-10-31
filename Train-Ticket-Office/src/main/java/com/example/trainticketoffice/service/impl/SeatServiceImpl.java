@@ -40,7 +40,7 @@ public class SeatServiceImpl implements SeatService {
                 .orElseThrow(() -> new RuntimeException("Khong tim thay seat voi ID: " + id));
 
         existingSeat.setStatus(seatDetails.getStatus());
-        existingSeat.setCarriage(seatDetails.getCarriage());
+
 
         return seatRepository.save(existingSeat);
     }

@@ -22,9 +22,6 @@ public class Seat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seatId;
 
-    @ManyToOne
-    @JoinColumn(name = "carriage_id", nullable = false)
-    private Carriage carriage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

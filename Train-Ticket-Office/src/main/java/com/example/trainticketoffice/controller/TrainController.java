@@ -21,10 +21,6 @@ public class TrainController {
         this.trainService = trainService;
     }
 
-    /**
-     * Hiển thị trang danh sách tất cả các tàu.
-     * Tương ứng với chức năng Read (All).
-     */
     @GetMapping
     public String listTrains(Model model) {
         List<Train> trainList = trainService.getAllTrains();

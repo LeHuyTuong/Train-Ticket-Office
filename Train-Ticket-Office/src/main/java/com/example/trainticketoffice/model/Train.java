@@ -27,6 +27,4 @@ public class Train {
     @Column(name = "route")
     private String route;
 
-    @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Carriage> carriages = new ArrayList<>();
 }
