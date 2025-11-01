@@ -44,9 +44,9 @@ public class Train extends BaseEntity{
     @Column(nullable = false)
     private String status;
 
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+//    @CreationTimestamp
+//    @Column(updatable = false)
+//    private LocalDateTime createdAt;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)
