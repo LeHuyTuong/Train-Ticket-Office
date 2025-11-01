@@ -1,32 +1,47 @@
 package com.example.trainticketoffice.model;
 
-import com.example.trainticketoffice.common.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Entity
-@Table(name = "users")
+import javax.management.relation.Role;
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
+@Getter
+@Setter
+@Table(name = "Users")
+
 public class User extends BaseEntity{
     // TODO : Quốc Bảo Repo + Service CRUD
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private int userId;
+    private Integer id;
 
-    @Column(name = "name" , nullable = false)
-    private String name;
-
-    @Column(name = "email" , nullable = false, unique = true)
+    @Column(name = "email",nullable = false)
     private String email;
 
-    @Column(name = "password", nullable = false, length =  50)
+    @Column(name = "password",nullable = false)
     private String password;
 
+    @Column(name = "fullName",nullable = false)
+    private String fullName;
+
+    @Column(name = "phone",nullable = false)
+    private String phone;
+
+    @Column(name = "create_Date")
+    private LocalDate createDate;
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "role",nullable = false)
     private Role role;
+
+    public enum Role {
+        STAFF,
+        CUSTOMER
+    }
 }
