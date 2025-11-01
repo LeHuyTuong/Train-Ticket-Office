@@ -11,7 +11,7 @@ import com.example.trainticketoffice.service.PaymentService;
 import com.example.trainticketoffice.util.VnpayUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value; // THÊM DÒNG NÀY
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
