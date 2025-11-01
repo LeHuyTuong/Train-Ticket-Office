@@ -15,4 +15,5 @@ public interface StationRepository extends JpaRepository<Station, Integer> {
     List<Station> findByStatus(Station.Status status);
 
     boolean existsByCode(String code);
+    Optional<Station> findByName(String name);
 }
