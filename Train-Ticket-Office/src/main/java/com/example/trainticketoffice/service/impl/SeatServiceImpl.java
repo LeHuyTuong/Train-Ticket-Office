@@ -31,7 +31,7 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     public Seat saveSeat(Seat seat) {
-        if (seat.getId() == null) {
+        if (seat.getSeatId() == null) {
             if (seatRepository.existsByTrainAndSeatNumber(seat.getTrain(), seat.getSeatNumber())) {
                 throw new IllegalStateException("Seat number '" + seat.getSeatNumber() + "' already exists on train '" + seat.getTrain().getCode() + "'!");
             }

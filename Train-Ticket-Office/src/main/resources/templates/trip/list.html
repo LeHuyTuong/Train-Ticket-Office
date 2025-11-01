@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_layout}">
+<head><title>Trip Management</title></head>
+<body>
+<div layout:fragment="content">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1><i class="bi bi-calendar-event"></i> Trip List</h1>
+        <a th:href="@{/trips/new}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add New Trip</a>
+    </div>
+    <hr/>
+    <table class="table table-hover table-bordered">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Train</th>
+            <th>Route</th>
+            <th>Departure</th>
+            <th>Arrival</th>
+            <th>Price</th>
+            <th class="text-center">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="trip : ${trips}">
+            <td th:text="${trip.tripId}"></td>
+            <td th:text="${trip.train.code}"></td>
+            <td th:text="${trip.route.code}"></td>
+            <td th:text="${#temporals.format(trip.departure_time, 'dd-MM-yyyy')}"></td>
+            <td th:text="${#temporals.format(trip.arrival_time, 'dd-MM-yyyy')}"></td>
+            <td th:text="${#numbers.formatCurrency(trip.price)}"></td>
+            <td class="text-center">
+                <a th:href="@{/trips/edit/{id}(id=${trip.tripId})}" class="btn btn-outline-primary btn-sm">Edit</a>
+                <a th:href="@{/trips/delete/{id}(id=${trip.tripId})}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
