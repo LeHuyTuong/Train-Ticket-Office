@@ -1,16 +1,18 @@
+// com/example/trainticketoffice/controller/TicketController.java
 package com.example.trainticketoffice.controller;
 
 import com.example.trainticketoffice.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
-@RestController
+@Controller
 @RequestMapping("/api")
 public class TicketController {
 
@@ -22,6 +24,7 @@ public class TicketController {
     }
 
     @PostMapping("/bookings/{id}/tickets")
+    @ResponseBody
     public ResponseEntity<Map<String, String>> addTicketToBooking(
             @PathVariable("id") Long bookingId,
             @RequestBody Map<String, Object> requestBody) {
@@ -39,6 +42,7 @@ public class TicketController {
     }
 
     @GetMapping("/tickets/{code}")
+    @ResponseBody //
     public ResponseEntity<?> getTicketByCode(@PathVariable("code") String code) {
 
         Optional<Long> ticketId = ticketService.getTicketIdByCode(code);
@@ -53,6 +57,7 @@ public class TicketController {
     }
 
     @PutMapping("/tickets/{id}/check-in")
+    @ResponseBody
     public ResponseEntity<?> checkInTicket(@PathVariable("id") Long ticketId) {
 
         boolean success = ticketService.checkInTicket(ticketId);
@@ -67,6 +72,7 @@ public class TicketController {
     }
 
     @PutMapping("/tickets/{id}/cancel")
+    @ResponseBody
     public ResponseEntity<?> cancelTicket(@PathVariable("id") Long ticketId) {
         boolean success = ticketService.cancelTicket(ticketId);
 
