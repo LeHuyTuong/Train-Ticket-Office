@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh toán VNPay</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2 class="mb-4">Thanh toán VNPay</h2>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Thông tin đặt vé</h5>
+            <p class="mb-1"><strong>Mã đặt chỗ:</strong> <span th:text="${booking.bookingId}"></span></p>
+            <p class="mb-1"><strong>Hành khách:</strong> <span th:text="${booking.passengerName}"></span></p>
+            <p class="mb-1"><strong>Chuyến đi:</strong>
+                <span th:text="${booking.trip.departureStation + ' → ' + booking.trip.arrival_station}"></span>
+            </p>
+            <p class="mb-1"><strong>Giá tiền:</strong>
+                <span th:text="${#numbers.formatDecimal(booking.trip.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></span>
+            </p>
+        </div>
+    </div>
+
+    <form th:action="@{/payments/bookings/{id}(id=${booking.bookingId})}" method="post" class="card p-4 shadow-sm">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="bankCode" class="form-label">Ngân hàng (tùy chọn)</label>
+                <input type="text" class="form-control" id="bankCode" name="bankCode">
+            </div>
+            <div class="col-md-4">
+                <label for="orderType" class="form-label">Loại giao dịch</label>
+                <input type="text" class="form-control" id="orderType" name="orderType" placeholder="other">
+            </div>
+            <div class="col-md-4">
+                <label for="locale" class="form-label">Ngôn ngữ</label>
+                <input type="text" class="form-control" id="locale" name="locale" placeholder="vn">
+            </div>
+            <div class="col-12">
+                <label for="orderInfo" class="form-label">Nội dung thanh toán</label>
+                <input type="text" class="form-control" id="orderInfo" name="orderInfo"
+                       th:value="${'Thanh toan dat ve ' + booking.bookingId}">
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-success">Tiếp tục VNPay</button>
+            <a th:href="@{/bookings}" class="btn btn-secondary">Quay lại</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>
