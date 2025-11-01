@@ -20,11 +20,6 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-    public Seat createSeat(Seat seat) {
-        return seatRepository.save(seat);
-    }
-
-    @Override
     public List<Seat> getAllSeats() {
         return seatRepository.findAll();
     }
@@ -35,20 +30,19 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-    public Seat updateSeat(Long id, Seat seatDetails) {
-        Seat existingSeat = seatRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay seat voi ID: " + id));
-
-        existingSeat.setStatus(seatDetails.getStatus());
-        existingSeat.setCarriage(seatDetails.getCarriage());
-
-        return seatRepository.save(existingSeat);
+    public Seat saveSeat(Seat seat) {
+        if (seat.getId() == null) {
+            if (seatRepository.existsByTrainAndSeatNumber(seat.getTrain(), seat.getSeatNumber())) {
+                throw new IllegalStateException("Seat number '" + seat.getSeatNumber() + "' already exists on train '" + seat.getTrain().getCode() + "'!");
+            }
+        }
+        return seatRepository.save(seat);
     }
 
     @Override
     public void deleteSeat(Long id) {
         if (!seatRepository.existsById(id)) {
-            throw new RuntimeException("Khong tim thay seat voi ID: " + id);
+            throw new RuntimeException("Seat not found with ID: " + id);
         }
         seatRepository.deleteById(id);
     }

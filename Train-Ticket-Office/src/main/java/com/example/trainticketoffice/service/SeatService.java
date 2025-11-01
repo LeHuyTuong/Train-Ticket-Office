@@ -5,14 +5,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SeatService {
-
-    Seat createSeat(Seat seat);
-
     List<Seat> getAllSeats();
 
     Optional<Seat> getSeatById(Long id);
 
-    Seat updateSeat(Long id, Seat seatDetails);
+    Seat saveSeat(Seat seat);
 
     void deleteSeat(Long id);
 }
