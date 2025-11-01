@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Seat {
+public class Seat extends BaseEntity{
 
     // TODO Ngoc Anh Repo + Full CRUD
 

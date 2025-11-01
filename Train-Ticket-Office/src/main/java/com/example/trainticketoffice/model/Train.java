@@ -17,7 +17,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Train {
+public class Train extends BaseEntity{
     // TODO Hân : repo + full CRUD
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
