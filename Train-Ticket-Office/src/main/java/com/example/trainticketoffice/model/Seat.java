@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Seat {
+public class Seat extends BaseEntity{
 
     // TODO Ngoc Anh Repo + Full CRUD
 
@@ -21,10 +21,6 @@ public class Seat {
     @Column(name = "seat_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seatId;
-
-    @ManyToOne
-    @JoinColumn(name = "carriage_id", nullable = false)
-    private Carriage carriage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

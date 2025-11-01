@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class User extends BaseEntity{
     // TODO : Quốc Bảo Repo + Service CRUD
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

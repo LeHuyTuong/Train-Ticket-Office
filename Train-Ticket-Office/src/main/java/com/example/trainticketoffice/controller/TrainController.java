@@ -65,8 +65,8 @@ public class TrainController {
         // @ModelAttribute sẽ tự động lấy dữ liệu từ form và gán vào đối tượng 'train'
 
         // Kiểm tra xem train đã có ID chưa.
-        // Nếu có (trainId != 0), nghĩa là đang cập nhật.
-        // Nếu không có, nghĩa là đang tạo mới.
+        // Nếu có (trainId != 0), thì cập nhật.
+        // Nếu không có, tạo mới.
         if (train.getTrainId() != 0) {
             trainService.updateTrain(train.getTrainId(), train);
         } else {
@@ -86,7 +86,6 @@ public class TrainController {
         try {
             trainService.deleteTrain(id);
         } catch (RuntimeException e) {
-            // Có thể thêm log hoặc thông báo lỗi ở đây
             System.err.println("Lỗi khi xóa tàu ID " + id + ": " + e.getMessage());
         }
         return "redirect:/trains";

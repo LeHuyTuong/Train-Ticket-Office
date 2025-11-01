@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Train {
+public class Train extends BaseEntity{
     // TODO Hân : repo + full CRUD
 
     @Id
@@ -27,6 +27,4 @@ public class Train {
     @Column(name = "route")
     private String route;
 
-    @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Carriage> carriages = new ArrayList<>();
 }
