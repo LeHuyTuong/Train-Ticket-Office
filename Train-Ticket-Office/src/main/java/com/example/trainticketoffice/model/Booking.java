@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Booking {
+public class Booking extends BaseEntity{
 
     // TODO Tuong luoi lam vai cut
 
@@ -52,12 +52,6 @@ public class Booking {
 
     @Column(name = "booking_time", nullable = false)
     private LocalDate bookingTime;
-
-    @PrePersist
-    void onCreate() {
-        if (bookingTime == null) bookingTime = LocalDate.now();
-        if (status == null) status = "BOOKED";
-    }
 
 
 }

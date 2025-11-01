@@ -17,7 +17,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Train {
+public class Train extends BaseEntity{
     // TODO Hân : repo + full CRUD
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,9 +44,9 @@ public class Train {
     @Column(nullable = false)
     private String status;
 
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+//    @CreationTimestamp
+//    @Column(updatable = false)
+//    private LocalDateTime createdAt;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)

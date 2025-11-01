@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Trip {
+public class Trip extends BaseEntity{
     // TODO má t lười quá , đứa nào làm hộ đi
 
     @Id

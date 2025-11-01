@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Routes Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Routes Management</h2>
+
+    <!-- Success Message -->
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+    <div class="mb-3">
+        <a th:href="@{/routes/new}" class="btn btn-primary">Add New Route</a>
+        <a th:href="@{/routes/search}" class="btn btn-info">Search Routes</a>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Code</th>
+            <th>Start Station</th>
+            <th>End Station</th>
+            <th>Distance (km)</th>
+            <th>Duration (min)</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="route : ${routes}">
+            <td th:text="${route.id}"></td>
+            <td th:text="${route.code}"></td>
+            <td th:text="${route.startStation.name}"></td>
+            <td th:text="${route.endStation.name}"></td>
+            <td th:text="${route.totalDistanceKm}"></td>
+            <td th:text="${route.estimatedDurationMinutes}"></td>
+            <td>
+                <span th:if="${route.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                <span th:if="${route.status == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
+            </td>
+            <td>
+                <a th:href="@{/routes/edit/{id}(id=${route.id})}" class="btn btn-sm btn-warning">Edit</a>
+                <a th:href="@{/routes/delete/{id}(id=${route.id})}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('Are you sure you want to delete this route?')">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="mt-3">
+        <a th:href="@{/}" class="btn btn-secondary">Back to Home</a>
+    </div>
+</div>
+</body>
+</html>

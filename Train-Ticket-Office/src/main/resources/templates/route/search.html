@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Routes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Search Routes</h2>
+
+    <!-- Error Message -->
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/routes/search}" method="post" class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Start Station</label>
+            <select name="startStationId" class="form-select" required>
+                <option value="">Select Start Station</option>
+                <option th:each="station : ${allStations}"
+                        th:value="${station.id}"
+                        th:text="|${station.name} (${station.code})|"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">End Station</label>
+            <select name="endStationId" class="form-select" required>
+                <option value="">Select End Station</option>
+                <option th:each="station : ${allStations}"
+                        th:value="${station.id}"
+                        th:text="|${station.name} (${station.code})|"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Search Routes</button>
+            <a th:href="@{/routes}" class="btn btn-secondary">Back to Routes</a>
+        </div>
+    </form>
+
+    <!-- Search Results -->
+    <div th:if="${routes != null}">
+        <h3 class="mt-4">Search Results</h3>
+        <p th:if="${startStation != null and endStation != null}">
+            Showing routes from <strong th:text="${startStation.name}"></strong> to <strong th:text="${endStation.name}"></strong>
+        </p>
+
+        <table class="table table-striped" th:if="${not #lists.isEmpty(routes)}">
+            <thead>
+            <tr>
+                <th>Route Code</th>
+                <th>Start Station</th>
+                <th>End Station</th>
+                <th>Distance (km)</th>
+                <th>Duration (min)</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="route : ${routes}">
+                <td th:text="${route.code}"></td>
+                <td th:text="${route.startStation.name}"></td>
+                <td th:text="${route.endStation.name}"></td>
+                <td th:text="${route.totalDistanceKm}"></td>
+                <td th:text="${route.estimatedDurationMinutes}"></td>
+                <td>
+                    <span th:if="${route.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                    <span th:if="${route.status == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${#lists.isEmpty(routes)}" class="alert alert-info">
+            No routes found for the selected stations.
+        </div>
+    </div>
+</div>
+</body>
+</html>
