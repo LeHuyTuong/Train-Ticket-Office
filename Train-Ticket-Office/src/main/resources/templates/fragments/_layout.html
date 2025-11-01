@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle} ?: 'Train Ticket Office'"></title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        body {
+            background-color: #f0f2f5; /* Màu nền xám nhạt hơn một chút */
+        }
+
+        /* Style cho phần nội dung chính (khung trắng) */
+        .content-wrapper {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 2.5rem; /* Tăng padding */
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Shadow mềm hơn */
+        }
+
+        /* Style riêng cho tiêu đề của form */
+        .form-header {
+            text-align: center; /* Căn giữa tiêu đề */
+            margin-bottom: 2rem;
+            font-weight: 600; /* In đậm hơn */
+            color: #333;
+        }
+
+        /* Style cho các nhãn (label) của form */
+        .form-label {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar - Thanh điều hướng -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/}"><i class="bi bi-train-front"></i> Ticket Office</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/trains}">Train Management</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/seats}">Seat Management</a>
+                </li>
+                <!-- Thêm các link quản lý khác ở đây -->
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Vùng nội dung chính sẽ được thay thế bởi các trang con -->
+<div layout:fragment="content" class="container content-wrapper">
+    <p>Page content goes here</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

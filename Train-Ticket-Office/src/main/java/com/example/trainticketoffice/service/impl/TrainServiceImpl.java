@@ -20,42 +20,30 @@ public class TrainServiceImpl implements TrainService {
     }
 
     @Override
-    public Train createTrain(Train train) {
-        // Có thể thêm logic kiểm tra trước khi lưu, ví dụ: tên tàu không được trùng
-        return trainRepository.save(train);
-    }
-
-    @Override
     public List<Train> getAllTrains() {
         return trainRepository.findAll();
     }
 
     @Override
-    public Optional<Train> getTrainById(int trainId) {
-        return trainRepository.findById(trainId);
+    public Optional<Train> getTrainById(Long id) {
+        return trainRepository.findById(id);
     }
 
     @Override
-    public Train updateTrain(int trainId, Train trainDetails) {
-        // Tìm train hiện có trong DB
-        Train existingTrain = trainRepository.findById(trainId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tàu với ID: " + trainId));
-
-        // Cập nhật thông tin từ trainDetails vào existingTrain
-        existingTrain.setName(trainDetails.getName());
-        existingTrain.setRoute(trainDetails.getRoute());
-        // Lưu ý: Việc cập nhật danh sách Toa tàu (carriages) cần xử lý cẩn thận hơn
-        // ở đây chỉ cập nhật thông tin cơ bản của Train
-
-        return trainRepository.save(existingTrain);
-    }
-
-    @Override
-    public void deleteTrain(int trainId) {
-        // Kiểm tra xem tàu có tồn tại không trước khi xóa
-        if (!trainRepository.existsById(trainId)) {
-            throw new RuntimeException("Không tìm thấy tàu với ID: " + trainId);
+    public Train saveTrain(Train train) {
+        if (train.getId() == null) {
+            if (trainRepository.existsByCode(train.getCode())) {
+                throw new IllegalStateException("Train code '" + train.getCode() + "' already exists!");
+            }
         }
-        trainRepository.deleteById(trainId);
+        return trainRepository.save(train);
+    }
+
+    @Override
+    public void deleteTrain(Long id) {
+        if (!trainRepository.existsById(id)) {
+            throw new RuntimeException("Train not found with ID: " + id);
+        }
+        trainRepository.deleteById(id);
     }
 }
