@@ -1,24 +1,62 @@
 package com.example.trainticketoffice.model;
 
 
+import com.example.trainticketoffice.common.PaymentStatus;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
-
-public class Payment {
+@Entity
+@Table(name = "payments")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Payment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "payment_id")
     private Long paymentId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(nullable = false)
     private double amount;
 
-    @Column(nullable = false)
-    private LocalDateTime date = LocalDateTime.now();
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PaymentStatus status = PaymentStatus.PENDING;
+
+    @Column(name = "transaction_ref", unique = true, length = 64)
+    private String transactionRef;
+
+    @Column(name = "order_info")
+    private String orderInfo;
+
+    @Column(name = "bank_code")
+    private String bankCode;
+
+    @Column(name = "bank_tran_no")
+    private String bankTranNo;
+
+    @Column(name = "vnp_transaction_no")
+    private String vnpTransactionNo;
+
+    @Column(name = "response_code")
+    private String responseCode;
+
+    @Column(name = "pay_date")
+    private LocalDateTime payDate;
+
+    @Column(name = "secure_hash", length = 256)
+    private String secureHash;
 
 }

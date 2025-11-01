@@ -3,9 +3,19 @@ package com.example.trainticketoffice.service;
 import com.example.trainticketoffice.model.Booking;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingService {
-    Booking createBooking(Booking booking);
+    Booking createBooking(Integer userId,
+                          Long tripId,
+                          Long seatId,
+                          String passengerName,
+                          String phone,
+                          String email);
+
     List<Booking> findAllBookings();
-    List<Booking> findAllBookingsByUserId(Long userId);
+
+    List<Booking> findAllBookingsByUserId(Integer userId);
+
+    Optional<Booking> findById(Long bookingId);
 }

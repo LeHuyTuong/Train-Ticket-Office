@@ -1,5 +1,6 @@
 package com.example.trainticketoffice.model;
 
+import com.example.trainticketoffice.common.BookingStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,9 +47,9 @@ public class Booking extends BaseEntity{
     @Column(length = 100)
     private String email;
 
-    // BOOKED / PAID / CANCELLED (để String cho dễ)
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "BOOKED";
+    private BookingStatus status = BookingStatus.BOOKED;
 
     @Column(name = "booking_time", nullable = false)
     private LocalDate bookingTime;
