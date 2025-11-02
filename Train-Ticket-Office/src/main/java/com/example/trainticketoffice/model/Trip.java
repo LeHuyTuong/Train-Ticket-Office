@@ -22,7 +22,9 @@ public class Trip extends BaseEntity{
     @Column(name = "trip_id")
     private Long tripId;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    // Nếu Train là một đối tượng detached,(đính kèm)
+    // nó sẽ được "merge" (gắn lại) vào phiên làm việc hiện tại thay vì cố gắng "persist" (lưu mới).
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REFRESH})
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Train train;

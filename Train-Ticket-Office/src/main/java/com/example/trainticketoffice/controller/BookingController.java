@@ -8,6 +8,8 @@ import com.example.trainticketoffice.repository.SeatRepository;
 import com.example.trainticketoffice.repository.TripRepository;
 import com.example.trainticketoffice.repository.UserRepository;
 import com.example.trainticketoffice.service.BookingService;
+import com.example.trainticketoffice.service.SeatService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,22 +26,14 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/bookings")
+@RequiredArgsConstructor
 public class BookingController {
 
     private final BookingService bookingService;
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
     private final SeatRepository seatRepository;
-
-    public BookingController(BookingService bookingService,
-                             UserRepository userRepository,
-                             TripRepository tripRepository,
-                             SeatRepository seatRepository) {
-        this.bookingService = bookingService;
-        this.userRepository = userRepository;
-        this.tripRepository = tripRepository;
-        this.seatRepository = seatRepository;
-    }
+    private final SeatService seatService;
 
     @GetMapping
     public String listBookings(Model model) {
@@ -102,14 +96,22 @@ public class BookingController {
     private void prepareReferenceData(Model model) {
         List<User> users = userRepository.findAll();
         List<Trip> trips = tripRepository.findAll();
-        List<Seat> seats = seatRepository.findAll();
+        List<Seat> seats = seatService.getAvailableSeats();
+
 
         Map<Long, String> tripDescriptions = trips.stream()
                 .collect(Collectors.toMap(Trip::getTripId,
-                        trip -> String.format("%s -> %s (%s)",
+                        trip -> String.format("%s → %s (%s)",
                                 trip.getDepartureStation(),
-                                trip.getArrival_station(),
-                                trip.getDeparture_time())));
+                                trip.getArrivalStation(),
+                                trip.getDepartureTime())));
+
+        Map<Long, String> seatDescriptions = seats.stream()
+                .collect(Collectors.toMap(Seat::getSeatId,
+                        seat -> String.format("%s - %s (%s)",
+                                seat.getTrain().getCode(),
+                                seat.getSeatNumber(),
+                                seat.getSeatType())));
 
         model.addAttribute("users", users);
         model.addAttribute("trips", trips);

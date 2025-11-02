@@ -6,6 +6,7 @@ import com.example.trainticketoffice.model.Payment;
 import com.example.trainticketoffice.service.BookingService;
 import com.example.trainticketoffice.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +22,12 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/payments")
+@RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
     private final BookingService bookingService;
 
-    public PaymentController(PaymentService paymentService, BookingService bookingService) {
-        this.paymentService = paymentService;
-        this.bookingService = bookingService;
-    }
 
     @GetMapping("/bookings/{bookingId}")
     public String showPaymentPage(@PathVariable Long bookingId,
