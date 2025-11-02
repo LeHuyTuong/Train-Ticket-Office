@@ -100,9 +100,9 @@ public class DataInitializer implements CommandLineRunner {
         northSouthTrip.setTrain(se1Train);
         northSouthTrip.setRoute(northSouthRoute);
         northSouthTrip.setDepartureStation(haNoiStation.getName());
-        northSouthTrip.setArrival_station(saiGonStation.getName());
-        northSouthTrip.setDeparture_time(LocalDate.of(2024, 5, 1));
-        northSouthTrip.setArrival_time(LocalDate.of(2024, 5, 2));
+        northSouthTrip.setArrivalStation(saiGonStation.getName());
+        northSouthTrip.setDepartureTime(LocalDate.of(2024, 5, 1));
+        northSouthTrip.setArrivalTime(LocalDate.of(2024, 5, 2));
         northSouthTrip.setPrice(1_500_000.0);
         northSouthTrip = tripService.saveTrip(northSouthTrip);
 

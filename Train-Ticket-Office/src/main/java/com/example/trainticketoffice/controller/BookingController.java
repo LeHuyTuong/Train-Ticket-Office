@@ -96,7 +96,7 @@ public class BookingController {
     private void prepareReferenceData(Model model) {
         List<User> users = userRepository.findAll();
         List<Trip> trips = tripRepository.findAll();
-        List<Seat> seats = seatService.getAvailableSeats();
+        List<Seat> seats = seatService.getAllSeats();
 
 
         Map<Long, String> tripDescriptions = trips.stream()

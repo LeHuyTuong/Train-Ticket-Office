@@ -64,7 +64,7 @@ public class TicketServiceImpl implements TicketService {
 
 
             Optional<Station> fromStationOpt = stationRepository.findByName(trip.getDepartureStation());
-            Optional<Station> toStationOpt = stationRepository.findByName(trip.getArrival_station());
+            Optional<Station> toStationOpt = stationRepository.findByName(trip.getArrivalStation());
 
             if (fromStationOpt.isEmpty() || toStationOpt.isEmpty()) {
                 return null;
