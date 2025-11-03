@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_customer_layout}"> <head>
+    <title>Hoàn Tất Đặt Vé</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="page-title">Hoàn Tất Đặt Vé</h2>
+    <div class="row">
+        <div class="col-md-8">
+            <form th:action="@{/bookings}" method="POST">
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+                <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
+                <input type="hidden" name="userId" th:value="${currentUser.id}" />
+                <div class="mb-4 p-3 bg-light border rounded">
+                    <h4>Thông Tin Chuyến Tàu</h4>
+                    <p>
+                        <strong>Tuyến:</strong>
+                        <span th:text="${selectedTrip.route.startStation.name}">Ga Đi</span> →
+                        <span th:text="${selectedTrip.route.endStation.name}">Ga Đến</span>
+                    </p>
+                    <p>
+                        <strong>Giờ đi:</strong>
+                        <span th:text="${#temporals.format(selectedTrip.departureTime, 'dd/MM/yyyy')}"></span>
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label for="seatId" class="form-label fw-bold">Chọn Ghế Ngồi (Còn trống)</label>
+                    <select name="seatId" id="seatId" class="form-select form-select-lg" required>
+                        <option value="">-- Vui lòng chọn 1 ghế --</option>
+                        <option th:each="seat : ${availableSeats}"
+                                th:value="${seat.seatId}"
+                                th:text="|Ghế ${seat.seatNumber} - Toa ${seat.train.code} (${seat.seatType})|"></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="passengerName" class="form-label fw-bold">Tên Hành Khách</label>
+                    <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label fw-bold">Số Điện Thoại</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" th:value="${currentUser.phone}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label fw-bold">Email</label>
+                        <input type="email" id="email" name="email" class="form-control" th:value="${currentUser.email}" required>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">Xác Nhận Đặt Vé</button>
+                    <a th:href="@{/}" class="btn btn-secondary btn-lg">Hủy (Về Trang chủ)</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

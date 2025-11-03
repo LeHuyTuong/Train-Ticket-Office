@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
+    <title th:text="${seat.seatId != null ? 'Edit Seat' : 'Add New Seat'}">Seat Form</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="page-title" th:text="${seat.seatId != null ? 'Edit Seat' : 'Add New Seat'}">Seat Form</h2>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/seats/save}" th:object="${seat}" method="post" class="col-md-8">
+        <input type="hidden" th:field="*{seatId}">
+
+        <div class="mb-3">
+            <label class="form-label">Train</label>
+            <select th:field="*{train}" class="form-select" required>
+                <option value="">-- Select Train --</option>
+                <option th:each="train : ${allTrains}"
+                        th:value="${train.id}"
+                        th:text="|${train.code} - ${train.name}|"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Seat Number (Số Ghế)</label>
+            <input type="text" th:field="*{seatNumber}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Seat Type (Loại Ghế)</label>
+            <select th:field="*{seatType}" class="form-select" required>
+                <option value="">-- Select Type --</option>
+                <option th:each="type : ${seatTypes}"
+                        th:value="${type}"
+                        th:text="${type}"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Price Per Km (Giá / Km)</label>
+            <input type="number" th:field="*{pricePerKm}" step="0.01" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select th:field="*{status}" class="form-select" required>
+                <option th:each="s : ${T(com.example.trainticketoffice.common.SeatStatus).values()}"
+                        th:value="${s}"
+                        th:text="${s}"></option>
+            </select>
+        </div>
+
+        <div class="form-check mb-3">
+            <input type="checkbox" th:field="*{isActive}" class="form-check-input">
+            <label class="form-check-label">Is Active</label>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-success">Save Seat</button>
+            <a th:href="@{/seats}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

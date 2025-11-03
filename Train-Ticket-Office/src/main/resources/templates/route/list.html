@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}"> <head>
+    <title>Routes Management</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="page-title">Routes Management</h2>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div class="mb-3">
+        <a th:href="@{/routes/new}" class="btn btn-primary">Add New Route</a>
+    </div>
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Code</th>
+            <th>Start Station</th>
+            <th>End Station</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="route : ${routes}">
+            <td th:text="${route.id}"></td>
+            <td th:text="${route.code}"></td>
+            <td th:text="${route.startStation.name}"></td>
+            <td th:text="${route.endStation.name}"></td>
+            <td>
+                <span th:if="${route.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                <span th:if="${route.status == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
+            </td>
+            <td>
+                <a th:href="@{/routes/edit/{id}(id=${route.id})}" class="btn btn-sm btn-warning">Edit</a>
+                <a th:href="@{/routes/delete/{id}(id=${route.id})}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+</body>
+</html>

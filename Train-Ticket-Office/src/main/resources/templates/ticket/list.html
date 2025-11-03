@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_customer_layout}"> <head>
+    <title>Vé Của Tôi</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="page-title">Vé Của Tôi</h2>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${#lists.isEmpty(bookings)}" class="alert alert-info" role="alert">
+        Bạn chưa có vé nào.
+    </div>
+    <div th:if="${not #lists.isEmpty(bookings)}">
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>Mã Đặt Vé</th>
+                <th>Hành Khách</th>
+                <th>Chuyến Tàu</th>
+                <th>Ga Đi</th>
+                <th>Ga Đến</th>
+                <th>Ngày Đi</th>
+                <th>Ghế</th>
+                <th>Chi tiết</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="booking : ${bookings}">
+                <td th:text="${booking.bookingId}"></td>
+                <td th:text="${booking.passengerName}"></td>
+                <td th:text="${booking.trip.train.code}"></td>
+                <td th:text="${booking.trip.departureStation}"></td>
+                <td th:text="${booking.trip.arrivalStation}"></td>
+                <td th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy')}"></td>
+                <td th:text="${booking.seat.seatNumber}"></td>
+                <td>
+                    <a th:href="@{/bookings/{id}(id=${booking.bookingId})}" class="btn btn-sm btn-info">Xem Vé</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <a th:href="@{/}" class="btn btn-secondary">Back to Homepage</a>
+</div>
+</body>
+</html>

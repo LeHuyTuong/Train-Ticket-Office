@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
+    <title>Train Management</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="page-title">Train Management</h2>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="mb-3">
+        <a th:href="@{/trains/new}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add New Train
+        </a>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Total Carriages</th>
+            <th>Seat Capacity</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="train : ${trains}">
+            <td th:text="${train.id}"></td>
+            <td th:text="${train.code}"></td>
+            <td th:text="${train.name}"></td>
+            <td th:text="${train.totalCarriages}"></td>
+            <td th:text="${train.seatCapacity}"></td>
+            <td>
+                <span th:if="${train.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                <span th:if="${train.status != 'ACTIVE'}" class="badge bg-secondary" th:text="${train.status}"></span>
+            </td>
+            <td>
+                <a th:href="@{/trains/edit/{id}(id=${train.id})}" class="btn btn-sm btn-warning">Edit</a>
+                <a th:href="@{/trains/delete/{id}(id=${train.id})}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+</body>
+</html>
