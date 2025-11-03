@@ -2,72 +2,75 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${pageTitle} ?: 'Train Ticket Office'"></title>
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">Train Ticket Office</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        body {
-            background-color: #f0f2f5; /* Màu nền xám nhạt hơn một chút */
+        /* (Giữ nguyên toàn bộ CSS của bạn ở đây...) */
+        :root {
+            --primary-color: #004a99;
+            --secondary-color: #f2c94c;
+            --bg-light-yellow: #fffbe6;
         }
-
-        /* Style cho phần nội dung chính (khung trắng) */
-        .content-wrapper {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 2.5rem; /* Tăng padding */
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Shadow mềm hơn */
-        }
-
-        /* Style riêng cho tiêu đề của form */
-        .form-header {
-            text-align: center; /* Căn giữa tiêu đề */
-            margin-bottom: 2rem;
-            font-weight: 600; /* In đậm hơn */
-            color: #333;
-        }
-
-        /* Style cho các nhãn (label) của form */
-        .form-label {
-            font-weight: 500;
-        }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-light-yellow); }
+        .navbar-dark.bg-primary { background-color: var(--primary-color) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+        .navbar-brand { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem; }
+        .content-card { background-color: #ffffff; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); margin-top: 2rem; margin-bottom: 2rem; }
+        .page-title { color: var(--primary-color); font-family: 'Montserrat', sans-serif; font-weight: 700; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; display: inline-block; margin-bottom: 1.5rem; }
+        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); font-weight: 600; padding: 0.6rem 1.2rem; }
+        .btn-primary:hover { background-color: #003366; border-color: #003366; }
+        .btn-secondary { font-weight: 600; padding: 0.6rem 1.2rem; }
+        .table thead { background-color: var(--primary-color); color: white; text-transform: uppercase; }
+        .table-hover tbody tr:hover { background-color: rgba(0, 74, 153, 0.08); }
     </style>
 </head>
 <body>
 
-<!-- Navbar - Thanh điều hướng -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
-        <a class="navbar-brand" th:href="@{/}"><i class="bi bi-train-front"></i> Ticket Office</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <a class="navbar-brand" th:href="@{/}">Train Ticket Office</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/trains}">Train Management</a>
+                    <a class="nav-link" th:href="@{/routes/search}" th:classappend="${requestURI == '/routes/search' ? 'active' : ''}">Tìm Tuyến</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/seats}">Seat Management</a>
+                    <a class="nav-link" th:href="@{/bookings}" th:classappend="${requestURI == '/bookings' ? 'active' : ''}">Vé Của Tôi</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/trips}">Trip Management</a>
+                    <a class="nav-link" th:href="@{/routes}" th:classappend="${#strings.startsWith(requestURI, '/routes') and not #strings.startsWith(requestURI, '/routes/search') ? 'active' : ''}">Quản lý Tuyến</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/trips}" th:classappend="${#strings.startsWith(requestURI, '/trips') ? 'active' : ''}">Quản lý Chuyến</a>
                 </li>
 
-                <!-- Thêm các link quản lý khác ở đây -->
+
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/logout}">Đăng Xuất</a>
+                </li>
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- Vùng nội dung chính sẽ được thay thế bởi các trang con -->
-<div layout:fragment="content" class="container content-wrapper">
-    <p>Page content goes here</p>
+<div class="container mt-4">
+    <div class="content-card">
+        <div layout:fragment="content">
+        </div>
+    </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

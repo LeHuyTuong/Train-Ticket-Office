@@ -39,13 +39,18 @@ public class BookingController {
     public String listBookings(Model model) {
         List<Booking> bookings = bookingService.findAllBookings();
         model.addAttribute("bookings", bookings);
-        return "booking/list";
+
+        // SỬA LỖI 1: Đường dẫn sai
+        return "ticket/list"; // Trỏ đến file list.html mới
     }
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
+        // Hàm này gọi prepareReferenceData, đã được sửa lỗi 500
         prepareReferenceData(model);
-        return "booking/form";
+
+        // SỬA LỖI 2: Đường dẫn sai
+        return "ticket/form"; // Trỏ đến file form.html bạn đã có
     }
 
     @PostMapping
@@ -62,6 +67,7 @@ public class BookingController {
             return "redirect:/bookings";
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            // Redirect này là đúng, nó sẽ gọi lại hàm @GetMapping("/new")
             return "redirect:/bookings/new";
         }
     }
@@ -76,7 +82,9 @@ public class BookingController {
             return "redirect:/bookings";
         }
         model.addAttribute("booking", booking.get());
-        return "booking/detail";
+
+        // SỬA LỖI 3: Đường dẫn sai
+        return "ticket/detail"; // Trỏ đến file detail.html mới
     }
 
     @GetMapping("/user/{userId}")
@@ -90,7 +98,9 @@ public class BookingController {
         }
         model.addAttribute("bookings", bookings);
         model.addAttribute("userId", userId);
-        return "booking/list";
+
+        // SỬA LỖI 4: Đường dẫn sai
+        return "ticket/list"; // Dùng chung file list
     }
 
     private void prepareReferenceData(Model model) {
@@ -98,13 +108,13 @@ public class BookingController {
         List<Trip> trips = tripRepository.findAll();
         List<Seat> seats = seatService.getAllSeats();
 
-
+        // SỬA LỖI 500: Tên biến đã đổi thành camelCase
         Map<Long, String> tripDescriptions = trips.stream()
                 .collect(Collectors.toMap(Trip::getTripId,
                         trip -> String.format("%s → %s (%s)",
-                                trip.getDepartureStation(),
-                                trip.getArrivalStation(),
-                                trip.getDepartureTime())));
+                                trip.getDepartureStation(), // Đã sửa
+                                trip.getArrivalStation(),   // Đã sửa
+                                trip.getDepartureTime()))); // Đã sửa
 
         Map<Long, String> seatDescriptions = seats.stream()
                 .collect(Collectors.toMap(Seat::getSeatId,

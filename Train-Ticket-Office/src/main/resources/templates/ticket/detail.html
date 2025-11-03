@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_layout}">
+<head>
+    <title>Chi Tiết Vé</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="ticket-container" style="max-width: 800px; margin: auto;">
+
+        <div class="ticket-header" style="background-color: #004a99; color: white; padding: 20px; text-align: center;">
+            <h3>Vé Tàu Hỏa Điện Tử</h3>
+            <p>Train Ticket Office</p>
+        </div>
+
+        <div class="ticket-body" style="padding: 25px; border-bottom: 2px dashed #ccc;">
+
+            <div th:object="${booking}"> <div class="trip-details" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                <h4>
+                    <span th:text="*{trip.departureStation}">Ga Đi</span> →
+                    <span th:text="*{trip.arrivalStation}">Ga Đến</span>
+                </h4>
+                <p>
+                    <strong>Tàu:</strong> <span th:text="*{trip.train.code}">SE1</span> |
+                    <strong>Ngày Đi:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy')}"></span>
+                </p>
+            </div>
+
+                <div class="passenger-details" style="padding-top: 15px;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong class="text-muted">Hành Khách</strong>
+                            <p class="fs-5" th:text="*{passengerName}">Nguyễn Văn A</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong class="text-muted">Mã Đặt Vé</strong>
+                            <p class="fs-5" th:text="*{bookingId}">123</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong class="text-muted">Ghế</strong>
+                            <p class="fs-5" th:text="|Ghế *{seat.seatNumber} (Toa *{seat.train.code})|">A1 (Toa SE1)</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong class="text-muted">Loại Ghế</strong>
+                            <p class="fs-5" th:text="*{seat.seatType}">VIP</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="ticket-footer" style="background-color: #f9f9f9; padding: 20px; text-align: center;">
+            <a th:href="@{/bookings}" class="btn btn-secondary">Quay lại danh sách</a>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
