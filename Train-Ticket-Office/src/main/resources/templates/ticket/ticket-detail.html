@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi Tiết Vé Tàu</title>
+    <link rel="stylesheet" th:href="@{/css/ticket-style.css}" />
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="ticket-container">
+
+    <div class="ticket-header">
+        <h3>Vé Tàu Hỏa Điện Tử</h3>
+        <p>Train Ticket Office</p>
+    </div>
+
+    <div class="ticket-body">
+
+        <div class="ticket-section trip-details">
+            <div class="trip-stations">
+                <div class="station">
+                    <span class="station-code" th:text="${ticket.fromStation.code}">HNO</span>
+                    <span class="station-name" th:text="${ticket.fromStation.name}">Ga Hà Nội</span>
+                </div>
+                <div class="arrow">→</div>
+                <div class="station">
+                    <span class="station-code" th:text="${ticket.toStation.code}">HCM</span>
+                    <span class="station-name" th:text="${ticket.toStation.name}">Ga Sài Gòn</span>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div>
+                    <span class="label">Tàu</span>
+                    <span class="value" th:text="${ticket.trip.train.code}">SE1</span>
+                </div>
+                <div>
+                    <span class="label">Ngày Đi</span>
+                    <span class="value" th:text="${#temporals.format(ticket.trip.departureTime, 'dd/MM/yyyy')}">01/05/2024</span>
+                </div>
+                <div>
+                    <span class="label">Toa</span>
+                    <span class="value" th:text="${ticket.seat.train.code}">A1</span>
+                </div>
+                <div>
+                    <span class="label">Số Ghế</span>
+                    <span class="value" th:text="${ticket.seat.seatNumber}">A1</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ticket-section passenger-details">
+            <div class="info-grid">
+                <div>
+                    <span class="label">Hành Khách</span>
+                    <span class="value" th:text="${ticket.passengerName}">Nguyễn Văn A</span>
+                </div>
+                <div>
+                    <span class="label">SĐT</span>
+                    <span class="value" th:text="${ticket.passengerPhone}">0909009009</span>
+                </div>
+                <div>
+                    <span class="label">CCCD/ID</span>
+                    <span class="value" th:text="${ticket.passengerIdCard}">0123456789</span>
+                </div>
+                <div>
+                    <span class="label">Giá Vé</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(ticket.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">1,500,000 VNĐ</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ticket-section qr-code">
+            <div class="ticket-code" th:text="${ticket.code}">TICKET-SE1-0001</div>
+
+            <div id="qrcode"></div>
+
+            <span class="label">(Vui lòng đưa mã này khi check-in)</span>
+        </div>
+
+    </div>
+
+    <div class="ticket-footer">
+        <p>Cảm ơn quý khách đã sử dụng dịch vụ. Chúc quý khách một chuyến đi vui vẻ!</p>
+        <p th:text="'Trạng thái: ' + ${ticket.status}">Trạng thái: ACTIVE</p>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /* Lấy mã vé từ đối tượng Thymeleaf */
+    var ticketCode = /*[[${ticket.code}]]*/ 'FALLBACK_CODE';
+
+    new QRCode(document.getElementById("qrcode"), {
+        text: ticketCode,
+        width: 128,
+        height: 128,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+</script>
+
+</body>
+</html>
