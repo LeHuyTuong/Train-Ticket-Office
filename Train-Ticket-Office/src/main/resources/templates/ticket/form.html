@@ -1,60 +1,224 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_customer_layout}"> <head>
-    <title>Hoàn Tất Đặt Vé</title>
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
+    <title>Chọn Ghế & Toa</title>
+
+    <style>
+        .carriage-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        .carriage-tab {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            background-color: #f5f5f5;
+        }
+
+        .carriage-tab:hover {
+            background-color: #eee;
+        }
+
+        .carriage-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .seat-map-container {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .seat-grid {
+            display: none; /* Ẩn tất cả grid ghế */
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .seat-grid.active {
+            display: grid; /* Chỉ hiện grid của toa active */
+        }
+
+        .seat-item { position: relative; }
+        .seat-item input[type="checkbox"] {
+            opacity: 0;
+            position: fixed;
+            width: 0;
+        }
+
+        .seat-label {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 80px;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #ffffff;
+        }
+
+        .seat-label .seat-number { font-weight: bold; font-size: 1.1rem; color: var(--primary-color); }
+        .seat-label .seat-type { font-size: 0.7rem; text-transform: uppercase; color: #777; }
+        .seat-label .seat-price { font-size: 0.8rem; font-weight: bold; color: #d9534f; }
+
+        .seat-item input[type="checkbox"]:checked + .seat-label {
+            background-color: var(--secondary-color);
+            border-color: #003366;
+            transform: scale(1.05);
+        }
+
+        /* Đã bị đặt (BOOKED) */
+        .seat-item input[type="checkbox"]:disabled + .seat-label {
+            background-color: #e0e0e0;
+            border-color: #aaa;
+            cursor: not-allowed;
+        }
+        .seat-item input[type="checkbox"]:disabled + .seat-label .seat-number {
+            color: #999;
+            text-decoration: line-through;
+        }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
-    <h2 class="page-title">Hoàn Tất Đặt Vé</h2>
-    <div class="row">
-        <div class="col-md-8">
-            <form th:action="@{/bookings}" method="POST">
-                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-                <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
-                <input type="hidden" name="userId" th:value="${currentUser.id}" />
-                <div class="mb-4 p-3 bg-light border rounded">
-                    <h4>Thông Tin Chuyến Tàu</h4>
-                    <p>
-                        <strong>Tuyến:</strong>
-                        <span th:text="${selectedTrip.route.startStation.name}">Ga Đi</span> →
-                        <span th:text="${selectedTrip.route.endStation.name}">Ga Đến</span>
-                    </p>
-                    <p>
-                        <strong>Giờ đi:</strong>
-                        <span th:text="${#temporals.format(selectedTrip.departureTime, 'dd/MM/yyyy')}"></span>
-                    </p>
-                </div>
-                <div class="mb-3">
-                    <label for="seatId" class="form-label fw-bold">Chọn Ghế Ngồi (Còn trống)</label>
-                    <select name="seatId" id="seatId" class="form-select form-select-lg" required>
-                        <option value="">-- Vui lòng chọn 1 ghế --</option>
-                        <option th:each="seat : ${availableSeats}"
-                                th:value="${seat.seatId}"
-                                th:text="|Ghế ${seat.seatNumber} - Toa ${seat.train.code} (${seat.seatType})|"></option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="passengerName" class="form-label fw-bold">Tên Hành Khách</label>
-                    <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="phone" class="form-label fw-bold">Số Điện Thoại</label>
-                        <input type="tel" id="phone" name="phone" class="form-control" th:value="${currentUser.phone}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="email" class="form-label fw-bold">Email</label>
-                        <input type="email" id="email" name="email" class="form-control" th:value="${currentUser.email}" required>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-success btn-lg">Xác Nhận Đặt Vé</button>
-                    <a th:href="@{/}" class="btn btn-secondary btn-lg">Hủy (Về Trang chủ)</a>
-                </div>
-            </form>
+
+    <form th:action="@{/bookings}" method="POST">
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
+
+        <h2 class="page-title">Hoàn Tất Đặt Vé</h2>
+        <div class="mb-4 p-3 bg-light border rounded">
+            <h4>Thông Tin Chuyến Tàu</h4>
+            <p>
+                <strong>Tuyến:</strong>
+                <span th:text="${selectedTrip.route.startStation.name}">Ga Đi</span> →
+                <span th:text="${selectedTrip.route.endStation.name}">Ga Đến</span>
+                (<span th:text="${selectedTrip.train.code}"></span>)
+            </p>
+            <p>
+                <strong>Đi:</strong> <span th:text="${#temporals.format(selectedTrip.departureTime, 'dd/MM/yyyy HH:mm')}"></span>
+                <strong>Đến:</strong> <span th:text="${#temporals.format(selectedTrip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span>
+            </p>
         </div>
-    </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">1. Chọn Toa</label>
+            <div class="carriage-nav" id="carriage-tabs">
+                <div th:each="carriage, iter : ${carriages}"
+                     th:text="|${carriage.name} (${carriage.type})|"
+                     th:data-target="|carriage-grid-${carriage.carriageId}|"
+                     th:classappend="${iter.index == 0 ? 'active' : ''}"
+                     class="carriage-tab">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">2. Chọn Ghế</label>
+            <div class="seat-map-container">
+                <div th:each="carriage, iter : ${carriages}"
+                     th:id="|carriage-grid-${carriage.carriageId}|"
+                     th:classappend="${iter.index == 0 ? 'active' : ''}"
+                     class="seat-grid">
+
+                    <th:block th:each="seat : ${allSeats}" th:if="${seat.carriage.carriageId == carriage.carriageId}">
+                        <div class="seat-item">
+                            <th:block th:with="seatPrice=${seat.pricePerKm.multiply(selectedTrip.route.totalDistanceKm)}">
+                                <input type="checkbox"
+                                       name="seatIds"
+                                       th:id="|seat-${seat.seatId}|"
+                                       th:value="${seat.seatId}"
+                                       th:data-price="${seatPrice}"
+                                       th:disabled="${bookedSeatIds.contains(seat.seatId)}"
+                                       class="seat-checkbox" />
+                                <label th:for="|seat-${seat.seatId}|" class="seat-label">
+                                    <span class="seat-number" th:text="${seat.seatNumber}"></span>
+                                    <span class.seat-type th:text="${seat.seatType}"></span>
+                                    <span class.seat-price th:text="${#numbers.formatDecimal(seatPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                                </label>
+                            </th:block>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <h3 class="mt-3">Tổng Tiền:
+                <span id="total-price" class="text-danger fw-bold">0</span> VNĐ
+            </h3>
+        </div>
+
+        <div class="mb-3">
+            <label for="passengerName" class="form-label fw-bold">Tên Hành Khách (cho tất cả vé)</label>
+            <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label fw-bold">Số Điện Thoại</label>
+                <input type="tel" id="phone" name="phone" class="form-control" th:value="${currentUser.phone}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="email" class="form-label fw-bold">Email</label>
+                <input type="email" id="email" name="email" class="form-control" th:value="${currentUser.email}" required>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success btn-lg">Xác Nhận Đặt Ghế</button>
+            <a th:href="@{/}" class="btn btn-secondary btn-lg">Hủy (Về Trang chủ)</a>
+        </div>
+    </form>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.seat-checkbox');
+            const totalElement = document.getElementById('total-price');
+            const carriageTabs = document.querySelectorAll('.carriage-tab');
+            const seatGrids = document.querySelectorAll('.seat-grid');
+
+            // 1. Hàm tính tổng tiền
+            function calculateTotal() {
+                let currentTotal = 0;
+                checkboxes.forEach(box => {
+                    if (box.checked) {
+                        currentTotal += parseFloat(box.dataset.price);
+                    }
+                });
+                totalElement.textContent = currentTotal.toLocaleString('vi-VN');
+            }
+            checkboxes.forEach(box => box.addEventListener('change', calculateTotal));
+
+            // 2. Hàm chuyển tab (Toa)
+            carriageTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Xóa active cũ
+                    carriageTabs.forEach(t => t.classList.remove('active'));
+                    seatGrids.forEach(g => g.classList.remove('active'));
+
+                    // Thêm active mới
+                    this.classList.add('active');
+                    const targetGridId = this.dataset.target;
+                    document.getElementById(targetGridId).classList.add('active');
+                });
+            });
+        });
+    </script>
+
 </div>
 </body>
 </html>

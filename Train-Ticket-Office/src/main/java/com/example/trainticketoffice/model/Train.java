@@ -18,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Train {
-    // TODO Hân : repo + full CRUD
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -44,11 +44,14 @@ public class Train {
     @Column(nullable = false)
     private String status;
 
-//    @CreationTimestamp
-//    @Column(updatable = false)
-//    private LocalDateTime createdAt;
+    // ===== THAY ĐỔI Ở ĐÂY =====
 
-    @ToString.Exclude
+    // BỎ liên kết cũ với Seat:
+    // @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<Seat> seats = new ArrayList<>();
+
+    // THÊM liên kết mới với Carriage:
     @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Seat> seats = new ArrayList<>();
+    @ToString.Exclude
+    private List<Carriage> carriages = new ArrayList<>();
 }

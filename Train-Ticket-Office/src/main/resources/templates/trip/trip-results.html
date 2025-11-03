@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_customer_layout}"> <head>
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
     <title>Kết Quả Tìm Kiếm</title>
 </head>
 <body>
@@ -25,27 +26,46 @@
                 <th>Mã Tàu</th>
                 <th>Giờ Đi</th>
                 <th>Giờ Đến</th>
-                <th>Giá Vé (VNĐ)</th>
+                <th>Ghế Trống</th> <th>Giá Vé (VNĐ)</th>
                 <th></th> </tr>
             </thead>
             <tbody>
             <tr th:each="trip : ${availableTrips}">
+
                 <td class="align-middle">
                     <strong th:text="${trip.train.code}">SE1</strong>
                 </td>
+
                 <td class="align-middle">
-                    <span th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy')}">01/05/2024</span>
+                    <span th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy HH:mm')}"></span>
                 </td>
+
                 <td class="align-middle">
-                    <span th:text="${#temporals.format(trip.arrivalTime, 'dd/MM/yyyy')}">02/05/2024</span>
+                    <span th:text="${#temporals.format(trip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span>
                 </td>
+
                 <td class="align-middle">
-                    <strong th:text="${#numbers.formatDecimal(trip.price, 0, 'COMMA', 0, 'POINT')}">1,500,000</strong>
+                    <span th:text="|VIP: ${availableVipCounts[trip.tripId]}|"
+                          class="badge bg-warning text-dark me-1"></span>
+                    <span th:text="|Thường: ${availableNormalCounts[trip.tripId]}|"
+                          class="badge bg-light text-dark"></span>
                 </td>
+
+                <td class="align-middle">
+                    <strong th:text="|từ ${#numbers.formatDecimal(trip.price, 0, 'COMMA', 0, 'POINT')}|"></strong>
+                </td>
+
                 <td class="text-end">
-                    <a th:href="@{/bookings/new(tripId=${trip.tripId})}" class="btn btn-primary">
-                        Chọn Ghế & Đặt Vé <i class="bi bi-chevron-right"></i>
-                    </a>
+                    <th:block th:with="totalAvailable=${availableVipCounts[trip.tripId] + availableNormalCounts[trip.tripId]}">
+                        <a th:href="@{/bookings/new(tripId=${trip.tripId})}"
+                           class="btn btn-primary"
+                           th:classappend="${totalAvailable == 0} ? 'disabled' : ''">
+
+                            <span th:if="${totalAvailable > 0}">Chọn Ghế & Đặt Vé</span>
+                            <span th:if="${totalAvailable == 0}">Hết Vé</span>
+                            <i class="bi bi-chevron-right" th:if="${totalAvailable > 0}"></i>
+                        </a>
+                    </th:block>
                 </td>
             </tr>
             </tbody>

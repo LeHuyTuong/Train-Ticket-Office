@@ -37,10 +37,6 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/}"><b>Đặt Vé Ngay</b></a>
-                </li>
-
-                <li class="nav-item">
                     <a class="nav-link" th:href="@{/bookings}" th:classappend="${#strings.startsWith(requestURI, '/bookings') ? 'active' : ''}">Vé Của Tôi</a>
                 </li>
 

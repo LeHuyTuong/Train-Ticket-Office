@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_customer_layout}"> <head>
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
     <title>Tìm Kiếm Chuyến Tàu</title>
 </head>
 <body>
@@ -30,6 +31,11 @@
                             th:value="${station.id}"
                             th:text="|${station.name} (${station.code})|"></option>
                 </select>
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label class="form-label fw-bold">Ngày Đi (Departure Date)</label>
+                <input type="date" name="departureDate" class="form-select form-select-lg" required>
             </div>
         </div>
 
