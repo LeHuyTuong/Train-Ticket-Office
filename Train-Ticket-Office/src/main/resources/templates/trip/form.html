@@ -32,12 +32,12 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="departureTime" class="form-label">Departure Time</label>
-                        <input type="date" th:field="*{departureTime}" class="form-control" th:classappend="${#fields.hasErrors('departureTime')} ? 'is-invalid' : ''" id="departureTime">
+                        <input type="datetime-local" th:field="*{departureTime}" class="form-control" th:classappend="${#fields.hasErrors('departureTime')} ? 'is-invalid' : ''" id="departureTime">
                         <div th:if="${#fields.hasErrors('departureTime')}" th:errors="*{departureTime}" class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="arrivalTime" class="form-label">Arrival Time</label>
-                        <input type="date" th:field="*{arrivalTime}" class="form-control" th:classappend="${#fields.hasErrors('arrivalTime')} ? 'is-invalid' : ''" id="arrivalTime">
+                        <input type="datetime-local" th:field="*{arrivalTime}" class="form-control" th:classappend="${#fields.hasErrors('arrivalTime')} ? 'is-invalid' : ''" id="arrivalTime">
                         <div th:if="${#fields.hasErrors('arrivalTime')}" th:errors="*{arrivalTime}" class="invalid-feedback"></div>
                     </div>
                 </div>

@@ -1,13 +1,12 @@
 package com.example.trainticketoffice.controller;
 
-import com.example.trainticketoffice.model.Booking;
-import com.example.trainticketoffice.model.Seat;
-import com.example.trainticketoffice.model.Trip;
-import com.example.trainticketoffice.model.User;
-import com.example.trainticketoffice.repository.TripRepository; // Giữ lại
+import com.example.trainticketoffice.common.BookingStatus; // <-- THÊM
+import com.example.trainticketoffice.model.*; // <-- SỬA
+import com.example.trainticketoffice.repository.BookingRepository; // <-- THÊM
+import com.example.trainticketoffice.repository.TripRepository;
 import com.example.trainticketoffice.service.BookingService;
 import com.example.trainticketoffice.service.SeatService;
-import jakarta.servlet.http.HttpSession; // Thêm import này
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,8 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList; // <-- THÊM
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors; // <-- THÊM
 
 @Controller
 @RequestMapping("/bookings")
@@ -29,6 +30,7 @@ public class BookingController {
     private final BookingService bookingService;
     private final TripRepository tripRepository;
     private final SeatService seatService;
+    private final BookingRepository bookingRepository; // <-- THÊM
 
     /**
      * HÀM MỚI (Trang 3 Customer): Hiển thị form đặt vé
@@ -47,23 +49,42 @@ public class BookingController {
             return "redirect:/"; // Nếu tripId bậy, về trang chủ
         }
 
-        // (Bạn cần implement logic này trong SeatService, ví dụ: "findAvailableSeatsForTrip")
-        List<Seat> availableSeats = seatService.getAllSeats(); // Tạm thời lấy tất cả
+        Trip selectedTrip = tripOpt.get();
+        Train train = selectedTrip.getTrain();
 
-        model.addAttribute("selectedTrip", tripOpt.get());
-        model.addAttribute("availableSeats", availableSeats);
-        model.addAttribute("currentUser", currentUser); // Gửi thông tin user đã login
+        // 1. Lấy tất cả Toa của tàu này
+        List<Carriage> carriages = train.getCarriages();
 
-        return "ticket/form"; // <-- Trả về Trang 3 (file ticket/form.html)
+        // 2. Lấy tất cả Ghế của tàu này
+        List<Seat> allSeatsOnTrain = carriages.stream()
+                .flatMap(carriage -> carriage.getSeats().stream())
+                .collect(Collectors.toList());
+
+        // 3. Lấy ID của các ghế đã được đặt cho chuyến đi NÀY
+        List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
+                        tripId,
+                        List.of(BookingStatus.BOOKED, BookingStatus.PAID)
+                )
+                .stream()
+                .map(booking -> booking.getSeat().getSeatId())
+                .collect(Collectors.toList());
+
+        model.addAttribute("selectedTrip", selectedTrip);
+        model.addAttribute("carriages", carriages); // Gửi danh sách Toa
+        model.addAttribute("allSeats", allSeatsOnTrain); // Gửi TẤT CẢ ghế
+        model.addAttribute("bookedSeatIds", bookedSeatIds); // Gửi ID ghế đã bị đặt
+        model.addAttribute("currentUser", currentUser);
+
+        return "ticket/form"; // Trả về trang chọn ghế
     }
 
     /**
-     * HÀM MỚI (Trang 3 Customer): Xử lý đặt vé
+     * HÀM MỚI (Trang 3 Customer): Xử lý đặt vé (chọn nhiều ghế)
      */
     @PostMapping
     public String createBooking(HttpSession session, // Lấy user từ session
                                 @RequestParam("tripId") Long tripId,
-                                @RequestParam("seatId") Long seatId,
+                                @RequestParam("seatIds") List<Long> seatIds,
                                 @RequestParam("passengerName") String passengerName,
                                 @RequestParam(value = "phone", required = false) String phone,
                                 @RequestParam(value = "email", required = false) String email,
@@ -76,8 +97,20 @@ public class BookingController {
 
         try {
             // Dùng ID của user đã login
-            Booking booking = bookingService.createBooking(currentUser.getId(), tripId, seatId, passengerName, phone, email);
-            redirectAttributes.addFlashAttribute("successMessage", "Đặt vé thành công. Mã đặt chỗ: " + booking.getBookingId());
+            List<Booking> createdBookings = new ArrayList<>();
+            for(Long seatId : seatIds) {
+                Booking booking = bookingService.createBooking(
+                        currentUser.getId(),
+                        tripId,
+                        seatId,
+                        passengerName,
+                        phone,
+                        email
+                );
+                createdBookings.add(booking);
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt " + createdBookings.size() + " ghế thành công!");
             return "redirect:/bookings"; // Chuyển đến trang "Vé của tôi"
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());

@@ -4,6 +4,7 @@ import com.example.trainticketoffice.common.PaymentStatus;
 import com.example.trainticketoffice.common.SeatStatus;
 import com.example.trainticketoffice.common.TicketStatus;
 import com.example.trainticketoffice.model.*;
+import com.example.trainticketoffice.repository.CarriageRepository; // <-- THÊM
 import com.example.trainticketoffice.repository.PaymentRepository;
 import com.example.trainticketoffice.repository.TicketRepository;
 import com.example.trainticketoffice.repository.UserRepository;
@@ -31,21 +32,24 @@ public class DataInitializer implements CommandLineRunner {
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
 
+    // THÊM REPO NÀY ĐỂ LƯU TOA
+    private final CarriageRepository carriageRepository;
+
     @Override
     public void run(String... args) {
         if (userRepository.count() > 0) {
             return;
         }
 
-        // Lấy ngày hiện tại
         LocalDate today = LocalDate.now();
 
+        // ... (code tạo User, Station, Route giữ nguyên) ...
         User staff = new User();
         staff.setEmail("staff@example.com");
         staff.setPassword("password123");
         staff.setFullName("Nguyễn Văn B");
         staff.setPhone("0911001100");
-        staff.setCreateDate(today.minusMonths(6)); // Cập nhật ngày
+        staff.setCreateDate(today.minusMonths(6));
         staff.setRole(User.Role.STAFF);
         userService.addUser(staff);
 
@@ -54,7 +58,7 @@ public class DataInitializer implements CommandLineRunner {
         customer.setPassword("password123");
         customer.setFullName("Nguyễn Văn A");
         customer.setPhone("0909009009");
-        customer.setCreateDate(today.minusMonths(5)); // Cập nhật ngày
+        customer.setCreateDate(today.minusMonths(5));
         customer.setRole(User.Role.CUSTOMER);
         userService.addUser(customer);
 
@@ -82,47 +86,65 @@ public class DataInitializer implements CommandLineRunner {
         northSouthRoute.setEstimatedDurationMinutes(1980);
         northSouthRoute = routeService.createRoute(northSouthRoute);
 
+        // 1. Tạo Tàu (SE1)
         Train se1Train = new Train();
         se1Train.setCode("SE1");
         se1Train.setName("Thống Nhất Express");
         se1Train.setTotalCarriages(15);
         se1Train.setSeatCapacity(600);
         se1Train.setStatus("ACTIVE");
-        se1Train = trainService.saveTrain(se1Train);
+        se1Train = trainService.saveTrain(se1Train); // Lưu Tàu
 
+        // 2. Tạo Toa 1 (VIP)
+        Carriage toa1 = new Carriage();
+        toa1.setTrain(se1Train);
+        toa1.setName("Toa 1");
+        toa1.setType("Ngồi mềm VIP");
+        toa1.setPosition(1);
+        toa1 = carriageRepository.save(toa1); // Lưu Toa 1
+
+        // 3. Tạo Toa 2 (Normal)
+        Carriage toa2 = new Carriage();
+        toa2.setTrain(se1Train);
+        toa2.setName("Toa 2");
+        toa2.setType("Ngồi mềm");
+        toa2.setPosition(2);
+        toa2 = carriageRepository.save(toa2); // Lưu Toa 2
+
+        // 4. Tạo Ghế A1 (thuộc Toa 1)
         Seat vipSeat = new Seat();
-        vipSeat.setTrain(se1Train);
+        // vipSeat.setTrain(se1Train); // BỎ DÒNG NÀY
+        vipSeat.setCarriage(toa1); // <-- THAY BẰNG DÒNG NÀY
         vipSeat.setSeatNumber("A1");
         vipSeat.setSeatType("VIP");
-        vipSeat.setPricePerKm(1.50);
-        vipSeat.setStatus(SeatStatus.AVAILABLE); // Để AVAILABLE, booking sẽ chuyển
+        vipSeat.setPricePerKm(new BigDecimal("1.50"));
+        vipSeat.setStatus(SeatStatus.AVAILABLE);
         vipSeat.setIsActive(true);
-        vipSeat = seatService.saveSeat(vipSeat);
+        vipSeat = seatService.saveSeat(vipSeat); // Lưu Ghế A1
 
-        // Tạo thêm ghế để test đặt vé mới
+        // 5. Tạo Ghế B12 (thuộc Toa 2)
         Seat normalSeat = new Seat();
-        normalSeat.setTrain(se1Train);
+        // normalSeat.setTrain(se1Train); // BỎ DÒNG NÀY
+        normalSeat.setCarriage(toa2); // <-- THAY BẰNG DÒNG NÀY
         normalSeat.setSeatNumber("B12");
         normalSeat.setSeatType("normal");
-        normalSeat.setPricePerKm(1.0);
+        normalSeat.setPricePerKm(new BigDecimal("1.0"));
         normalSeat.setStatus(SeatStatus.AVAILABLE);
         normalSeat.setIsActive(true);
         normalSeat = seatService.saveSeat(normalSeat);
 
-
-        // ===== THAY ĐỔI QUAN TRỌNG =====
-        // Đặt chuyến đi vào 7 ngày tới (so với ngày hiện tại)
-        LocalDate departureDate = today.plusDays(7);
-        LocalDate arrivalDate = today.plusDays(8);
+        // ===== (Tạo chuyến đi) =====
+        LocalDateTime departureTime = today.plusDays(7).atTime(19, 0); // 7h Tối
+        LocalDateTime arrivalTime = today.plusDays(8).atTime(5, 30); // 5h30 Sáng hôm sau
 
         Trip northSouthTrip = new Trip();
         northSouthTrip.setTrain(se1Train);
         northSouthTrip.setRoute(northSouthRoute);
         northSouthTrip.setDepartureStation(haNoiStation.getName());
         northSouthTrip.setArrivalStation(saiGonStation.getName());
-        northSouthTrip.setDepartureTime(departureDate); // <-- Dùng ngày tương lai
-        northSouthTrip.setArrivalTime(arrivalDate); // <-- Dùng ngày tương lai
-        northSouthTrip.setPrice(1_500_000.0);
+        northSouthTrip.setPrice(1_500_000.0); // Giá gốc (ghế normal)
+        northSouthTrip.setDepartureTime(departureTime);
+        northSouthTrip.setArrivalTime(arrivalTime);
         northSouthTrip = tripService.saveTrip(northSouthTrip);
 
         // Tạo 1 booking cũ (đã thanh toán) cho ghế A1

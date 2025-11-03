@@ -12,4 +12,7 @@ public interface BookingRepository extends JpaRepository<Booking,Long> {
     List<Booking> findByUser_Id(Integer userId);
 
     boolean existsByTrip_TripIdAndSeat_SeatIdAndStatusIn(Long tripId, Long seatId, Collection<BookingStatus> statuses);
+
+    // ===== THÊM HÀM NÀY =====
+    List<Booking> findAllByTrip_TripIdAndStatusIn(Long tripId, Collection<BookingStatus> statuses);
 }

@@ -1,4 +1,3 @@
-// com/example/trainticketoffice/model/Seat.java
 package com.example.trainticketoffice.model;
 
 import com.example.trainticketoffice.common.SeatStatus;
@@ -28,12 +27,20 @@ public class Seat extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seatId;
 
-    // THIẾU: Mối quan hệ với Train (gây lỗi getTrain() và getTrain().getCode())
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "train_id", nullable = false)
-    private Train train;
+    // ===== THAY ĐỔI Ở ĐÂY =====
 
-    // THIẾU: Số ghế (gây lỗi getSeatNumber())
+    // BỎ liên kết cũ với Train:
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "train_id", nullable = false)
+    // private Train train;
+
+    // THÊM liên kết mới với Carriage:
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "carriage_id", nullable = false)
+    private Carriage carriage;
+
+    // ===== (Các trường còn lại giữ nguyên) =====
+
     @NotBlank(message = "Seat number is mandatory")
     @Column(name = "seat_number", nullable = false)
     private String seatNumber;
@@ -45,14 +52,12 @@ public class Seat extends BaseEntity {
 
     @NotNull(message = "Price per km is mandatory")
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
-    @Column(nullable = false)
-    private Double pricePerKm;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal pricePerKm;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private SeatStatus status;
 
     private Boolean isActive = true;
-
-    // Lưu ý: Đảm bảo class Train cũng tồn tại trong package model.
 }

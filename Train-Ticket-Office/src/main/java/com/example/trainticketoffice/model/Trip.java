@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.time.LocalDate;
+// THÊM IMPORT NÀY
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "trips")
@@ -20,8 +21,6 @@ public class Trip  {
     @Column(name = "trip_id")
     private Long tripId;
 
-    // Nếu Train là một đối tượng detached,(đính kèm)
-    // nó sẽ được "merge" (gắn lại) vào phiên làm việc hiện tại thay vì cố gắng "persist" (lưu mới).
     @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REFRESH})
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -32,7 +31,6 @@ public class Trip  {
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    // TRƯỜNG BỊ THIẾU MÀ BẠN CẦN THÊM VÀO
     @Column(name = "departure_station")
     private String departureStation;
 
@@ -41,14 +39,13 @@ public class Trip  {
 
     @NotNull(message = "Departure time is mandatory")
     @Column(name = "departure_time")
-    private LocalDate departureTime;
+    private LocalDateTime departureTime; // <-- ĐÃ SỬA TỪ LocalDate
 
     @NotNull(message = "Arrival time is mandatory")
     @Column(name = "arrival_time")
-    private LocalDate arrivalTime;
+    private LocalDateTime arrivalTime; // <-- ĐÃ SỬA TỪ LocalDate
 
-    // TRƯỜNG NÀY CÓ TRONG FILE CŨ CỦA BẠN NHƯNG BỊ MẤT Ở FILE MỚI
     @Column(name = "price")
-    private double price;
+    private double price; // Đây là giá cơ bản (ghế normal)
 
 }

@@ -1,8 +1,8 @@
 package com.example.trainticketoffice.controller;
 
-import com.example.trainticketoffice.model.Route;
-import com.example.trainticketoffice.model.Station;
-import com.example.trainticketoffice.model.Trip;
+import com.example.trainticketoffice.common.BookingStatus; // <-- THÊM
+import com.example.trainticketoffice.model.*; // <-- SỬA
+import com.example.trainticketoffice.repository.BookingRepository; // <-- THÊM
 import com.example.trainticketoffice.service.RouteService;
 import com.example.trainticketoffice.service.StationService;
 import com.example.trainticketoffice.service.TrainService;
@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.HashMap; // <-- THÊM
 import java.util.List;
+import java.util.Map; // <-- THÊM
 import java.util.Optional;
+import java.util.stream.Collectors; // <-- THÊM
 
 @Controller
 @RequestMapping("/trips")
@@ -33,6 +36,10 @@ public class TripController {
     @Autowired
     private StationService stationService;
 
+    // ===== THÊM REPO NÀY =====
+    @Autowired
+    private BookingRepository bookingRepository;
+
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
@@ -40,10 +47,7 @@ public class TripController {
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
                                       Model model) {
 
-        // SỬA DÒNG NÀY: Gọi đúng hàm service
-        // List<Route> routeOpt = routeService.findRouteByStations(startStationId, endStationId); // <-- Code CŨ
-        List<Route> routeOpt = routeService.findByStartStationIdAndEndStationId(startStationId, endStationId); // <-- Code MỚI
-
+        List<Route> routeOpt = routeService.findByStartStationIdAndEndStationId(startStationId, endStationId);
         Optional<Station> startStationOpt = stationService.findById(startStationId);
         Optional<Station> endStationOpt = stationService.findById(endStationId);
 
@@ -55,7 +59,48 @@ public class TripController {
 
         List<Trip> availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
 
+        // ===== BẮT ĐẦU: LOGIC TÍNH SỐ GHẾ TRỐNG =====
+        Map<Long, Long> availableVipCounts = new HashMap<>();
+        Map<Long, Long> availableNormalCounts = new HashMap<>();
+
+        for (Trip trip : availableTrips) {
+            // 1. Lấy ID của các ghế đã bị đặt cho chuyến đi NÀY
+            List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
+                            trip.getTripId(),
+                            List.of(BookingStatus.BOOKED, BookingStatus.PAID)
+                    )
+                    .stream()
+                    .map(booking -> booking.getSeat().getSeatId())
+                    .collect(Collectors.toList());
+
+            // 2. Đi qua tất cả các ghế trên tàu và đếm số ghế CÒN TRỐNG
+            long vipCount = 0;
+            long normalCount = 0;
+
+            Train train = trip.getTrain();
+            for (Carriage carriage : train.getCarriages()) {
+                for (Seat seat : carriage.getSeats()) {
+                    // Nếu ghế này KHÔNG nằm trong danh sách đã đặt
+                    if (!bookedSeatIds.contains(seat.getSeatId())) {
+                        if ("VIP".equalsIgnoreCase(seat.getSeatType())) {
+                            vipCount++;
+                        } else {
+                            normalCount++; // Coi tất cả các loại khác là "thường"
+                        }
+                    }
+                }
+            }
+
+            // 3. Lưu số lượng đếm được vào Maps
+            availableVipCounts.put(trip.getTripId(), vipCount);
+            availableNormalCounts.put(trip.getTripId(), normalCount);
+        }
+
         model.addAttribute("availableTrips", availableTrips);
+        model.addAttribute("availableVipCounts", availableVipCounts); // <-- GỬI RA VIEW
+        model.addAttribute("availableNormalCounts", availableNormalCounts); // <-- GỬI RA VIEW
+        // ===== KẾT THÚC: LOGIC TÍNH SỐ GHẾ TRỐNG =====
+
         model.addAttribute("startStation", startStationOpt.get());
         model.addAttribute("endStation", endStationOpt.get());
 
