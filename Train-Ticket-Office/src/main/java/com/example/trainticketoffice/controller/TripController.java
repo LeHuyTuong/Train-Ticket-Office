@@ -9,12 +9,14 @@ import com.example.trainticketoffice.service.TrainService;
 import com.example.trainticketoffice.service.TripService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,46 +30,39 @@ public class TripController {
     private TrainService trainService;
     @Autowired
     private RouteService routeService;
-
-    // ===== BẮT BUỘC THÊM SERVICE NÀY =====
     @Autowired
     private StationService stationService;
 
-    // ----------------------------------------------------------------
-    // ===== HÀM MỚI (Trang 2 Customer) - SỬA LỖI 404 =====
-    // ----------------------------------------------------------------
-    /**
-     * Xử lý Trang 2 (Kết quả tìm kiếm)
-     * Đây là hàm xử lý GET /trips/search
-     */
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
+                                      @RequestParam("departureDate")
+                                      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
                                       Model model) {
 
-        // (LƯU Ý: Bạn cần implement logic findRouteByStations và findTripsByRoute trong Service)
-        List<Route> routeOpt = routeService.findRouteByStations(startStationId, endStationId);
+        // SỬA DÒNG NÀY: Gọi đúng hàm service
+        // List<Route> routeOpt = routeService.findRouteByStations(startStationId, endStationId); // <-- Code CŨ
+        List<Route> routeOpt = routeService.findByStartStationIdAndEndStationId(startStationId, endStationId); // <-- Code MỚI
+
         Optional<Station> startStationOpt = stationService.findById(startStationId);
         Optional<Station> endStationOpt = stationService.findById(endStationId);
 
         if (routeOpt.isEmpty() || startStationOpt.isEmpty() || endStationOpt.isEmpty()) {
             model.addAttribute("errorMessage", "Không tìm thấy tuyến đường nào phù hợp.");
             model.addAttribute("allStations", stationService.getAllStations());
-            return "customer/home"; // Quay lại Trang 1 (Trang chủ)
+            return "customer/Home";
         }
 
-        List<Trip> availableTrips = tripService.findTripsByRoute(routeOpt.get(0));
+        List<Trip> availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
 
         model.addAttribute("availableTrips", availableTrips);
         model.addAttribute("startStation", startStationOpt.get());
         model.addAttribute("endStation", endStationOpt.get());
 
-        return "customer/trip-results"; // <-- Trả về Trang 2 (Code FE ở dưới)
+        return "trip/trip-results";
     }
 
-    // ----------------------------------------------------------------
-    // ===== CÁC HÀM CŨ (Trang Admin/Staff) - GIỮ NGUYÊN =====
-    // ----------------------------------------------------------------
+    // ... (Toàn bộ các hàm @GetMapping, @PostMapping cho /new, /edit, /save, /delete giữ nguyên như cũ) ...
 
     @GetMapping
     public String listTrips(Model model) {

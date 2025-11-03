@@ -68,7 +68,9 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public List<Route> findRouteByStations(Integer startStationId, Integer endStationId) {
-        return routeRepository.startStationId(startStationId);
+        // SỬA DÒNG NÀY:
+        // return routeRepository.startStationId(startStationId); // <-- Code CŨ GÂY LỖI
+        return routeRepository.findByStartStationIdAndEndStationId(startStationId, endStationId); // <-- Code MỚI ĐÚNG
     }
 
 

@@ -37,12 +37,15 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
+        // Lấy ngày hiện tại
+        LocalDate today = LocalDate.now();
+
         User staff = new User();
         staff.setEmail("staff@example.com");
         staff.setPassword("password123");
         staff.setFullName("Nguyễn Văn B");
         staff.setPhone("0911001100");
-        staff.setCreateDate(LocalDate.of(2023, 1, 15));
+        staff.setCreateDate(today.minusMonths(6)); // Cập nhật ngày
         staff.setRole(User.Role.STAFF);
         userService.addUser(staff);
 
@@ -51,7 +54,7 @@ public class DataInitializer implements CommandLineRunner {
         customer.setPassword("password123");
         customer.setFullName("Nguyễn Văn A");
         customer.setPhone("0909009009");
-        customer.setCreateDate(LocalDate.of(2023, 2, 20));
+        customer.setCreateDate(today.minusMonths(5)); // Cập nhật ngày
         customer.setRole(User.Role.CUSTOMER);
         userService.addUser(customer);
 
@@ -92,30 +95,47 @@ public class DataInitializer implements CommandLineRunner {
         vipSeat.setSeatNumber("A1");
         vipSeat.setSeatType("VIP");
         vipSeat.setPricePerKm(1.50);
-        vipSeat.setStatus(SeatStatus.AVAILABLE);
+        vipSeat.setStatus(SeatStatus.AVAILABLE); // Để AVAILABLE, booking sẽ chuyển
         vipSeat.setIsActive(true);
         vipSeat = seatService.saveSeat(vipSeat);
+
+        // Tạo thêm ghế để test đặt vé mới
+        Seat normalSeat = new Seat();
+        normalSeat.setTrain(se1Train);
+        normalSeat.setSeatNumber("B12");
+        normalSeat.setSeatType("normal");
+        normalSeat.setPricePerKm(1.0);
+        normalSeat.setStatus(SeatStatus.AVAILABLE);
+        normalSeat.setIsActive(true);
+        normalSeat = seatService.saveSeat(normalSeat);
+
+
+        // ===== THAY ĐỔI QUAN TRỌNG =====
+        // Đặt chuyến đi vào 7 ngày tới (so với ngày hiện tại)
+        LocalDate departureDate = today.plusDays(7);
+        LocalDate arrivalDate = today.plusDays(8);
 
         Trip northSouthTrip = new Trip();
         northSouthTrip.setTrain(se1Train);
         northSouthTrip.setRoute(northSouthRoute);
         northSouthTrip.setDepartureStation(haNoiStation.getName());
         northSouthTrip.setArrivalStation(saiGonStation.getName());
-        northSouthTrip.setDepartureTime(LocalDate.of(2024, 5, 1));
-        northSouthTrip.setArrivalTime(LocalDate.of(2024, 5, 2));
+        northSouthTrip.setDepartureTime(departureDate); // <-- Dùng ngày tương lai
+        northSouthTrip.setArrivalTime(arrivalDate); // <-- Dùng ngày tương lai
         northSouthTrip.setPrice(1_500_000.0);
         northSouthTrip = tripService.saveTrip(northSouthTrip);
 
+        // Tạo 1 booking cũ (đã thanh toán) cho ghế A1
         Booking booking = bookingService.createBooking(
                 customer.getId(),
                 northSouthTrip.getTripId(),
-                vipSeat.getSeatId(),
+                vipSeat.getSeatId(), // Đặt ghế A1
                 customer.getFullName(),
                 customer.getPhone(),
                 customer.getEmail()
         );
 
-        Seat bookedSeat = booking.getSeat();
+        Seat bookedSeat = booking.getSeat(); // Ghế A1 sẽ bị chuyển thành BOOKED
 
         Ticket ticket = new Ticket();
         ticket.setCode("TICKET-SE1-0001");
@@ -130,21 +150,21 @@ public class DataInitializer implements CommandLineRunner {
         ticket.setDistanceKm(northSouthRoute.getTotalDistanceKm());
         ticket.setTotalPrice(BigDecimal.valueOf(northSouthTrip.getPrice()));
         ticket.setStatus(TicketStatus.ACTIVE);
-        ticket.setBookedAt(LocalDateTime.of(2024, 4, 10, 9, 15));
+        ticket.setBookedAt(LocalDateTime.now().minusDays(1)); // Đặt hôm qua
         ticketRepository.save(ticket);
 
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setUser(customer);
         payment.setAmount(northSouthTrip.getPrice());
-        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setStatus(PaymentStatus.SUCCESS); // Đã thanh toán thành công
         payment.setTransactionRef("TXN123456");
         payment.setOrderInfo("Thanh toán vé tàu");
         payment.setBankCode("VCB");
         payment.setBankTranNo("202405010001");
         payment.setVnpTransactionNo("123456789");
         payment.setResponseCode("00");
-        payment.setPayDate(LocalDateTime.of(2024, 4, 10, 9, 30));
+        payment.setPayDate(LocalDateTime.now().minusDays(1).plusMinutes(15)); // Thanh toán hôm qua
         payment.setSecureHash("samplehash");
         paymentRepository.save(payment);
     }

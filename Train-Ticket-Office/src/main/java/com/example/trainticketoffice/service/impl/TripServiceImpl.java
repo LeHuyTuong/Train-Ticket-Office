@@ -7,6 +7,7 @@ import com.example.trainticketoffice.service.TripService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,5 +41,10 @@ public class TripServiceImpl implements TripService {
     public List<Trip> findTripsByRoute(Route route) {
         // Chúng ta sẽ cần tạo hàm này trong Repository
         return tripRepository.findAllByRoute(route);
+    }
+
+    @Override
+    public List<Trip> findTripsByRouteAndDate(Route route, LocalDate departureDate) {
+        return tripRepository.findAllByRouteAndDepartureTime(route, departureDate);
     }
 }
