@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List; // <-- Thêm import
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @Service
 public class TicketServiceImpl implements TicketService {
 
+    // (Các trường (fields) và constructor giữ nguyên...)
     private final TicketRepository ticketRepository;
     private final BookingRepository bookingRepository;
     private final SeatRepository seatRepository;
@@ -42,10 +44,12 @@ public class TicketServiceImpl implements TicketService {
         this.stationRepository = stationRepository;
     }
 
+    // (Hàm createTicketForBooking, getTicketIdByCode, checkInTicket, cancelTicket giữ nguyên...)
+
     @Override
     @Transactional
     public String createTicketForBooking(Long bookingId, Map<String, Object> requestData) {
-        // Lấy dữ liệu từ Map và cast (Lưu ý: Không có validation)
+        // ... (code cũ của bạn)
         try {
             Long seatId = ((Number) requestData.get("seatId")).longValue();
             String passengerName = (String) requestData.get("passengerName");
@@ -100,13 +104,13 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public Optional<Long> getTicketIdByCode(String code) {
-
         return ticketRepository.findByCode(code).map(Ticket::getId);
     }
 
     @Override
     @Transactional
     public boolean checkInTicket(Long ticketId) {
+        // ... (code cũ của bạn)
         Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
 
         if (ticketOpt.isEmpty()) { return false; } // 404
@@ -123,6 +127,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public boolean cancelTicket(Long ticketId) {
+        // ... (code cũ của bạn)
         Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
 
         if (ticketOpt.isEmpty()) { return false; } // 404
@@ -136,5 +141,20 @@ public class TicketServiceImpl implements TicketService {
         ticket.setStatus(TicketStatus.CANCELLED);
         ticketRepository.save(ticket);
         return true;
+    }
+
+    // ===== HÀM MỚI (BẮT BUỘC) =====
+    // Repository đã có sẵn 2 hàm này vì nó kế thừa JpaRepository
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> findAll() {
+        return ticketRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Ticket> findById(Long id) {
+        return ticketRepository.findById(id);
     }
 }

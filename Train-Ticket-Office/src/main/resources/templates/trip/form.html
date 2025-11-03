@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_layout}">
+      layout:decorate="~{fragments/_admin_layout}">
 <head><title th:text="${trip.tripId == null ? 'Add New Trip' : 'Update Trip'}"></title></head>
 <body>
 <div layout:fragment="content">
-    <h1 class="form-header" th:text="${trip.tripId == null ? 'Add New Trip' : 'Update Trip'}"></h1>
+    <h1 class="page-title" th:text="${trip.tripId == null ? 'Add New Trip' : 'Update Trip'}"></h1>
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
             <form th:action="@{/trips/save}" th:object="${trip}" method="POST">
@@ -32,12 +32,12 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="departureTime" class="form-label">Departure Time</label>
-                        <input type="date" th:field="*{departure_time}" class="form-control" th:classappend="${#fields.hasErrors('departure_time')} ? 'is-invalid' : ''" id="departureTime">
+                        <input type="date" th:field="*{departureTime}" class="form-control" th:classappend="${#fields.hasErrors('departureTime')} ? 'is-invalid' : ''" id="departureTime">
                         <div th:if="${#fields.hasErrors('departureTime')}" th:errors="*{departureTime}" class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="arrivalTime" class="form-label">Arrival Time</label>
-                        <input type="date" th:field="*{arrival_time}" class="form-control" th:classappend="${#fields.hasErrors('arrival_time')} ? 'is-invalid' : ''" id="arrivalTime">
+                        <input type="date" th:field="*{arrivalTime}" class="form-control" th:classappend="${#fields.hasErrors('arrivalTime')} ? 'is-invalid' : ''" id="arrivalTime">
                         <div th:if="${#fields.hasErrors('arrivalTime')}" th:errors="*{arrivalTime}" class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -45,7 +45,7 @@
                 <div class="mb-3">
                     <label for="basePrice" class="form-label">Price</label>
                     <input type="number" step="1000" th:field="*{price}" class="form-control" th:classappend="${#fields.hasErrors('price')} ? 'is-invalid' : ''" id="basePrice">
-                    <div th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}" class="invalid-feedback"></div>
+                    <div th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="invalid-feedback"></div>
                 </div>
 
                 <div class="mt-4 text-center">

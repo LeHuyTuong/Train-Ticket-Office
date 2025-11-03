@@ -13,9 +13,13 @@ public interface RouteRepository extends JpaRepository<Route, Integer> {
 
     Optional<Route> findByCode(String code);
 
-    List<Route> findByStartStationAndEndStation(Station startStation, Station endStation);
+    List<Route> findByStartStationIdAndEndStationId(Integer startStation, Integer endStation);
 
     List<Route> findByStatus(Route.Status status);
 
     boolean existsByCode(String code);
+
+    List<Route> startStationId(Integer startStation);
+
+    List<Route> findByStartStationAndEndStation(Station startStation, Station endStation);
 }

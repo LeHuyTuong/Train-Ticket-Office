@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RouteServiceImpl implements RouteService {
@@ -63,5 +64,16 @@ public class RouteServiceImpl implements RouteService {
     @Override
     public boolean routeExists(String code) {
         return routeRepository.existsByCode(code);
+    }
+
+    @Override
+    public List<Route> findRouteByStations(Integer startStationId, Integer endStationId) {
+        return routeRepository.startStationId(startStationId);
+    }
+
+
+    @Override
+    public List<Route> findByStartStationIdAndEndStationId(Integer startStationId, Integer endStationId) {
+        return routeRepository.findByStartStationIdAndEndStationId(startStationId, endStationId);
     }
 }

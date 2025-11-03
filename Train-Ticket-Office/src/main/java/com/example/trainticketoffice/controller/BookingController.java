@@ -4,11 +4,10 @@ import com.example.trainticketoffice.model.Booking;
 import com.example.trainticketoffice.model.Seat;
 import com.example.trainticketoffice.model.Trip;
 import com.example.trainticketoffice.model.User;
-import com.example.trainticketoffice.repository.SeatRepository;
-import com.example.trainticketoffice.repository.TripRepository;
-import com.example.trainticketoffice.repository.UserRepository;
+import com.example.trainticketoffice.repository.TripRepository; // Giữ lại
 import com.example.trainticketoffice.service.BookingService;
 import com.example.trainticketoffice.service.SeatService;
+import jakarta.servlet.http.HttpSession; // Thêm import này
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,9 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/bookings")
@@ -30,42 +27,83 @@ import java.util.stream.Collectors;
 public class BookingController {
 
     private final BookingService bookingService;
-    private final UserRepository userRepository;
     private final TripRepository tripRepository;
-    private final SeatRepository seatRepository;
     private final SeatService seatService;
 
-    @GetMapping
-    public String listBookings(Model model) {
-        List<Booking> bookings = bookingService.findAllBookings();
-        model.addAttribute("bookings", bookings);
-        return "booking/list";
-    }
-
+    /**
+     * HÀM MỚI (Trang 3 Customer): Hiển thị form đặt vé
+     */
     @GetMapping("/new")
-    public String showCreateForm(Model model) {
-        prepareReferenceData(model);
-        return "booking/form";
+    public String showCreateForm(@RequestParam("tripId") Long tripId, Model model,
+                                 HttpSession session) { // Dùng HttpSession
+
+        User currentUser = (User) session.getAttribute("userLogin");
+        if (currentUser == null) {
+            return "redirect:/login"; // Bắt buộc login
+        }
+
+        Optional<Trip> tripOpt = tripRepository.findById(tripId);
+        if (tripOpt.isEmpty()) {
+            return "redirect:/"; // Nếu tripId bậy, về trang chủ
+        }
+
+        // (Bạn cần implement logic này trong SeatService, ví dụ: "findAvailableSeatsForTrip")
+        List<Seat> availableSeats = seatService.getAllSeats(); // Tạm thời lấy tất cả
+
+        model.addAttribute("selectedTrip", tripOpt.get());
+        model.addAttribute("availableSeats", availableSeats);
+        model.addAttribute("currentUser", currentUser); // Gửi thông tin user đã login
+
+        return "ticket/form"; // <-- Trả về Trang 3 (file ticket/form.html)
     }
 
+    /**
+     * HÀM MỚI (Trang 3 Customer): Xử lý đặt vé
+     */
     @PostMapping
-    public String createBooking(@RequestParam("userId") Integer userId,
+    public String createBooking(HttpSession session, // Lấy user từ session
                                 @RequestParam("tripId") Long tripId,
                                 @RequestParam("seatId") Long seatId,
                                 @RequestParam("passengerName") String passengerName,
                                 @RequestParam(value = "phone", required = false) String phone,
                                 @RequestParam(value = "email", required = false) String email,
                                 RedirectAttributes redirectAttributes) {
+
+        User currentUser = (User) session.getAttribute("userLogin");
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
         try {
-            Booking booking = bookingService.createBooking(userId, tripId, seatId, passengerName, phone, email);
+            // Dùng ID của user đã login
+            Booking booking = bookingService.createBooking(currentUser.getId(), tripId, seatId, passengerName, phone, email);
             redirectAttributes.addFlashAttribute("successMessage", "Đặt vé thành công. Mã đặt chỗ: " + booking.getBookingId());
-            return "redirect:/bookings";
+            return "redirect:/bookings"; // Chuyển đến trang "Vé của tôi"
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/bookings/new";
+            return "redirect:/bookings/new?tripId=" + tripId; // Lỗi thì quay lại
         }
     }
 
+    /**
+     * HÀM CŨ (Trang "Vé của tôi" Customer): Hiển thị danh sách vé
+     */
+    @GetMapping
+    public String listBookings(HttpSession session, Model model) {
+        User currentUser = (User) session.getAttribute("userLogin");
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        // Lấy vé CỦA USER NÀY THÔI
+        List<Booking> bookings = bookingService.findAllBookingsByUserId(currentUser.getId());
+        model.addAttribute("bookings", bookings);
+        return "ticket/list"; // Trỏ đến file list.html
+    }
+
+    /**
+     * HÀM CŨ (Trang "Chi tiết vé" Customer):
+     */
     @GetMapping("/{bookingId}")
     public String viewBooking(@PathVariable Long bookingId,
                               Model model,
@@ -76,46 +114,6 @@ public class BookingController {
             return "redirect:/bookings";
         }
         model.addAttribute("booking", booking.get());
-        return "booking/detail";
-    }
-
-    @GetMapping("/user/{userId}")
-    public String viewBookingsByUser(@PathVariable Integer userId,
-                                     Model model,
-                                     RedirectAttributes redirectAttributes) {
-        List<Booking> bookings = bookingService.findAllBookingsByUserId(userId);
-        if (bookings.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Người dùng chưa có vé nào");
-            return "redirect:/bookings";
-        }
-        model.addAttribute("bookings", bookings);
-        model.addAttribute("userId", userId);
-        return "booking/list";
-    }
-
-    private void prepareReferenceData(Model model) {
-        List<User> users = userRepository.findAll();
-        List<Trip> trips = tripRepository.findAll();
-        List<Seat> seats = seatService.getAllSeats();
-
-
-        Map<Long, String> tripDescriptions = trips.stream()
-                .collect(Collectors.toMap(Trip::getTripId,
-                        trip -> String.format("%s → %s (%s)",
-                                trip.getDepartureStation(),
-                                trip.getArrivalStation(),
-                                trip.getDepartureTime())));
-
-        Map<Long, String> seatDescriptions = seats.stream()
-                .collect(Collectors.toMap(Seat::getSeatId,
-                        seat -> String.format("%s - %s (%s)",
-                                seat.getTrain().getCode(),
-                                seat.getSeatNumber(),
-                                seat.getSeatType())));
-
-        model.addAttribute("users", users);
-        model.addAttribute("trips", trips);
-        model.addAttribute("seats", seats);
-        model.addAttribute("tripDescriptions", tripDescriptions);
+        return "ticket/detail"; // Trỏ đến file detail.html
     }
 }

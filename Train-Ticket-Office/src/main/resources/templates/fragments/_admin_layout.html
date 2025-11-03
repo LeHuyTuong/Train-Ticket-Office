@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">Train Ticket Office (Admin)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #004a99; --secondary-color: #f2c94c; --bg-light-yellow: #fffbe6; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-light-yellow); }
+        .navbar-dark.bg-primary { background-color: var(--primary-color) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+        .navbar-brand { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem; }
+        .content-card { background-color: #ffffff; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); margin-top: 2rem; margin-bottom: 2rem; }
+        .page-title { color: var(--primary-color); font-family: 'Montserrat', sans-serif; font-weight: 700; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; display: inline-block; margin-bottom: 1.5rem; }
+        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); font-weight: 600; padding: 0.6rem 1.2rem; }
+        .btn-primary:hover { background-color: #003366; border-color: #003366; }
+        .btn-secondary { font-weight: 600; padding: 0.6rem 1.2rem; }
+        .table thead { background-color: var(--primary-color); color: white; text-transform: uppercase; }
+        .table-hover tbody tr:hover { background-color: rgba(0, 74, 153, 0.08); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/admin/dashboard}">Train Ticket Office (Admin)</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/routes}" th:classappend="${#strings.startsWith(requestURI, '/routes') ? 'active' : ''}">Quản lý Tuyến</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/trips}" th:classappend="${#strings.startsWith(requestURI, '/trips') ? 'active' : ''}">Quản lý Chuyến</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/stations}" th:classappend="${#strings.startsWith(requestURI, '/stations') ? 'active' : ''}">Quản lý Ga</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/logout}">Đăng Xuất</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="content-card">
+        <div layout:fragment="content">
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

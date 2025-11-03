@@ -1,6 +1,5 @@
 package com.example.trainticketoffice.controller;
 
-
 import com.example.trainticketoffice.model.User;
 import com.example.trainticketoffice.service.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -17,7 +16,7 @@ public class LoginController {
 
     @GetMapping("/login")
     public String showLogin(){
-        return "user/login";
+        return "user/login"; // File login.html của bạn
     }
 
     @PostMapping("/login")
@@ -34,13 +33,13 @@ public class LoginController {
             // Lưu thông tin user vào session
             session.setAttribute("userLogin", user);
 
-            // PHÂN LUỒNG CHUYỂN HƯỚNG DỰA TRÊN VAI TRÒ
+            // ===== PHÂN LUỒNG VỀ 2 TRANG CHỦ MỚI =====
             if (user.getRole() == User.Role.STAFF) {
-                // Nếu là STAFF, chuyển đến trang quản lý chuyến đi
-                return "redirect:/trips";
+                // Nếu là STAFF, chuyển đến trang Dashboard của Admin
+                return "redirect:/admin/dashboard";
             } else {
-                // Nếu là CUSTOMER, chuyển đến trang tìm kiếm tuyến đường (để bắt đầu đặt vé)
-                return "redirect:/routes/search";
+                // Nếu là CUSTOMER, chuyển đến trang chủ (homepage)
+                return "redirect:/"; // Đường dẫn trang chủ
             }
 
         } catch (Exception e) {
