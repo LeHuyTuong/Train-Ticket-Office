@@ -6,15 +6,19 @@
 </head>
 <body>
 <div layout:fragment="content">
+
     <h2 class="page-title">
         Chuyến: <span th:text="${startStation.name}">Ga Đi</span>
         → <span th:text="${endStation.name}">Ga Đến</span>
     </h2>
+
     <div th:if="${#lists.isEmpty(availableTrips)}" class="alert alert-warning" role="alert">
         Không tìm thấy chuyến tàu nào phù hợp với tuyến đường của bạn.
     </div>
+
     <div th:if="${not #lists.isEmpty(availableTrips)}">
         <h4 class="mb-3">Các chuyến tàu có sẵn:</h4>
+
         <table class="table table-hover">
             <thead>
             <tr>
@@ -22,8 +26,7 @@
                 <th>Giờ Đi</th>
                 <th>Giờ Đến</th>
                 <th>Giá Vé (VNĐ)</th>
-                <th></th>
-            </tr>
+                <th></th> </tr>
             </thead>
             <tbody>
             <tr th:each="trip : ${availableTrips}">
@@ -31,13 +34,13 @@
                     <strong th:text="${trip.train.code}">SE1</strong>
                 </td>
                 <td class="align-middle">
-                    <span th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy')}"></span>
+                    <span th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy')}">01/05/2024</span>
                 </td>
                 <td class="align-middle">
-                    <span th:text="${#temporals.format(trip.arrivalTime, 'dd/MM/yyyy')}"></span>
+                    <span th:text="${#temporals.format(trip.arrivalTime, 'dd/MM/yyyy')}">02/05/2024</span>
                 </td>
                 <td class="align-middle">
-                    <strong th:text="${#numbers.formatDecimal(trip.price, 0, 'COMMA', 0, 'POINT')}"></strong>
+                    <strong th:text="${#numbers.formatDecimal(trip.price, 0, 'COMMA', 0, 'POINT')}">1,500,000</strong>
                 </td>
                 <td class="text-end">
                     <a th:href="@{/bookings/new(tripId=${trip.tripId})}" class="btn btn-primary">
@@ -48,7 +51,11 @@
             </tbody>
         </table>
     </div>
-    <a th:href="@{/}" class="btn btn-secondary">Quay lại Tìm kiếm</a>
+
+    <a th:href="@{/}" class="btn btn-secondary mt-3">
+        <i class="bi bi-arrow-left"></i> Quay lại Tìm kiếm
+    </a>
+
 </div>
 </body>
 </html>

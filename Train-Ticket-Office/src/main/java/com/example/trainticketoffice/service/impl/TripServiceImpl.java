@@ -1,5 +1,6 @@
 package com.example.trainticketoffice.service.impl;
 
+import com.example.trainticketoffice.model.Route;
 import com.example.trainticketoffice.model.Trip;
 import com.example.trainticketoffice.repository.TripRepository;
 import com.example.trainticketoffice.service.TripService;
@@ -33,5 +34,11 @@ public class TripServiceImpl implements TripService {
     @Override
     public void deleteTrip(Long id) {
         tripRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Trip> findTripsByRoute(Route route) {
+        // Chúng ta sẽ cần tạo hàm này trong Repository
+        return tripRepository.findAllByRoute(route);
     }
 }

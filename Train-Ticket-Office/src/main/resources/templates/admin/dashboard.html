@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}"> <head>
+    <title>Admin Dashboard</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="page-title">Trang Quản Trị Hệ Thống</h1>
+    <p>Chào mừng bạn đến với khu vực quản trị. Vui lòng chọn một chức năng từ thanh điều hướng (navbar) ở trên.</p>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý Tuyến</h5>
+                    <p class="card-text">Thêm, sửa, xóa các tuyến tàu (routes).</p>
+                    <a th:href="@{/routes}" class="btn btn-light">Đi đến</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý Chuyến</h5>
+                    <p class="card-text">Quản lý các chuyến tàu (trips) thực tế.</p>
+                    <a th:href="@{/trips}" class="btn btn-light">Đi đến</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý Ga</h5>
+                    <p class="card-text">Quản lý danh sách các nhà ga (stations).</p>
+                    <a th:href="@{/stations}" class="btn btn-light">Đi đến</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,51 +1,42 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}">
 <head>
-    <meta charset="UTF-8">
-    <title th:text="${station.id != null} ? 'Edit Station' : 'Add New Station'">Station Form</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title th:text="*{id} != null ? 'Edit Station' : 'Add New Station'">Station Form</title>
 </head>
 <body>
-<div class="container mt-4">
-    <h2 th:text="${station.id != null} ? 'Edit Station' : 'Add New Station'">Station Form</h2>
+<div layout:fragment="content">
+    <h2 class="page-title" th:text="*{id} != null ? 'Edit Station' : 'Add New Station'">Station Form</h2>
 
-    <!-- Error Message -->
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <form th:action="@{/stations/save}" th:object="${station}" method="post" class="col-md-6">
+    <form th:action="@{/stations/save}" th:object="${station}" method="post" class="col-md-8">
         <input type="hidden" th:field="*{id}">
 
         <div class="mb-3">
-            <label class="form-label">Station Code</label>
+            <label class="form-label">Station Code (Mã Ga)</label>
             <input type="text" th:field="*{code}" class="form-control" required>
         </div>
-
         <div class="mb-3">
-            <label class="form-label">Station Name</label>
+            <label class="form-label">Station Name (Tên Ga)</label>
             <input type="text" th:field="*{name}" class="form-control" required>
         </div>
-
         <div class="mb-3">
-            <label class="form-label">City</label>
-            <input type="text" th:field="*{city}" class="form-control" required>
+            <label class="form-label">City (Thành phố)</label>
+            <input type="text" th:field="*{city}" class="form-control">
         </div>
-
         <div class="mb-3">
-            <label class="form-label">Province</label>
-            <input type="text" th:field="*{province}" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Distance from Start (km)</label>
-            <input type="number" th:field="*{kmFromStart}" step="0.01" class="form-control" required>
+            <label class="form-label">Province (Tỉnh)</label>
+            <input type="text" th:field="*{province}" class="form-control">
         </div>
 
         <div class="mb-3">
             <label class="form-label">Status</label>
             <select th:field="*{status}" class="form-select" required>
-                <option th:each="status : ${statusTypes}"
-                        th:value="${status}"
-                        th:text="${status}"></option>
+                <option th:each="s : ${statusTypes}"
+                        th:value="${s}"
+                        th:text="${s}"></option>
             </select>
         </div>
 

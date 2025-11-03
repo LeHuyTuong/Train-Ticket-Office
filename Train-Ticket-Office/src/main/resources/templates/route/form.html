@@ -1,25 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_layout}"> <head>
+      layout:decorate="~{fragments/_admin_layout}"> <head>
     <title th:text="*{id} != null ? 'Edit Route' : 'Add New Route'">Route Form</title>
 </head>
 <body>
-
 <div layout:fragment="content">
-
     <h2 class="page-title" th:text="*{id} != null ? 'Edit Route' : 'Add New Route'">Route Form</h2>
-
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-
     <form th:action="@{/routes/save}" th:object="${route}" method="post" class="col-md-8">
         <input type="hidden" th:field="*{id}">
-
         <div class="mb-3">
             <label class="form-label">Route Code</label>
             <input type="text" th:field="*{code}" class="form-control" required>
         </div>
-
         <div class="mb-3">
             <label class="form-label">Start Station</label>
             <select th:field="*{startStation.id}" class="form-select" required>
@@ -29,7 +23,6 @@
                         th:text="${station.name} + ' (' + ${station.code} + ')'"></option>
             </select>
         </div>
-
         <div class="mb-3">
             <label class="form-label">End Station</label>
             <select th:field="*{endStation.id}" class="form-select" required>
@@ -39,17 +32,14 @@
                         th:text="${station.name} + ' (' + ${station.code} + ')'"></option>
             </select>
         </div>
-
         <div class="mb-3">
             <label class="form-label">Total Distance (km)</label>
             <input type="number" th:field="*{totalDistanceKm}" step="0.01" class="form-control" required>
         </div>
-
         <div class="mb-3">
             <label class="form-label">Estimated Duration (minutes)</label>
             <input type="number" th:field="*{estimatedDurationMinutes}" class="form-control" required>
         </div>
-
         <div class="mb-3">
             <label class="form-label">Status</label>
             <select th:field="*{status}" class="form-select" required>
@@ -58,7 +48,6 @@
                         th:text="${status}"></option>
             </select>
         </div>
-
         <div class="mb-3">
             <button type="submit" class="btn btn-success">Save Route</button>
             <a th:href="@{/routes}" class="btn btn-secondary">Cancel</a>

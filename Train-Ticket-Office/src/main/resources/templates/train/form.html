@@ -1,70 +1,45 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_layout}">
+      layout:decorate="~{fragments/_admin_layout}">
 <head>
-    <title th:text="${train.id == null ? 'Add New Train' : 'Update Train'}"></title>
+    <title th:text="*{id} != null ? 'Edit Train' : 'Add New Train'">Train Form</title>
 </head>
 <body>
 <div layout:fragment="content">
+    <h2 class="page-title" th:text="*{id} != null ? 'Edit Train' : 'Add New Train'">Train Form</h2>
 
-    <h1 class="form-header" th:text="${train.id == null ? 'Add New Train' : 'Update Train'}"></h1>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${errorMessage}"></span>
-    </div>
+    <form th:action="@{/trains/save}" th:object="${train}" method="post" class="col-md-8">
+        <input type="hidden" th:field="*{id}">
 
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <form th:action="@{/trains/save}" th:object="${train}" method="POST">
-                <input type="hidden" th:field="*{id}" />
-
-                <div class="mb-3">
-                    <label for="code" class="form-label">Train Code</label>
-                    <input type="text" th:field="*{code}" class="form-control"
-                           th:classappend="${#fields.hasErrors('code')} ? 'is-invalid' : ''" id="code" placeholder="Example: SE1" required>
-                    <div th:if="${#fields.hasErrors('code')}" th:errors="*{code}" class="invalid-feedback"></div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="name" class="form-label">Train Name</label>
-                    <input type="text" th:field="*{name}" class="form-control"
-                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''" id="name" placeholder="Example: Reunification Express" required>
-                    <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="invalid-feedback"></div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="totalCarriages" class="form-label">Total Carriages</label>
-                    <input type="number" th:field="*{totalCarriages}" class="form-control"
-                           th:classappend="${#fields.hasErrors('totalCarriages')} ? 'is-invalid' : ''" id="totalCarriages" required>
-                    <div th:if="${#fields.hasErrors('totalCarriages')}" th:errors="*{totalCarriages}" class="invalid-feedback"></div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="seatCapacity" class="form-label">Seat Capacity</label>
-                    <input type="number" th:field="*{seatCapacity}" class="form-control"
-                           th:classappend="${#fields.hasErrors('seatCapacity')} ? 'is-invalid' : ''" id="seatCapacity" required>
-                    <div th:if="${#fields.hasErrors('seatCapacity')}" th:errors="*{seatCapacity}" class="invalid-feedback"></div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="status" class="form-label">Status</label>
-                    <select th:field="*{status}" class="form-select"
-                            th:classappend="${#fields.hasErrors('status')} ? 'is-invalid' : ''" id="status" required>
-                        <option value="">-- Select Status --</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                    <div th:if="${#fields.hasErrors('status')}" th:errors="*{status}" class="invalid-feedback"></div>
-                </div>
-
-                <div class="mt-4 text-center">
-                    <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle"></i> Save</button>
-                    <a th:href="@{/trains}" class="btn btn-secondary px-4"><i class="bi bi-arrow-left-circle"></i> Back to List</a>
-                </div>
-            </form>
+        <div class="mb-3">
+            <label class="form-label">Train Code</label>
+            <input type="text" th:field="*{code}" class="form-control" required>
         </div>
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Train Name</label>
+            <input type="text" th:field="*{name}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Total Carriages</label>
+            <input type="number" th:field="*{totalCarriages}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Seat Capacity</label>
+            <input type="number" th:field="*{seatCapacity}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <input type="text" th:field="*{status}" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-success">Save Train</button>
+            <a th:href="@{/trains}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
 </div>
 </body>
 </html>

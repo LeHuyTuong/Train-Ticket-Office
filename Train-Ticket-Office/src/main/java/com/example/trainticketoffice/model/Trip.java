@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Trip extends BaseEntity {
+public class Trip  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

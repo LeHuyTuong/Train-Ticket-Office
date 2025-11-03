@@ -1,41 +1,33 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_layout}">
+      layout:decorate="~{fragments/_admin_layout}">
 <head>
     <title>Train Management</title>
 </head>
 <body>
 <div layout:fragment="content">
+    <h2 class="page-title">Train Management</h2>
 
-    <!-- KHỐI HIỂN THỊ THÔNG BÁO -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <span th:text="${successMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <span th:text="${errorMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <!-- KẾT THÚC KHỐI THÔNG BÁO -->
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1><i class="bi bi-train-lightrail-front"></i> Train List</h1>
-        <a th:href="@{/trains/new}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add New Train</a>
+    <div class="mb-3">
+        <a th:href="@{/trains/new}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add New Train
+        </a>
     </div>
 
-    <hr/>
-
-    <table class="table table-hover table-bordered">
-        <thead class="table-dark">
+    <table class="table table-striped table-hover">
+        <thead>
         <tr>
             <th>ID</th>
-            <th>Train Code</th>
-            <th>Train Name</th>
-            <th>Carriages</th>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Total Carriages</th>
             <th>Seat Capacity</th>
             <th>Status</th>
-            <th class="text-center">Actions</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -46,17 +38,19 @@
             <td th:text="${train.totalCarriages}"></td>
             <td th:text="${train.seatCapacity}"></td>
             <td>
-                <span th:text="${train.status}"
-                      th:classappend="${train.status == 'active' ? 'badge bg-success' : 'badge bg-secondary'}"></span>
+                <span th:if="${train.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                <span th:if="${train.status != 'ACTIVE'}" class="badge bg-secondary" th:text="${train.status}"></span>
             </td>
-            <td class="text-center">
-                <a th:href="@{/trains/edit/{id}(id=${train.id})}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i> Edit</a>
-                <a th:href="@{/trains/delete/{id}(id=${train.id})}" class="btn btn-outline-danger btn-sm"
-                   onclick="return confirm('Are you sure you want to delete this train?');"><i class="bi bi-trash"></i> Delete</a>
+            <td>
+                <a th:href="@{/trains/edit/{id}(id=${train.id})}" class="btn btn-sm btn-warning">Edit</a>
+                <a th:href="@{/trains/delete/{id}(id=${train.id})}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('Are you sure?')">Delete</a>
             </td>
         </tr>
         </tbody>
     </table>
+
+    <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
 </div>
 </body>
 </html>

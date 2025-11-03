@@ -15,7 +15,7 @@ import java.time.LocalTime;
 @Setter
 @Table(name = "Users")
 
-public class User extends BaseEntity{
+public class User{
     // TODO : Quốc Bảo Repo + Service CRUD
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
