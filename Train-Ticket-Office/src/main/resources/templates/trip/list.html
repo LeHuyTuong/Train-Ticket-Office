@@ -23,6 +23,7 @@
             <th>Departure</th>
             <th>Arrival</th>
             <th>Price</th>
+            <th>Status</th>
             <th class="text-center">Actions</th>
         </tr>
         </thead>
@@ -31,12 +32,42 @@
             <td th:text="${trip.tripId}"></td>
             <td th:text="${trip.train.code}"></td>
             <td th:text="${trip.route.code}"></td>
-            <td th:text="${#temporals.format(trip.departureTime, 'dd-MM-yyyy')}"></td>
-            <td th:text="${#temporals.format(trip.arrivalTime, 'dd-MM-yyyy')}"></td>
+            <td th:text="${#temporals.format(trip.departureTime, 'dd-MM-yyyy HH:mm')}"></td>
+            <td th:text="${#temporals.format(trip.arrivalTime, 'dd-MM-yyyy HH:mm')}"></td>
             <td th:text="${#numbers.formatCurrency(trip.price)}"></td>
+
+            <td>
+                <span th:text="${trip.status.description}"
+                      th:classappend="${trip.status.name() == 'COMPLETED'} ? 'badge bg-success' :
+                                     (${trip.status.name() == 'IN_PROGRESS'} ? 'badge bg-danger' :
+                                     (${trip.status.name() == 'CANCELLED'} ? 'badge bg-secondary' :
+                                     (${trip.status.name() == 'DELAYED'} ? 'badge bg-warning text-dark' : 'badge bg-info')))">
+                </span>
+            </td>
+
             <td class="text-center">
-                <a th:href="@{/trips/edit/{id}(id=${trip.tripId})}" class="btn btn-outline-primary btn-sm">Edit</a>
-                <a th:href="@{/trips/delete/{id}(id=${trip.tripId})}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
+                <form th:action="@{/trips/update-status/{id}(id=${trip.tripId})}" method="POST" class="d-inline-flex">
+                    <select name="status" class="form-select form-select-sm" style="width: 150px;">
+                        <option th:each="s : ${allTripStatus}"
+                                th:value="${s}"
+                                th:text="${s.description}"
+                                th:selected="${s == trip.status}"></option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm ms-1">OK</button>
+                </form>
+
+                <a th:href="@{/trips/edit/{id}(id=${trip.tripId})}"
+                   class="btn btn-outline-primary btn-sm ms-2"
+                   th:classappend="${trip.status.name() != 'UPCOMING' AND trip.status.name() != 'DELAYED'} ? 'disabled' : ''">
+                    Edit
+                </a>
+
+                <a th:href="@{/trips/delete/{id}(id=${trip.tripId})}"
+                   class="btn btn-outline-danger btn-sm"
+                   th:classappend="${trip.status.name() != 'COMPLETED'} ? 'disabled' : ''"
+                   onclick="return confirm('Bạn có chắc muốn xóa vĩnh viễn chuyến này và toàn bộ vé, booking liên quan?');">
+                    Delete
+                </a>
             </td>
         </tr>
         </tbody>

@@ -6,6 +6,7 @@ import com.example.trainticketoffice.service.RouteService;
 import com.example.trainticketoffice.service.StationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/routes")
@@ -49,10 +51,7 @@ public class RouteController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Integer id, Model model) {
-        Route route = routeService.getAllRoutes().stream()
-                .filter(r -> r.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        Route route = routeService.findById(id).orElse(null);
 
         if (route != null) {
             model.addAttribute("route", route);
@@ -102,6 +101,8 @@ public class RouteController {
         try {
             routeService.deleteRoute(id);
             redirectAttributes.addFlashAttribute("successMessage", "Route with ID " + id + " has been deleted.");
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể xóa tuyến này. Đã có Chuyến (Trip) đang sử dụng tuyến này.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error deleting route: " + e.getMessage());
         }

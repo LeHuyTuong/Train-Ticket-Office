@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_admin_layout}"> <head>
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
     <title>Routes Management</title>
 </head>
 <body>
 <div layout:fragment="content">
     <h2 class="page-title">Routes Management</h2>
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-    <div class="mb-3">
-        <a th:href="@{/routes/new}" class="btn btn-primary">Add New Route</a>
-    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div> <div class="mb-3">
+    <a th:href="@{/routes/new}" class="btn btn-primary">Add New Route</a>
+</div>
     <table class="table table-striped table-hover">
         <thead>
         <tr>
@@ -28,9 +29,10 @@
             <td th:text="${route.code}"></td>
             <td th:text="${route.startStation.name}"></td>
             <td th:text="${route.endStation.name}"></td>
+
             <td>
-                <span th:if="${route.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
-                <span th:if="${route.status == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
+                <span th:if="${route.status.name() == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                <span th:if="${route.status.name() == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
             </td>
             <td>
                 <a th:href="@{/routes/edit/{id}(id=${route.id})}" class="btn btn-sm btn-warning">Edit</a>

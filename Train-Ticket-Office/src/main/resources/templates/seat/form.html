@@ -15,32 +15,30 @@
         <input type="hidden" th:field="*{seatId}">
 
         <div class="mb-3">
-            <label class="form-label">Train</label>
-            <select th:field="*{train}" class="form-select" required>
-                <option value="">-- Select Train --</option>
-                <option th:each="train : ${allTrains}"
-                        th:value="${train.id}"
-                        th:text="|${train.code} - ${train.name}|"></option>
-            </select>
+            <label class="form-label">Thuộc Toa (Carriage)</label> <select th:field="*{carriage}" class="form-select" required> <option value="">-- Select Carriage --</option>
+            <option th:each="carriage : ${allCarriages}"
+                    th:value="${carriage.carriageId}"
+                    th:text="|${carriage.train.code} - ${carriage.name} (${carriage.type})|"></option>
+        </select>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Seat Number (Số Ghế)</label>
+            <label class="form-label">Số Ghế (Seat Number)</label>
             <input type="text" th:field="*{seatNumber}" class="form-control" required>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Seat Type (Loại Ghế)</label>
+            <label class="form-label">Loại Ghế (Seat Type)</label>
             <select th:field="*{seatType}" class="form-select" required>
                 <option value="">-- Select Type --</option>
                 <option th:each="type : ${seatTypes}"
                         th:value="${type}"
-                        th:text="${type}"></option>
+                        th:text="${#strings.capitalize(type)}"></option>
             </select>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Price Per Km (Giá / Km)</label>
+            <label class="form-label">Giá / Km (Price Per Km)</label>
             <input type="number" th:field="*{pricePerKm}" step="0.01" class="form-control" required>
         </div>
 

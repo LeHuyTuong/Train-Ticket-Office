@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal; // <-- THÊM
 import java.time.LocalDate;
+import java.time.LocalDateTime; // <-- THÊM
 
 @Entity
 @Table(name = "bookings")
@@ -15,29 +17,23 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class Booking extends BaseEntity{
 
-    // TODO Tuong luoi lam vai cut
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "booking_id")
     private Long bookingId;
 
-    // Ai đặt vé
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
 
-    // Chuyến (nếu dùng Schedule thì đổi Trip -> Schedule + cột trip_id -> schedule_id)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "trip_id")
     private Trip trip;
 
-    // Ghế
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "seat_id")
     private Seat seat;
 
-    // Thông tin hành khách (1 booking = 1 ghế)
     @Column(nullable = false, length = 100)
     private String passengerName;
 
@@ -47,12 +43,15 @@ public class Booking extends BaseEntity{
     @Column(length = 100)
     private String email;
 
+    // ===== THÊM TRƯỜNG NÀY =====
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BookingStatus status = BookingStatus.BOOKED;
 
+    // ===== SỬA TỪ LocalDate thành LocalDateTime =====
     @Column(name = "booking_time", nullable = false)
-    private LocalDate bookingTime;
-
-
+    private LocalDateTime bookingTime;
 }

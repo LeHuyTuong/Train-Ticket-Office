@@ -2,30 +2,32 @@ package com.example.trainticketoffice.service.impl;
 
 import com.example.trainticketoffice.common.BookingStatus;
 import com.example.trainticketoffice.common.SeatStatus;
-import com.example.trainticketoffice.model.Booking;
-import com.example.trainticketoffice.model.Seat;
-import com.example.trainticketoffice.model.Trip;
-import com.example.trainticketoffice.model.User;
-import com.example.trainticketoffice.repository.BookingRepository;
-import com.example.trainticketoffice.repository.SeatRepository;
-import com.example.trainticketoffice.repository.TripRepository;
-import com.example.trainticketoffice.repository.UserRepository;
+import com.example.trainticketoffice.model.*;
+import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.BookingService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
+
+    // Thời gian giữ vé (phút)
+    private static final int HOLD_DURATION_MINUTES = 15;
+
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
     private final SeatRepository seatRepository;
+    private final TicketRepository ticketRepository;
+    private final PaymentRepository paymentRepository;
 
     @Override
     @Transactional
@@ -45,7 +47,11 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế với mã " + seatId));
 
         if (seat.getStatus() == SeatStatus.BOOKED) {
-            throw new IllegalStateException("Ghế đã được đặt trước đó");
+            autoCancelExpiredBookingsForTrip(tripId);
+            seat = seatRepository.findById(seatId).get();
+            if(seat.getStatus() == SeatStatus.BOOKED) {
+                throw new IllegalStateException("Ghế đã được đặt trước đó và vẫn còn thời hạn giữ.");
+            }
         }
 
         boolean hasConflict = bookingRepository.existsByTrip_TripIdAndSeat_SeatIdAndStatusIn(
@@ -58,6 +64,10 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalStateException("Ghế đã được giữ chỗ cho chuyến đi này");
         }
 
+        BigDecimal routeDistance = trip.getRoute().getTotalDistanceKm();
+        BigDecimal seatPricePerKm = seat.getPricePerKm();
+        BigDecimal finalPrice = seatPricePerKm.multiply(routeDistance);
+
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setTrip(trip);
@@ -66,7 +76,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setPhone(phone);
         booking.setEmail(email);
         booking.setStatus(BookingStatus.BOOKED);
-        booking.setBookingTime(LocalDate.now());
+        booking.setBookingTime(LocalDateTime.now());
+        booking.setPrice(finalPrice);
 
         Booking savedBooking = bookingRepository.save(booking);
 
@@ -77,17 +88,69 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<Booking> findAllBookings() {
-        return bookingRepository.findAll();
+    public List<Booking> findAllBookings() { return bookingRepository.findAll(); }
+    @Override
+    public List<Booking> findAllBookingsByUserId(Integer userId) { return bookingRepository.findByUser_Id(userId); }
+    @Override
+    public Optional<Booking> findById(Long bookingId) { return bookingRepository.findById(bookingId); }
+
+    // ===== SỬA LỖI Ở ĐÂY (Xóa @Transactional) =====
+    // @Transactional // <--- XÓA DÒNG NÀY
+    private void internalCancelBooking(Booking booking) {
+        // 1. Giải phóng ghế
+        Seat seat = booking.getSeat();
+        if (seat != null) {
+            seat.setStatus(SeatStatus.AVAILABLE);
+            seatRepository.save(seat);
+        }
+
+        // 2. Xóa các bản ghi phụ thuộc (Ticket và Payment)
+        List<Ticket> tickets = ticketRepository.findByBooking(booking);
+        ticketRepository.deleteAll(tickets);
+
+        List<Payment> payments = paymentRepository.findByBooking(booking);
+        paymentRepository.deleteAll(payments);
+
+        // 3. Xóa booking chính
+        bookingRepository.delete(booking);
+    }
+    // ===========================================
+
+    @Override
+    @Transactional // (Hàm public này BẮT ĐẦU giao dịch)
+    public void customerCancelBooking(Long bookingId, Integer userId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy booking với ID: " + bookingId));
+
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new IllegalStateException("Bạn không có quyền hủy booking này.");
+        }
+
+        if (booking.getStatus() == BookingStatus.PAID || booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new IllegalStateException("Không thể hủy vé đã thanh toán/hoàn thành. Vui lòng liên hệ quầy vé.");
+        }
+
+        // Gọi hàm private (vẫn chạy trong giao dịch của hàm public này)
+        internalCancelBooking(booking);
     }
 
     @Override
-    public List<Booking> findAllBookingsByUserId(Integer userId) {
-        return bookingRepository.findByUser_Id(userId);
-    }
+    @Transactional // (Hàm public này BẮT ĐẦU giao dịch)
+    public void autoCancelExpiredBookingsForTrip(Long tripId) {
+        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(HOLD_DURATION_MINUTES);
+        List<Booking> booked = bookingRepository.findAllByTrip_TripIdAndStatus(tripId, BookingStatus.BOOKED);
 
-    @Override
-    public Optional<Booking> findById(Long bookingId) {
-        return bookingRepository.findById(bookingId);
+        int cancelCount = 0;
+        for (Booking booking : booked) {
+            if (booking.getBookingTime().isBefore(cutoffTime)) {
+                // Gọi hàm private (vẫn chạy trong giao dịch của hàm public này)
+                internalCancelBooking(booking);
+                cancelCount++;
+            }
+        }
+
+        if(cancelCount > 0) {
+            System.out.println("SCHEDULER: Đã tự động hủy " + cancelCount + " vé quá hạn cho chuyến " + tripId);
+        }
     }
 }

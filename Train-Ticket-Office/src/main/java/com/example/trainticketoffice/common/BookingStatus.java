@@ -3,5 +3,6 @@ package com.example.trainticketoffice.common;
 public enum BookingStatus {
     BOOKED,
     CANCELLED,
-    PAID
+    PAID,
+    COMPLETED // <-- THÊM MỚI
 }

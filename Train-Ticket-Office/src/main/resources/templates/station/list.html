@@ -37,9 +37,10 @@
             <td th:text="${station.name}"></td>
             <td th:text="${station.city}"></td>
             <td th:text="${station.province}"></td>
+
             <td>
-                <span th:if="${station.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
-                <span th:if="${station.status == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
+                <span th:if="${station.status.name() == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                <span th:if="${station.status.name() == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
             </td>
             <td>
                 <a th:href="@{/stations/edit/{id}(id=${station.id})}" class="btn btn-sm btn-warning">Edit</a>

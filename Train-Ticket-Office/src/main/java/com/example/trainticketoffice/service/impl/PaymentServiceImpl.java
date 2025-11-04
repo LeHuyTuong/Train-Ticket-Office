@@ -11,7 +11,7 @@ import com.example.trainticketoffice.service.PaymentService;
 import com.example.trainticketoffice.util.VnpayUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value; // THÊM DÒNG NÀY
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
@@ -38,11 +39,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Value("${vnpay.return-url}")
     private String returnUrl;
-
-    public PaymentServiceImpl(PaymentRepository paymentRepository, BookingRepository bookingRepository) {
-        this.paymentRepository = paymentRepository;
-        this.bookingRepository = bookingRepository;
-    }
 
     @Override
     @Transactional
@@ -61,7 +57,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         String resolvedIp = (clientIp == null || clientIp.isBlank()) ? "127.0.0.1" : clientIp;
 
-        BigDecimal amount = BigDecimal.valueOf(booking.getTrip().getPrice()).setScale(0, RoundingMode.HALF_UP);
+        // ===== SỬA LỖI Ở ĐÂY =====
+        BigDecimal amount = booking.getPrice().setScale(0, RoundingMode.HALF_UP);
+        // ==========================
+
         long amountValue = amount.multiply(BigDecimal.valueOf(100)).longValueExact();
 
         String resolvedOrderInfo = Optional.ofNullable(orderInfo)
@@ -73,7 +72,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setUser(booking.getUser());
-        payment.setAmount(amount.doubleValue());
+        payment.setAmount(amount);
         payment.setStatus(PaymentStatus.PENDING);
         payment.setTransactionRef(txnRef);
         payment.setOrderInfo(resolvedOrderInfo);
@@ -113,6 +112,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment = paymentRepository.findByTransactionRef(txnRef)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch tương ứng"));
+
+        if(payment.getStatus() == PaymentStatus.SUCCESS) {
+            return payment;
+        }
 
         String receivedHash = vnpayParams.get("vnp_SecureHash");
         if (receivedHash == null || receivedHash.isBlank()) {

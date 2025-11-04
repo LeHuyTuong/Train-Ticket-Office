@@ -30,9 +30,14 @@
             <label class="form-label">Seat Capacity</label>
             <input type="number" th:field="*{seatCapacity}" class="form-control" required>
         </div>
+
         <div class="mb-3">
             <label class="form-label">Status</label>
-            <input type="text" th:field="*{status}" class="form-control">
+            <select th:field="*{status}" class="form-select" required>
+                <option th:each="s : ${allTrainStatus}"
+                        th:value="${s}"
+                        th:text="${s.description}"></option>
+            </select>
         </div>
 
         <div class="mb-3">
