@@ -1,5 +1,6 @@
 package com.example.trainticketoffice.controller;
 
+import com.example.trainticketoffice.common.TrainStatus; // <-- THÊM
 import com.example.trainticketoffice.model.Train;
 import com.example.trainticketoffice.service.TrainService;
 import jakarta.validation.Valid;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/trains") // URL chính để quản lý tàu, ví dụ: http://localhost:8080/trains
+@RequestMapping("/trains")
 public class TrainController {
 
     private final TrainService trainService;
@@ -22,6 +23,10 @@ public class TrainController {
     @Autowired
     public TrainController(TrainService trainService) {
         this.trainService = trainService;
+    }
+
+    private void addCommonAttributes(Model model) {
+        model.addAttribute("allTrainStatus", TrainStatus.values());
     }
 
     @GetMapping
@@ -34,6 +39,7 @@ public class TrainController {
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("train", new Train());
+        addCommonAttributes(model);
         return "train/form";
     }
 
@@ -42,6 +48,7 @@ public class TrainController {
         Optional<Train> train = trainService.getTrainById(id);
         if (train.isPresent()) {
             model.addAttribute("train", train.get());
+            addCommonAttributes(model);
             return "train/form";
         }
         return "redirect:/trains";
@@ -50,6 +57,7 @@ public class TrainController {
     @PostMapping("/save")
     public String saveTrain(@Valid @ModelAttribute("train") Train train, BindingResult result, Model model, RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
+            addCommonAttributes(model);
             return "train/form";
         }
 
@@ -59,6 +67,7 @@ public class TrainController {
             return "redirect:/trains";
         } catch (IllegalStateException e) {
             model.addAttribute("errorMessage", e.getMessage());
+            addCommonAttributes(model);
             return "train/form";
         }
     }

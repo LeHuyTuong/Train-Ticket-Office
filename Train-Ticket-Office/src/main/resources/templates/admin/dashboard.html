@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_admin_layout}"> <head>
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
     <title>Admin Dashboard</title>
 </head>
 <body>
@@ -34,6 +35,34 @@
                     <h5 class="card-title">Quản lý Ga</h5>
                     <p class="card-text">Quản lý danh sách các nhà ga (stations).</p>
                     <a th:href="@{/stations}" class="btn btn-light">Đi đến</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-secondary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý Tàu</h5>
+                    <p class="card-text">Quản lý các đầu tàu (SE1, SE2...).</p>
+                    <a th:href="@{/trains}" class="btn btn-light">Đi đến</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-dark mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý Toa</h5>
+                    <p class="card-text">Gán toa vào các tàu (Toa 1, Toa 2...).</p>
+                    <a th:href="@{/carriages}" class="btn btn-light">Đi đến</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-warning text-dark mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý Ghế</h5>
+                    <p class="card-text">Gán ghế vào các toa (A1, A2...).</p>
+                    <a th:href="@{/seats}" class="btn btn-light">Đi đến</a>
                 </div>
             </div>
         </div>

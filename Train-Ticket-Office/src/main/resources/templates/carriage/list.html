@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
+    <title>Carriage Management</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="page-title">Carriage Management</h2>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="mb-3">
+        <a th:href="@{/carriages/new}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add New Carriage
+        </a>
+    </div>
+
+    <form th:action="@{/carriages}" method="GET" class="row g-3 mb-4 p-3 bg-light border rounded">
+        <div class="col-md-5">
+            <label for="trainId" class="form-label fw-bold">Lọc theo Tàu (Filter by Train)</label>
+            <select name="trainId" id="trainId" class="form-select">
+                <option value="">-- Hiển thị tất cả --</option>
+                <option th:each="train : ${allTrains}"
+                        th:value="${train.id}"
+                        th:text="|${train.code} - ${train.name}|"
+                        th:selected="${train.id == selectedTrainId}"></option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-info">Lọc</button>
+        </div>
+    </form>
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Tên Toa</th>
+            <th>Loại Toa</th>
+            <th>Thuộc Tàu</th>
+            <th>Vị trí</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="carriage : ${carriages}">
+            <td th:text="${carriage.carriageId}"></td>
+            <td th:text="${carriage.name}"></td>
+            <td th:text="${carriage.type}"></td>
+            <td th:text="${carriage.train.code}"></td>
+            <td th:text="${carriage.position}"></td>
+            <td>
+                <a th:href="@{/carriages/edit/{id}(id=${carriage.carriageId})}" class="btn btn-sm btn-warning">Edit</a>
+                <a th:href="@{/carriages/delete/{id}(id=${carriage.carriageId})}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(carriages)}">
+            <td colspan="6" class="text-center">Không tìm thấy toa nào.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+</body>
+</html>

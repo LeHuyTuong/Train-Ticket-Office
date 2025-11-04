@@ -38,8 +38,10 @@
             <td th:text="${train.totalCarriages}"></td>
             <td th:text="${train.seatCapacity}"></td>
             <td>
-                <span th:if="${train.status == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
-                <span th:if="${train.status != 'ACTIVE'}" class="badge bg-secondary" th:text="${train.status}"></span>
+                <span th:text="${train.status.description}"
+                      th:classappend="${train.status.name() == 'AVAILABLE'} ? 'badge bg-success' :
+                                     (${train.status.name() == 'ON_TRIP'} ? 'badge bg-danger' : 'badge bg-warning text-dark')">
+                </span>
             </td>
             <td>
                 <a th:href="@{/trains/edit/{id}(id=${train.id})}" class="btn btn-sm btn-warning">Edit</a>

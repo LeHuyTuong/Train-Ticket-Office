@@ -18,23 +18,39 @@
         </a>
     </div>
 
+    <form th:action="@{/seats}" method="GET" class="row g-3 mb-4 p-3 bg-light border rounded">
+        <div class="col-md-5">
+            <label for="carriageId" class="form-label fw-bold">Lọc theo Toa (Filter by Carriage)</label>
+            <select name="carriageId" id="carriageId" class="form-select">
+                <option value="">-- Hiển thị tất cả --</option>
+                <option th:each="carriage : ${allCarriages}"
+                        th:value="${carriage.carriageId}"
+                        th:text="|Tàu ${carriage.train.code} - ${carriage.name} (${carriage.type})|"
+                        th:selected="${carriage.carriageId == selectedCarriageId}"></option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-info">Lọc</button>
+        </div>
+    </form>
     <table class="table table-striped table-hover">
         <thead>
         <tr>
             <th>ID</th>
-            <th>Train Code</th>
-            <th>Seat Number</th>
-            <th>Type</th>
-            <th>Price/Km</th>
-            <th>Status</th>
-            <th>Active</th>
+            <th>Tàu</th>
+            <th>Toa</th>
+            <th>Số Ghế</th>
+            <th>Loại Ghế</th>
+            <th>Giá/Km</th>
+            <th>Trạng Thái</th>
             <th>Actions</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="seat : ${seats}">
             <td th:text="${seat.seatId}"></td>
-            <td th:text="${seat.train.code}"></td>
+            <td th:text="${seat.carriage.train.code}"></td>
+            <td th:text="${seat.carriage.name}"></td>
             <td th:text="${seat.seatNumber}"></td>
             <td th:text="${seat.seatType}"></td>
             <td th:text="${seat.pricePerKm}"></td>
@@ -42,12 +58,14 @@
                 <span th:if="${seat.status == T(com.example.trainticketoffice.common.SeatStatus).AVAILABLE}" class="badge bg-success" th:text="${seat.status}"></span>
                 <span th:if="${seat.status == T(com.example.trainticketoffice.common.SeatStatus).BOOKED}" class="badge bg-danger" th:text="${seat.status}"></span>
             </td>
-            <td th:text="${seat.isActive}"></td>
             <td>
                 <a th:href="@{/seats/edit/{id}(id=${seat.seatId})}" class="btn btn-sm btn-warning">Edit</a>
                 <a th:href="@{/seats/delete/{id}(id=${seat.seatId})}" class="btn btn-sm btn-danger"
                    onclick="return confirm('Are you sure?')">Delete</a>
             </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(seats)}">
+            <td colspan="8" class="text-center">Không tìm thấy ghế nào.</td>
         </tr>
         </tbody>
     </table>

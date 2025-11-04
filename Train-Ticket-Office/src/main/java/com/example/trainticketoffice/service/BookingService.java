@@ -18,4 +18,9 @@ public interface BookingService {
     List<Booking> findAllBookingsByUserId(Integer userId);
 
     Optional<Booking> findById(Long bookingId);
+
+    void customerCancelBooking(Long bookingId, Integer userId);
+
+    // THÊM HÀM NÀY
+    void autoCancelExpiredBookingsForTrip(Long tripId);
 }

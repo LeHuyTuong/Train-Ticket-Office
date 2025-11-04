@@ -40,6 +40,17 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/stations}" th:classappend="${#strings.startsWith(requestURI, '/stations') ? 'active' : ''}">Quản lý Ga</a>
                 </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Quản lý Tàu
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" th:href="@{/trains}">Quản lý Tàu</a></li>
+                        <li><a class="dropdown-item" th:href="@{/carriages}">Quản lý Toa</a></li>
+                        <li><a class="dropdown-item" th:href="@{/seats}">Quản lý Ghế</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/logout}">Đăng Xuất</a>
                 </li>

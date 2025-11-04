@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal; // <-- THÊM
 import java.time.LocalDateTime;
 @Entity
 @Table(name = "payments")
@@ -28,8 +29,9 @@ public class Payment extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
-    private double amount;
+    // ===== SỬA TỪ double =====
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -58,5 +60,4 @@ public class Payment extends BaseEntity {
 
     @Column(name = "secure_hash", length = 256)
     private String secureHash;
-
 }

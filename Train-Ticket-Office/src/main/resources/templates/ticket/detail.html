@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_customer_layout}"> <head>
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
     <title>Chi Tiết Vé</title>
 </head>
 <body>
 <div layout:fragment="content">
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
     <div class="ticket-container" style="max-width: 800px; margin: auto;">
 
@@ -46,6 +50,15 @@
                             <strong class="text-muted">Loại Ghế</strong>
                             <p class="fs-5" th:text="*{seat.seatType}">VIP</p>
                         </div>
+                        <div class="col-md-6">
+                            <strong class="text-muted">Trạng thái</strong>
+                            <p class="fs-5">
+                                <span th:if="*{status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
+                                <span th:if="*{status.name() == 'BOOKED'}" class="badge bg-warning text-dark">Chờ thanh toán</span>
+                                <span th:if="*{status.name() == 'CANCELLED'}" class="badge bg-secondary">Đã hủy</span>
+                                <span th:if="*{status.name() == 'COMPLETED'}" class="badge bg-primary">Đã hoàn thành</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -54,6 +67,19 @@
 
         <div class="ticket-footer" style="background-color: #f9f9f9; padding: 20px; text-align: center;">
             <a th:href="@{/bookings}" class="btn btn-secondary">Quay lại danh sách</a>
+
+            <a th:if="${booking.status.name() == 'BOOKED'}"
+               th:href="@{/bookings/delete/{id}(id=${booking.bookingId})}"
+               class="btn btn-danger"
+               onclick="return confirm('Bạn có chắc muốn hủy vé này? Ghế sẽ được giải phóng.')">
+                Hủy vé
+            </a>
+
+            <a th:if="${booking.status.name() == 'BOOKED'}"
+               th:href="@{/payments/bookings/{id}(id=${booking.bookingId})}"
+               class="btn btn-success">
+                Thanh toán ngay
+            </a>
         </div>
     </div>
 

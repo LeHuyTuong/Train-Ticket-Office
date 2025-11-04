@@ -32,6 +32,10 @@
         </div>
 
         <div class="mb-3">
+            <label class="form-label">Km from Start (Vị trí km)</label>
+            <input type="number" th:field="*{kmFromStart}" step="0.01" class="form-control" required>
+        </div>
+        <div class="mb-3">
             <label class="form-label">Status</label>
             <select th:field="*{status}" class="form-select" required>
                 <option th:each="s : ${statusTypes}"

@@ -31,18 +31,13 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     public Seat saveSeat(Seat seat) {
-        // ===== SỬA LỖI Ở ĐÂY =====
         if (seat.getSeatId() == null) {
-            // Sửa `seat.getTrain()` thành `seat.getCarriage()`
-            // Sửa `existsByTrainAndSeatNumber` thành `existsByCarriageAndSeatNumber`
             if (seatRepository.existsByCarriageAndSeatNumber(seat.getCarriage(), seat.getSeatNumber())) {
 
-                // Sửa thông báo lỗi
                 throw new IllegalStateException("Seat number '" + seat.getSeatNumber() + "' already exists on carriage '" + seat.getCarriage().getName() + "'!");
             }
         }
         return seatRepository.save(seat);
-        // =========================
     }
 
     @Override

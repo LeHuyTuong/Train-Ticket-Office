@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_customer_layout}"> <head>
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
     <title>Vé Của Tôi</title>
 </head>
 <body>
 <div layout:fragment="content">
     <h2 class="page-title">Vé Của Tôi</h2>
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
     <div th:if="${#lists.isEmpty(bookings)}" class="alert alert-info" role="alert">
         Bạn chưa có vé nào.
     </div>
@@ -16,26 +19,51 @@
             <thead>
             <tr>
                 <th>Mã Đặt Vé</th>
-                <th>Hành Khách</th>
                 <th>Chuyến Tàu</th>
-                <th>Ga Đi</th>
-                <th>Ga Đến</th>
                 <th>Ngày Đi</th>
                 <th>Ghế</th>
-                <th>Chi tiết</th>
+                <th>Trạng thái Thanh toán</th>
+                <th>Trạng thái Chuyến</th>
+                <th>Hành động</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="booking : ${bookings}">
                 <td th:text="${booking.bookingId}"></td>
-                <td th:text="${booking.passengerName}"></td>
                 <td th:text="${booking.trip.train.code}"></td>
-                <td th:text="${booking.trip.departureStation}"></td>
-                <td th:text="${booking.trip.arrivalStation}"></td>
-                <td th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy')}"></td>
+                <td th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy HH:mm')}"></td>
                 <td th:text="${booking.seat.seatNumber}"></td>
                 <td>
-                    <a th:href="@{/bookings/{id}(id=${booking.bookingId})}" class="btn btn-sm btn-info">Xem Vé</a>
+                    <span th:if="${booking.status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
+                    <span th:if="${booking.status.name() == 'BOOKED'}" class="badge bg-warning text-dark">Chờ thanh toán</span>
+                    <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge bg-secondary">Đã hủy</span>
+                    <span th:if="${booking.status.name() == 'COMPLETED'}" class="badge bg-primary">Đã hoàn thành</span>
+                </td>
+
+                <td>
+                    <span th:text="${booking.trip.status.description}"
+                          th:classappend="${booking.trip.status.name() == 'COMPLETED'} ? 'badge bg-success' :
+                                         (${booking.trip.status.name() == 'IN_PROGRESS'} ? 'badge bg-danger' :
+                                         (${booking.trip.status.name() == 'CANCELLED'} ? 'badge bg-secondary' :
+                                         (${booking.trip.status.name() == 'DELAYED'} ? 'badge bg-warning text-dark' : 'badge bg-info')))">
+                    </span>
+                </td>
+
+                <td class="d-flex gap-1">
+                    <a th:href="@{/bookings/{id}(id=${booking.bookingId})}" class="btn btn-sm btn-info">Xem</a>
+
+                    <a th:if="${booking.status.name() == 'BOOKED'}"
+                       th:href="@{/bookings/delete/{id}(id=${booking.bookingId})}"
+                       class="btn btn-sm btn-danger"
+                       onclick="return confirm('Bạn có chắc muốn hủy vé này? Ghế sẽ được giải phóng.')">
+                        Hủy vé
+                    </a>
+
+                    <a th:if="${booking.status.name() == 'BOOKED'}"
+                       th:href="@{/payments/bookings/{id}(id=${booking.bookingId})}"
+                       class="btn btn-sm btn-success">
+                        Thanh toán
+                    </a>
                 </td>
             </tr>
             </tbody>
