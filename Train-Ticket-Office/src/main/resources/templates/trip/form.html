@@ -42,12 +42,6 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="basePrice" class="form-label">Price</label>
-                    <input type="number" step="1000" th:field="*{price}" class="form-control" th:classappend="${#fields.hasErrors('price')} ? 'is-invalid' : ''" id="basePrice">
-                    <div th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="invalid-feedback"></div>
-                </div>
-
                 <div class="mt-4 text-center">
                     <button type="submit" class="btn btn-success px-4">Save</button>
                     <a th:href="@{/trips}" class="btn btn-secondary px-4">Back to List</a>

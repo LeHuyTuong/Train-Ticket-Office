@@ -1,13 +1,37 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_customer_layout}">
 <head>
     <meta charset="UTF-8">
     <title>Xác Nhận & Thanh toán VNPay</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .vnpay-button {
+            background-color: #005a9f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .vnpay-button:hover {
+            background-color: #004a80;
+        }
+        .vnpay-button img {
+            width: 100px; /* Điều chỉnh kích thước logo nếu cần */
+            height: auto; /* Giữ tỷ lệ */
+            margin-right: 15px;
+        }
+    </style>
 </head>
 <body>
-<div class="container mt-4">
-    <h2 class="mb-4">Xác Nhận Thông Tin & Thanh Toán</h2>
+<div layout:fragment="content">
+    <h2 class="page-title">Bước 2: Xác Nhận & Thanh Toán</h2>
 
     <div th:if="${successMessage}" class="alert alert-info" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
@@ -23,7 +47,6 @@
             <p class="mb-1"><strong>Ghế:</strong>
                 <span th:text="|Ghế ${booking.seat.seatNumber} (${booking.seat.carriage.name})|"></span>
             </p>
-
             <p class="mb-1"><strong>Giá tiền:</strong>
                 <span class="fw-bold text-danger fs-5"
                       th:text="${#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">
@@ -32,30 +55,17 @@
         </div>
     </div>
 
-    <form th:action="@{/payments/bookings/{id}(id=${booking.bookingId})}" method="post" class="card p-4 shadow-sm">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label for="bankCode" class="form-label">Ngân hàng (tùy chọn)</label>
-                <input type="text" class="form-control" id="bankCode" name="bankCode" placeholder="NCB">
-            </div>
-            <div class="col-md-4">
-                <label for="orderType" class="form-label">Loại giao dịch</label>
-                <input type="text" class="form-control" id="orderType" name="orderType" placeholder="other">
-            </div>
-            <div class="col-md-4">
-                <label for="locale" class="form-label">Ngôn ngữ</label>
-                <input type="text" class="form-control" id="locale" name="locale" placeholder="vn">
-            </div>
-            <div class="col-12">
-                <label for="orderInfo" class="form-label">Nội dung thanh toán</label>
-                <input type="text" class="form-control" id="orderInfo" name="orderInfo"
-                       th:value="${'Thanh toan ve tau ' + booking.bookingId}">
-            </div>
-        </div>
+    <h4 class="mb-3">Chọn hình thức thanh toán</h4>
+    <form th:action="@{/payments/bookings/{id}(id=${booking.bookingId})}" method="post" class="p-4">
+
+        <input type="hidden" name="orderInfo" th:value="${'Thanh toan ve tau ' + booking.bookingId}">
 
         <div class="mt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-success">Tiếp tục VNPay</button>
-            <a th:href="@{/bookings}" class="btn btn-secondary">Quay lại (Vé của tôi)</a>
+            <button type="submit" class="vnpay-button">
+                <img th:src="@{/images/vnpay-logo.jpg}" alt="VNPay Logo">
+                Thanh toán ngay
+            </button>
+            <a th:href="@{/bookings}" class="btn btn-secondary" style="padding: 15px 30px; font-size: 1.2rem;">Quay lại</a>
         </div>
     </form>
 </div>

@@ -22,7 +22,6 @@
             <th>Route</th>
             <th>Departure</th>
             <th>Arrival</th>
-            <th>Price</th>
             <th>Status</th>
             <th class="text-center">Actions</th>
         </tr>
@@ -34,7 +33,6 @@
             <td th:text="${trip.route.code}"></td>
             <td th:text="${#temporals.format(trip.departureTime, 'dd-MM-yyyy HH:mm')}"></td>
             <td th:text="${#temporals.format(trip.arrivalTime, 'dd-MM-yyyy HH:mm')}"></td>
-            <td th:text="${#numbers.formatCurrency(trip.price)}"></td>
 
             <td>
                 <span th:text="${trip.status.description}"
@@ -57,13 +55,11 @@
                 </form>
 
                 <a th:href="@{/trips/edit/{id}(id=${trip.tripId})}"
-                   class="btn btn-outline-primary btn-sm ms-2"
-                   th:classappend="${trip.status.name() != 'UPCOMING' AND trip.status.name() != 'DELAYED'} ? 'disabled' : ''">
+                   class="btn btn-warning btn-sm ms-2">
                     Edit
                 </a>
-
                 <a th:href="@{/trips/delete/{id}(id=${trip.tripId})}"
-                   class="btn btn-outline-danger btn-sm"
+                   class="btn btn-danger btn-sm"
                    th:classappend="${trip.status.name() != 'COMPLETED'} ? 'disabled' : ''"
                    onclick="return confirm('Bạn có chắc muốn xóa vĩnh viễn chuyến này và toàn bộ vé, booking liên quan?');">
                     Delete

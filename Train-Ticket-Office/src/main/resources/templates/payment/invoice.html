@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Hóa đơn thanh toán VNPAY</title>
+    <style>
+        .invoice { max-width: 700px; margin: 30px auto; padding: 20px; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-family: Arial, sans-serif; }
+        .inv-head { text-align:center; color:#005a9f; }
+        .row { display:flex; justify-content:space-between; margin:8px 0; }
+    </style>
+</head>
+<body>
+<div class="invoice" layout:fragment="content">
+    <h2 class="inv-head">HÓA ĐƠN THANH TOÁN VNPay</h2>
+
+    <div class="row"><strong>Mã giao dịch:</strong> <span th:text="${transactionNo}"></span></div>
+    <div class="row"><strong>Mã đơn hàng (TxnRef):</strong> <span th:text="${bookingId}"></span></div>
+    <div class="row"><strong>Ngân hàng:</strong> <span th:text="${bankCode}"></span></div>
+    <div class="row"><strong>Số tiền:</strong> <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT')}"></span> VND</div>
+    <div class="row"><strong>Thời gian:</strong> <span th:text="${#temporals.format(payDate, 'dd/MM/yyyy HH:mm:ss')}"></span></div>
+    <div class="row"><strong>Trạng thái:</strong> <span th:text="${transactionStatus}"></span></div>
+    <div style="text-align:center; margin-top:20px;">
+        <a th:href="@{/bookings}" style="display:inline-block; padding:10px 18px; background:#005a9f; color:#fff; text-decoration:none; border-radius:6px;">Về danh sách vé</a>
+    </div>
+</div>
+
+<!-- Tự động in khi cần (bật nếu muốn auto in) -->
+<script>
+    // window.onload = function() { window.print(); };
+</script>
+</body>
+</html>

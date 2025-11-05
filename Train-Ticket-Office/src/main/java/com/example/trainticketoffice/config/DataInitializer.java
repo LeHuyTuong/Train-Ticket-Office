@@ -27,7 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final CarriageRepository carriageRepository;
-    private final BookingRepository bookingRepository; // <-- ĐÃ THÊM
+    private final BookingRepository bookingRepository;
 
     @Override
     public void run(String... args) {
@@ -62,7 +62,7 @@ public class DataInitializer implements CommandLineRunner {
         haNoiStation.setName("Ga Hà Nội");
         haNoiStation.setCity("Hà Nội");
         haNoiStation.setProvince("Hà Nội");
-        haNoiStation.setKmFromStart(new BigDecimal("0.00"));
+        // kmFromStart đã bị xóa
         haNoiStation.setStatus(Station.Status.ACTIVE);
         haNoiStation = stationService.createStation(haNoiStation);
 
@@ -71,7 +71,7 @@ public class DataInitializer implements CommandLineRunner {
         saiGonStation.setName("Ga Sài Gòn");
         saiGonStation.setCity("Hồ Chí Minh");
         saiGonStation.setProvince("Hồ Chí Minh");
-        saiGonStation.setKmFromStart(new BigDecimal("1726.00"));
+        // kmFromStart đã bị xóa
         saiGonStation.setStatus(Station.Status.ACTIVE);
         saiGonStation = stationService.createStation(saiGonStation);
 
@@ -80,8 +80,7 @@ public class DataInitializer implements CommandLineRunner {
         northSouthRoute.setCode("HN-HCM");
         northSouthRoute.setStartStation(haNoiStation);
         northSouthRoute.setEndStation(saiGonStation);
-        northSouthRoute.setTotalDistanceKm(new BigDecimal("1726.00"));
-        northSouthRoute.setEstimatedDurationMinutes(1980);
+        // totalDistanceKm và estimatedDurationMinutes đã bị xóa
         northSouthRoute.setStatus(Route.Status.ACTIVE);
         northSouthRoute = routeService.createRoute(northSouthRoute);
 
@@ -89,8 +88,7 @@ public class DataInitializer implements CommandLineRunner {
         Train se1Train = new Train();
         se1Train.setCode("SE1");
         se1Train.setName("Thống Nhất Express");
-        se1Train.setTotalCarriages(15);
-        se1Train.setSeatCapacity(600);
+        // totalCarriages và seatCapacity đã bị xóa
         se1Train.setStatus(TrainStatus.AVAILABLE);
         se1Train = trainService.saveTrain(se1Train);
 
@@ -114,7 +112,7 @@ public class DataInitializer implements CommandLineRunner {
         vipSeat.setCarriage(toa1);
         vipSeat.setSeatNumber("A1");
         vipSeat.setSeatType("VIP");
-        vipSeat.setPricePerKm(new BigDecimal("1.50"));
+        vipSeat.setPrice(new BigDecimal("2000000.00")); // <-- SỬA TỪ pricePerKm
         vipSeat.setStatus(SeatStatus.AVAILABLE);
         vipSeat.setIsActive(true);
         vipSeat = seatService.saveSeat(vipSeat);
@@ -123,7 +121,7 @@ public class DataInitializer implements CommandLineRunner {
         normalSeat.setCarriage(toa2);
         normalSeat.setSeatNumber("B12");
         normalSeat.setSeatType("normal");
-        normalSeat.setPricePerKm(new BigDecimal("1.0"));
+        normalSeat.setPrice(new BigDecimal("1500000.00")); // <-- SỬA TỪ pricePerKm
         normalSeat.setStatus(SeatStatus.AVAILABLE);
         normalSeat.setIsActive(true);
         normalSeat = seatService.saveSeat(normalSeat);
@@ -137,7 +135,7 @@ public class DataInitializer implements CommandLineRunner {
         northSouthTrip.setRoute(northSouthRoute);
         northSouthTrip.setDepartureStation(haNoiStation.getName());
         northSouthTrip.setArrivalStation(saiGonStation.getName());
-        northSouthTrip.setPrice(1500000.0);
+        // price đã bị xóa
         northSouthTrip.setDepartureTime(departureTime);
         northSouthTrip.setArrivalTime(arrivalTime);
         northSouthTrip.setStatus(TripStatus.UPCOMING);
@@ -166,8 +164,8 @@ public class DataInitializer implements CommandLineRunner {
         ticket.setPassengerName(customer.getFullName());
         ticket.setPassengerPhone(customer.getPhone());
         ticket.setPassengerIdCard("012345678901");
-        ticket.setDistanceKm(northSouthRoute.getTotalDistanceKm());
-        ticket.setTotalPrice(booking.getPrice()); // <-- SỬA: Lấy giá đúng
+        // distanceKm đã bị xóa
+        ticket.setTotalPrice(booking.getPrice());
         ticket.setStatus(TicketStatus.ACTIVE);
         ticket.setBookedAt(LocalDateTime.now().minusDays(1));
         ticketRepository.save(ticket);
@@ -176,7 +174,7 @@ public class DataInitializer implements CommandLineRunner {
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setUser(customer);
-        payment.setAmount(booking.getPrice()); // <-- SỬA: Lấy giá đúng
+        payment.setAmount(booking.getPrice());
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setTransactionRef("TXN123456");
         payment.setOrderInfo("Thanh toán vé tàu");

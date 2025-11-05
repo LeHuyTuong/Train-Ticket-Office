@@ -2,7 +2,7 @@ package com.example.trainticketoffice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
+import java.math.BigDecimal; // <-- BỎ IMPORT NÀY
 
 @Data
 @AllArgsConstructor
@@ -28,9 +28,6 @@ public class Station extends BaseEntity {
 
     @Column(name = "province", nullable = false, length = 50)
     private String province;
-
-    @Column(name = "km_from_start", nullable = false, precision = 8, scale = 2)
-    private BigDecimal kmFromStart;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

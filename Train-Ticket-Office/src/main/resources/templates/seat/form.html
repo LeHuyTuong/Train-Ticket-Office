@@ -15,11 +15,13 @@
         <input type="hidden" th:field="*{seatId}">
 
         <div class="mb-3">
-            <label class="form-label">Thuộc Toa (Carriage)</label> <select th:field="*{carriage}" class="form-select" required> <option value="">-- Select Carriage --</option>
-            <option th:each="carriage : ${allCarriages}"
-                    th:value="${carriage.carriageId}"
-                    th:text="|${carriage.train.code} - ${carriage.name} (${carriage.type})|"></option>
-        </select>
+            <label class="form-label">Thuộc Toa (Carriage)</label>
+            <select th:field="*{carriage}" class="form-select" required>
+                <option value="">-- Select Carriage --</option>
+                <option th:each="carriage : ${allCarriages}"
+                        th:value="${carriage.carriageId}"
+                        th:text="|${carriage.train.code} - ${carriage.name} (${carriage.type})|"></option>
+            </select>
         </div>
 
         <div class="mb-3">
@@ -38,10 +40,9 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Giá / Km (Price Per Km)</label>
-            <input type="number" th:field="*{pricePerKm}" step="0.01" class="form-control" required>
+            <label class="form-label">Giá Vé (Price)</label>
+            <input type="number" th:field="*{price}" step="1000" class="form-control" required>
         </div>
-
         <div class="mb-3">
             <label class="form-label">Status</label>
             <select th:field="*{status}" class="form-select" required>

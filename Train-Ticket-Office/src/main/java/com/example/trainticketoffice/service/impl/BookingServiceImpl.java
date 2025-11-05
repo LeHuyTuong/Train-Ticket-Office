@@ -19,7 +19,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
-    // Thời gian giữ vé (phút)
     private static final int HOLD_DURATION_MINUTES = 15;
 
     private final BookingRepository bookingRepository;
@@ -64,9 +63,9 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalStateException("Ghế đã được giữ chỗ cho chuyến đi này");
         }
 
-        BigDecimal routeDistance = trip.getRoute().getTotalDistanceKm();
-        BigDecimal seatPricePerKm = seat.getPricePerKm();
-        BigDecimal finalPrice = seatPricePerKm.multiply(routeDistance);
+        // ===== SỬA LOGIC TÍNH GIÁ VÉ =====
+        BigDecimal finalPrice = seat.getPrice();
+        // ===============================
 
         Booking booking = new Booking();
         booking.setUser(user);
@@ -94,30 +93,25 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public Optional<Booking> findById(Long bookingId) { return bookingRepository.findById(bookingId); }
 
-    // ===== SỬA LỖI Ở ĐÂY (Xóa @Transactional) =====
-    // @Transactional // <--- XÓA DÒNG NÀY
+    @Transactional
     private void internalCancelBooking(Booking booking) {
-        // 1. Giải phóng ghế
         Seat seat = booking.getSeat();
         if (seat != null) {
             seat.setStatus(SeatStatus.AVAILABLE);
             seatRepository.save(seat);
         }
 
-        // 2. Xóa các bản ghi phụ thuộc (Ticket và Payment)
         List<Ticket> tickets = ticketRepository.findByBooking(booking);
         ticketRepository.deleteAll(tickets);
 
         List<Payment> payments = paymentRepository.findByBooking(booking);
         paymentRepository.deleteAll(payments);
 
-        // 3. Xóa booking chính
         bookingRepository.delete(booking);
     }
-    // ===========================================
 
     @Override
-    @Transactional // (Hàm public này BẮT ĐẦU giao dịch)
+    @Transactional
     public void customerCancelBooking(Long bookingId, Integer userId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy booking với ID: " + bookingId));
@@ -130,12 +124,11 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalStateException("Không thể hủy vé đã thanh toán/hoàn thành. Vui lòng liên hệ quầy vé.");
         }
 
-        // Gọi hàm private (vẫn chạy trong giao dịch của hàm public này)
         internalCancelBooking(booking);
     }
 
     @Override
-    @Transactional // (Hàm public này BẮT ĐẦU giao dịch)
+    @Transactional
     public void autoCancelExpiredBookingsForTrip(Long tripId) {
         LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(HOLD_DURATION_MINUTES);
         List<Booking> booked = bookingRepository.findAllByTrip_TripIdAndStatus(tripId, BookingStatus.BOOKED);
@@ -143,7 +136,6 @@ public class BookingServiceImpl implements BookingService {
         int cancelCount = 0;
         for (Booking booking : booked) {
             if (booking.getBookingTime().isBefore(cutoffTime)) {
-                // Gọi hàm private (vẫn chạy trong giao dịch của hàm public này)
                 internalCancelBooking(booking);
                 cancelCount++;
             }

@@ -37,6 +37,12 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link" th:href="@{/trips/all}" th:classappend="${#strings.startsWith(requestURI, '/trips/all') ? 'active' : ''}">Tất Cả Chuyến</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/trains/all}" th:classappend="${#strings.startsWith(requestURI, '/trains/all') ? 'active' : ''}">Xem Tàu</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" th:href="@{/bookings}" th:classappend="${#strings.startsWith(requestURI, '/bookings') ? 'active' : ''}">Vé Của Tôi</a>
                 </li>
 
