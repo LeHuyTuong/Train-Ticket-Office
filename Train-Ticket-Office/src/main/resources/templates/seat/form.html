@@ -3,65 +3,164 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/_admin_layout}">
 <head>
-    <title th:text="${seat.seatId != null ? 'Edit Seat' : 'Add New Seat'}">Seat Form</title>
+    <title th:text="${seat.seatId != null ? 'Chỉnh Sửa Ghế' : 'Thêm Mới Ghế'}">Seat Form</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: url('/images/train01.jpg') center/cover no-repeat fixed;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .form-container {
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 40px;
+            margin-top: 30px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 30px;
+            color: #004a99;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #cfd9e0;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #004a99;
+            box-shadow: 0 0 8px rgba(0,74,153,0.2);
+            outline: none;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s ease;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #009ffd, #2a2a72);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .alert-danger {
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .form-check-label {
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 30px 20px;
+            }
+            .page-title {
+                font-size: 26px;
+            }
+        }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
-    <h2 class="page-title" th:text="${seat.seatId != null ? 'Edit Seat' : 'Add New Seat'}">Seat Form</h2>
+    <div class="form-container">
+        <h2 class="page-title" th:text="${seat.seatId != null ? 'Chỉnh Sửa Ghế' : 'Thêm Mới Ghế'}">Seat Form</h2>
 
-    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <form th:action="@{/seats/save}" th:object="${seat}" method="post" class="col-md-8">
-        <input type="hidden" th:field="*{seatId}">
+        <form th:action="@{/seats/save}" th:object="${seat}" method="post">
+            <input type="hidden" th:field="*{seatId}">
 
-        <div class="mb-3">
-            <label class="form-label">Thuộc Toa (Carriage)</label>
-            <select th:field="*{carriage}" class="form-select" required>
-                <option value="">-- Select Carriage --</option>
-                <option th:each="carriage : ${allCarriages}"
-                        th:value="${carriage.carriageId}"
-                        th:text="|${carriage.train.code} - ${carriage.name} (${carriage.type})|"></option>
-            </select>
-        </div>
+            <div>
+                <label>Toa Thuộc (Carriage)</label>
+                <select th:field="*{carriage}" class="form-select" required>
+                    <option value="">-- Chọn Toa --</option>
+                    <option th:each="carriage : ${allCarriages}"
+                            th:value="${carriage.carriageId}"
+                            th:text="|${carriage.train.code} - ${carriage.name} (${carriage.type})|"></option>
+                </select>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Số Ghế (Seat Number)</label>
-            <input type="text" th:field="*{seatNumber}" class="form-control" required>
-        </div>
+            <div>
+                <label>Số Ghế (Seat Number)</label>
+                <input type="text" th:field="*{seatNumber}" class="form-control" placeholder="Nhập số ghế" required>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Loại Ghế (Seat Type)</label>
-            <select th:field="*{seatType}" class="form-select" required>
-                <option value="">-- Select Type --</option>
-                <option th:each="type : ${seatTypes}"
-                        th:value="${type}"
-                        th:text="${#strings.capitalize(type)}"></option>
-            </select>
-        </div>
+            <div>
+                <label>Loại Ghế (Seat Type)</label>
+                <select th:field="*{seatType}" class="form-select" required>
+                    <option value="">-- Chọn Loại Ghế --</option>
+                    <option th:each="type : ${seatTypes}"
+                            th:value="${type}"
+                            th:text="${#strings.capitalize(type)}"></option>
+                </select>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Giá Vé (Price)</label>
-            <input type="number" th:field="*{price}" step="1000" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Status</label>
-            <select th:field="*{status}" class="form-select" required>
-                <option th:each="s : ${T(com.example.trainticketoffice.common.SeatStatus).values()}"
-                        th:value="${s}"
-                        th:text="${s}"></option>
-            </select>
-        </div>
+            <div>
+                <label>Giá Vé (Ticket Price)</label>
+                <input type="number" th:field="*{price}" step="1000" class="form-control" placeholder="Nhập giá vé" required>
+            </div>
 
-        <div class="form-check mb-3">
-            <input type="checkbox" th:field="*{isActive}" class="form-check-input">
-            <label class="form-check-label">Is Active</label>
-        </div>
+            <div>
+                <label>Trạng Thái Ghế</label>
+                <select th:field="*{status}" class="form-select" required>
+                    <option th:each="s : ${T(com.example.trainticketoffice.common.SeatStatus).values()}"
+                            th:value="${s}"
+                            th:text="${s}"></option>
+                </select>
+            </div>
 
-        <div class="mb-3">
-            <button type="submit" class="btn btn-success">Save Seat</button>
-            <a th:href="@{/seats}" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <div class="form-check mb-3">
+                <input type="checkbox" th:field="*{isActive}" class="form-check-input">
+                <label class="form-check-label">Kích Hoạt Ghế</label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">Lưu Ghế</button>
+                <a th:href="@{/seats}" class="btn btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
 </div>
 </body>
 </html>

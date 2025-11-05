@@ -5,45 +5,66 @@
 <head>
     <title>Chọn Ghế & Toa</title>
     <style>
-        .carriage-nav { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
-        .carriage-tab { padding: 8px 12px; border: 1px solid #ccc; border-bottom: none; border-radius: 5px 5px 0 0; cursor: pointer; background-color: #f5f5f5; }
-        .carriage-tab:hover { background-color: #eee; }
-        .carriage-tab.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: bold; }
-        .seat-map-container { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .seat-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        body { font-family: 'Montserrat', sans-serif; background: #f0f4f8; padding: 20px; }
+
+        .page-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; color: #004a99; }
+
+        .carriage-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .carriage-tab { padding: 10px 15px; border-radius: 8px 8px 0 0; cursor: pointer; background-color: #e0e0e0; transition: all 0.2s; font-weight: 600; }
+        .carriage-tab.active { background: linear-gradient(135deg, #009ffd, #2a2a72); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+        .seat-map-container { padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); }
+        .seat-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
         .seat-grid.active { display: grid; }
+
         .seat-item { position: relative; }
-        .seat-item input[type="checkbox"] { opacity: 0; position: fixed; width: 0; }
-        .seat-label { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80px; border: 2px solid var(--primary-color); border-radius: 5px; cursor: pointer; transition: all 0.2s ease; background-color: #ffffff; }
-        .seat-label .seat-number { font-weight: bold; font-size: 1.1rem; color: var(--primary-color); }
-        .seat-label .seat-type { font-size: 0.7rem; text-transform: uppercase; color: #777; }
-        .seat-label .seat-price { font-size: 0.8rem; font-weight: bold; color: #d9534f; }
-        .seat-item input[type="checkbox"]:checked + .seat-label { background-color: var(--secondary-color); border-color: #003366; transform: scale(1.05); }
-        .seat-item input[type="checkbox"]:disabled + .seat-label { background-color: #e0e0e0; border-color: #aaa; cursor: not-allowed; }
+        .seat-item input[type="checkbox"] { display: none; }
+
+        .seat-label {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 90px;
+            border-radius: 10px;
+            border: 2px solid #004a99;
+            cursor: pointer;
+            background: #fff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .seat-label:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+        .seat-number { font-weight: bold; font-size: 1.2rem; color: #004a99; }
+        .seat-type { font-size: 0.75rem; text-transform: uppercase; color: #555; }
+        .seat-price { font-size: 0.85rem; font-weight: 600; color: #d9534f; }
+
+        .seat-item input[type="checkbox"]:checked + .seat-label {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: white;
+            border-color: #004a99;
+            transform: scale(1.08);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+        }
+
+        .seat-item input[type="checkbox"]:disabled + .seat-label {
+            background: #e0e0e0;
+            border-color: #aaa;
+            cursor: not-allowed;
+        }
         .seat-item input[type="checkbox"]:disabled + .seat-label .seat-number { color: #999; text-decoration: line-through; }
+
+        #total-price { font-size: 1.3rem; font-weight: 700; color: #d9534f; }
+
+        @media(max-width: 600px) { .seat-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); } }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
 
-    <form th:action="@{/bookings}" method="POST">
-        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
+    <h2 class="page-title">Bước 1: Chọn Ghế & Toa</h2>
 
-        <h2 class="page-title">Bước 1: Chọn Ghế</h2>
-        <div class="mb-4 p-3 bg-light border rounded">
-            <h4>Thông Tin Chuyến Tàu</h4>
-            <p>
-                <strong>Tuyến:</strong>
-                <span th:text="${selectedTrip.route.startStation.name}">Ga Đi</span> →
-                <span th:text="${selectedTrip.route.endStation.name}">Ga Đến</span>
-                (<span th:text="${selectedTrip.train.code}"></span>)
-            </p>
-            <p>
-                <strong>Đi:</strong> <span th:text="${#temporals.format(selectedTrip.departureTime, 'dd/MM/yyyy HH:mm')}"></span>
-                <strong>Đến:</strong> <span th:text="${#temporals.format(selectedTrip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span>
-            </p>
-        </div>
+    <form th:action="@{/bookings}" method="POST">
+        <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
 
         <div class="mb-3">
             <label class="form-label fw-bold">1. Chọn Toa</label>
@@ -52,34 +73,30 @@
                      th:text="|${carriage.name} (${carriage.type})|"
                      th:data-target="|carriage-grid-${carriage.carriageId}|"
                      th:classappend="${iter.index == 0 ? 'active' : ''}"
-                     class="carriage-tab">
-                </div>
+                     class="carriage-tab"></div>
             </div>
         </div>
 
         <div class="mb-3">
-            <label class="form-label fw-bold">2. Chọn Ghế (Có thể chọn nhiều)</label>
+            <label class="form-label fw-bold">2. Chọn Ghế</label>
             <div class="seat-map-container">
                 <div th:each="carriage, iter : ${carriages}"
                      th:id="|carriage-grid-${carriage.carriageId}|"
                      th:classappend="${iter.index == 0 ? 'active' : ''}"
                      class="seat-grid">
-
                     <th:block th:each="seat : ${allSeats}" th:if="${seat.carriage.carriageId == carriage.carriageId}">
                         <div class="seat-item">
-                            <th:block>
-                                <input type="checkbox"
-                                       name="seatIds"
-                                       th:id="|seat-${seat.seatId}|"
-                                       th:value="${seat.seatId}"
-                                       th:data-price="${seat.price}" th:disabled="${bookedSeatIds.contains(seat.seatId)}"
-                                       class="seat-checkbox" />
-                                <label th:for="|seat-${seat.seatId}|" class="seat-label">
-                                    <span class="seat-number" th:text="${seat.seatNumber}"></span>
-                                    <span class="seat-type" th:text="${seat.seatType}"></span>
-                                    <span class="seat-price" th:text="${#numbers.formatDecimal(seat.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
-                                </label>
-                            </th:block>
+                            <input type="checkbox"
+                                   name="seatIds"
+                                   th:id="|seat-${seat.seatId}|"
+                                   th:value="${seat.seatId}"
+                                   th:data-price="${seat.price}" th:disabled="${bookedSeatIds.contains(seat.seatId)}"
+                                   class="seat-checkbox" />
+                            <label th:for="|seat-${seat.seatId}|" class="seat-label">
+                                <span class="seat-number" th:text="${seat.seatNumber}"></span>
+                                <span class="seat-type" th:text="${seat.seatType}"></span>
+                                <span class="seat-price" th:text="${#numbers.formatDecimal(seat.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                            </label>
                         </div>
                     </th:block>
                 </div>
@@ -87,15 +104,14 @@
         </div>
 
         <div class="mb-3">
-            <h3 class="mt-3">Tổng Tiền:
-                <span id="total-price" class="text-danger fw-bold">0</span> VNĐ
-            </h3>
+            <h3 class="mt-3">Tổng Tiền: <span id="total-price">0</span> VNĐ</h3>
         </div>
 
         <div class="mb-3">
-            <label for="passengerName" class="form-label fw-bold">3. Tên Hành Khách (cho tất cả vé)</label>
+            <label for="passengerName" class="form-label fw-bold">Tên Hành Khách</label>
             <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
         </div>
+
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="phone" class="form-label fw-bold">Số Điện Thoại</label>
@@ -121,23 +137,19 @@
             const seatGrids = document.querySelectorAll('.seat-grid');
 
             function calculateTotal() {
-                let currentTotal = 0;
-                checkboxes.forEach(box => {
-                    if (box.checked) {
-                        currentTotal += parseFloat(box.dataset.price);
-                    }
-                });
-                totalElement.textContent = currentTotal.toLocaleString('vi-VN');
+                let total = 0;
+                checkboxes.forEach(cb => { if(cb.checked) total += parseFloat(cb.dataset.price); });
+                totalElement.textContent = total.toLocaleString('vi-VN');
             }
-            checkboxes.forEach(box => box.addEventListener('change', calculateTotal));
+
+            checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
 
             carriageTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     carriageTabs.forEach(t => t.classList.remove('active'));
                     seatGrids.forEach(g => g.classList.remove('active'));
                     this.classList.add('active');
-                    const targetGridId = this.dataset.target;
-                    document.getElementById(targetGridId).classList.add('active');
+                    document.getElementById(this.dataset.target).classList.add('active');
                 });
             });
         });

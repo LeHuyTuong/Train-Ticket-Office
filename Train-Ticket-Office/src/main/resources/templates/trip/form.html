@@ -1,53 +1,133 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/_admin_layout}">
-<head><title th:text="${trip.tripId == null ? 'Add New Trip' : 'Update Trip'}"></title></head>
+<head>
+    <title th:text="${trip.tripId == null ? 'Thêm Chuyến Mới' : 'Cập Nhật Chuyến'}">Form Chuyến</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: url('/images/train01.jpg') center/cover no-repeat fixed;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .form-container {
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 40px;
+            margin-top: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        .page-title {
+            font-weight: 700;
+            font-size: 28px;
+            color: #004a99;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        label {
+            font-weight: 600;
+            color: #333;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #cfd9e0;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #004a99;
+            box-shadow: 0 0 8px rgba(0,74,153,0.2);
+            outline: none;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s ease;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #009ffd, #2a2a72);
+            color: #fff;
+        }
+        .btn-success:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .invalid-feedback {
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 30px 20px;
+            }
+            .page-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
 <body>
 <div layout:fragment="content">
-    <h1 class="page-title" th:text="${trip.tripId == null ? 'Add New Trip' : 'Update Trip'}"></h1>
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <form th:action="@{/trips/save}" th:object="${trip}" method="POST">
-                <input type="hidden" th:field="*{tripId}" />
+    <div class="form-container">
+        <h2 class="page-title" th:text="${trip.tripId == null ? 'Thêm Chuyến Mới' : 'Cập Nhật Chuyến'}">Form Chuyến</h2>
+        <form th:action="@{/trips/save}" th:object="${trip}" method="POST">
+            <input type="hidden" th:field="*{tripId}" />
 
-                <div class="mb-3">
-                    <label for="train" class="form-label">Train</label>
-                    <select th:field="*{train}" id="train" class="form-select" th:classappend="${#fields.hasErrors('train')} ? 'is-invalid' : ''">
-                        <option value="">-- Select Train --</option>
-                        <option th:each="t : ${allTrains}" th:value="${t.id}" th:text="${t.code + ' - ' + t.name}"></option>
-                    </select>
-                    <div th:if="${#fields.hasErrors('train')}" th:errors="*{train}" class="invalid-feedback"></div>
-                </div>
+            <div class="mb-3">
+                <label for="train">Tàu</label>
+                <select th:field="*{train}" id="train" class="form-select" th:classappend="${#fields.hasErrors('train')} ? 'is-invalid' : ''">
+                    <option value="">-- Chọn tàu --</option>
+                    <option th:each="t : ${allTrains}" th:value="${t.id}" th:text="${t.code + ' - ' + t.name}"></option>
+                </select>
+                <div th:if="${#fields.hasErrors('train')}" th:errors="*{train}" class="invalid-feedback"></div>
+            </div>
 
-                <div class="mb-3">
-                    <label for="route" class="form-label">Route</label>
-                    <select th:field="*{route}" id="route" class="form-select" th:classappend="${#fields.hasErrors('route')} ? 'is-invalid' : ''">
-                        <option value="">-- Select Route --</option>
-                        <option th:each="r : ${allRoutes}" th:value="${r.id}" th:text="${r.code + ' (' + r.startStation.name + ' -> ' + r.endStation.name + ')'}"></option>
-                    </select>
-                    <div th:if="${#fields.hasErrors('route')}" th:errors="*{route}" class="invalid-feedback"></div>
-                </div>
+            <div class="mb-3">
+                <label for="route">Tuyến</label>
+                <select th:field="*{route}" id="route" class="form-select" th:classappend="${#fields.hasErrors('route')} ? 'is-invalid' : ''">
+                    <option value="">-- Chọn tuyến --</option>
+                    <option th:each="r : ${allRoutes}" th:value="${r.id}" th:text="${r.code + ' (' + r.startStation.name + ' -> ' + r.endStation.name + ')'}"></option>
+                </select>
+                <div th:if="${#fields.hasErrors('route')}" th:errors="*{route}" class="invalid-feedback"></div>
+            </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="departureTime" class="form-label">Departure Time</label>
-                        <input type="datetime-local" th:field="*{departureTime}" class="form-control" th:classappend="${#fields.hasErrors('departureTime')} ? 'is-invalid' : ''" id="departureTime">
-                        <div th:if="${#fields.hasErrors('departureTime')}" th:errors="*{departureTime}" class="invalid-feedback"></div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="arrivalTime" class="form-label">Arrival Time</label>
-                        <input type="datetime-local" th:field="*{arrivalTime}" class="form-control" th:classappend="${#fields.hasErrors('arrivalTime')} ? 'is-invalid' : ''" id="arrivalTime">
-                        <div th:if="${#fields.hasErrors('arrivalTime')}" th:errors="*{arrivalTime}" class="invalid-feedback"></div>
-                    </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="departureTime">Giờ Khởi Hành</label>
+                    <input type="datetime-local" th:field="*{departureTime}" id="departureTime" class="form-control" th:classappend="${#fields.hasErrors('departureTime')} ? 'is-invalid' : ''">
+                    <div th:if="${#fields.hasErrors('departureTime')}" th:errors="*{departureTime}" class="invalid-feedback"></div>
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label for="arrivalTime">Giờ Đến</label>
+                    <input type="datetime-local" th:field="*{arrivalTime}" id="arrivalTime" class="form-control" th:classappend="${#fields.hasErrors('arrivalTime')} ? 'is-invalid' : ''">
+                    <div th:if="${#fields.hasErrors('arrivalTime')}" th:errors="*{arrivalTime}" class="invalid-feedback"></div>
+                </div>
+            </div>
 
-                <div class="mt-4 text-center">
-                    <button type="submit" class="btn btn-success px-4">Save</button>
-                    <a th:href="@{/trips}" class="btn btn-secondary px-4">Back to List</a>
-                </div>
-            </form>
-        </div>
-    </div> </div>
+            <div class="mt-4 d-flex justify-content-center gap-3">
+                <button type="submit" class="btn btn-success px-4">Lưu</button>
+                <a th:href="@{/trips}" class="btn btn-secondary px-4">Quay về danh sách</a>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>
