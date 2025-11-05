@@ -34,7 +34,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${vnpay.secret-key}")
     private String secretKey;
 
-    @Value("${vnpay.pay-url:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
+    @Value("${vnpay.pay-url}")
     private String payUrl;
 
     @Value("${vnpay.return-url}")
@@ -56,13 +56,8 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         String resolvedIp = (clientIp == null || clientIp.isBlank()) ? "127.0.0.1" : clientIp;
-
-        // ===== SỬA LỖI Ở ĐÂY =====
         BigDecimal amount = booking.getPrice().setScale(0, RoundingMode.HALF_UP);
-        // ==========================
-
         long amountValue = amount.multiply(BigDecimal.valueOf(100)).longValueExact();
-
         String resolvedOrderInfo = Optional.ofNullable(orderInfo)
                 .filter(info -> !info.isBlank())
                 .orElse("Thanh toan dat ve tau " + booking.getBookingId());
@@ -76,7 +71,10 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(PaymentStatus.PENDING);
         payment.setTransactionRef(txnRef);
         payment.setOrderInfo(resolvedOrderInfo);
-        payment.setBankCode(bankCode);
+
+        if (bankCode != null && !bankCode.isBlank()) {
+            payment.setBankCode(bankCode);
+        }
 
         Map<String, String> params = new HashMap<>();
         params.put("vnp_Version", "2.1.0");
@@ -102,21 +100,23 @@ public class PaymentServiceImpl implements PaymentService {
         return payUrl + "?" + query;
     }
 
+    // ===== SỬA LOGIC (Check Response Code) =====
     @Override
     @Transactional
     public Payment handleVnpayReturn(Map<String, String> vnpayParams) {
         String txnRef = vnpayParams.get("vnp_TxnRef");
         if (txnRef == null || txnRef.isBlank()) {
-            throw new IllegalArgumentException("Thiếu mã giao dịch");
+            throw new IllegalArgumentException("Thiếu mã giao dịch (vnp_TxnRef)");
         }
 
         Payment payment = paymentRepository.findByTransactionRef(txnRef)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch tương ứng"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch tương ứng với mã: " + txnRef));
 
         if(payment.getStatus() == PaymentStatus.SUCCESS) {
             return payment;
         }
 
+        // Bắt đầu kiểm tra chữ ký (vẫn cần thiết)
         String receivedHash = vnpayParams.get("vnp_SecureHash");
         if (receivedHash == null || receivedHash.isBlank()) {
             payment.setStatus(PaymentStatus.FAILED);
@@ -132,7 +132,9 @@ public class PaymentServiceImpl implements PaymentService {
             paymentRepository.save(payment);
             return payment;
         }
+        // Kết thúc kiểm tra chữ ký
 
+        // ===== LOGIC THỰC TẾ (Không còn là MOCK) =====
         String responseCode = vnpayParams.get("vnp_ResponseCode");
         payment.setResponseCode(responseCode);
         payment.setBankCode(vnpayParams.get("vnp_BankCode"));
@@ -140,13 +142,16 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setVnpTransactionNo(vnpayParams.get("vnp_TransactionNo"));
         payment.setPayDate(VnpayUtils.parsePayDate(vnpayParams.get("vnp_PayDate")));
 
+        // Kiểm tra xem VNPay có trả về "00" (Thành công) không
         if ("00".equals(responseCode)) {
             payment.setStatus(PaymentStatus.SUCCESS);
             Booking booking = payment.getBooking();
             booking.setStatus(BookingStatus.PAID);
             bookingRepository.save(booking);
         } else {
+            // Nếu là "24" (Hủy giao dịch) hoặc lỗi khác
             payment.setStatus(PaymentStatus.FAILED);
+            // (Chúng ta không giải phóng ghế ở đây, để người dùng tự hủy)
         }
 
         paymentRepository.save(payment);
