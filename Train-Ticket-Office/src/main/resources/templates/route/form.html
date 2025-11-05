@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/_admin_layout}"> <head>
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
     <title th:text="*{id} != null ? 'Edit Route' : 'Add New Route'">Route Form</title>
 </head>
 <body>
@@ -32,14 +33,7 @@
                         th:text="${station.name} + ' (' + ${station.code} + ')'"></option>
             </select>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Total Distance (km)</label>
-            <input type="number" th:field="*{totalDistanceKm}" step="0.01" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Estimated Duration (minutes)</label>
-            <input type="number" th:field="*{estimatedDurationMinutes}" class="form-control" required>
-        </div>
+
         <div class="mb-3">
             <label class="form-label">Status</label>
             <select th:field="*{status}" class="form-select" required>

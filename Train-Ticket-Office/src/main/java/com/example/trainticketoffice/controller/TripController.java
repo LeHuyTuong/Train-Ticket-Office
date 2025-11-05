@@ -19,6 +19,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +45,8 @@ public class TripController {
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
-                                      @RequestParam("departureDate")
+                                      // SỬA: Thêm (required = false)
+                                      @RequestParam(value = "departureDate", required = false)
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
                                       Model model) {
 
@@ -58,10 +60,16 @@ public class TripController {
             return "customer/Home";
         }
 
-        List<Trip> availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
+        List<Trip> availableTrips;
+        if (departureDate != null) {
+            availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
+        } else {
+            availableTrips = tripService.findTripsByRoute(routeOpt.get(0));
+        }
 
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
+        Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
 
         for (Trip trip : availableTrips) {
             List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
@@ -74,11 +82,15 @@ public class TripController {
 
             long vipCount = 0;
             long normalCount = 0;
+            BigDecimal minPrice = null;
 
             Train train = trip.getTrain();
             for (Carriage carriage : train.getCarriages()) {
                 for (Seat seat : carriage.getSeats()) {
                     if (!bookedSeatIds.contains(seat.getSeatId())) {
+                        if (minPrice == null || seat.getPrice().compareTo(minPrice) < 0) {
+                            minPrice = seat.getPrice();
+                        }
                         if ("VIP".equalsIgnoreCase(seat.getSeatType())) {
                             vipCount++;
                         } else {
@@ -88,6 +100,9 @@ public class TripController {
                 }
             }
 
+            if (minPrice == null) minPrice = BigDecimal.ZERO;
+
+            tripMinPrices.put(trip.getTripId(), minPrice);
             availableVipCounts.put(trip.getTripId(), vipCount);
             availableNormalCounts.put(trip.getTripId(), normalCount);
         }
@@ -95,6 +110,7 @@ public class TripController {
         model.addAttribute("availableTrips", availableTrips);
         model.addAttribute("availableVipCounts", availableVipCounts);
         model.addAttribute("availableNormalCounts", availableNormalCounts);
+        model.addAttribute("tripMinPrices", tripMinPrices);
 
         model.addAttribute("startStation", startStationOpt.get());
         model.addAttribute("endStation", endStationOpt.get());
@@ -102,13 +118,69 @@ public class TripController {
         return "trip/trip-results";
     }
 
+    @GetMapping("/all")
+    public String showAllTrips(Model model) {
 
+        List<Trip> allTrips = tripService.getAllTrips().stream()
+                .filter(trip -> trip.getStatus() == TripStatus.UPCOMING || trip.getStatus() == TripStatus.DELAYED)
+                .collect(Collectors.toList());
+
+        Map<Long, Long> availableVipCounts = new HashMap<>();
+        Map<Long, Long> availableNormalCounts = new HashMap<>();
+        Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
+
+        for (Trip trip : allTrips) {
+            List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
+                            trip.getTripId(),
+                            List.of(BookingStatus.BOOKED, BookingStatus.PAID)
+                    )
+                    .stream()
+                    .map(booking -> booking.getSeat().getSeatId())
+                    .collect(Collectors.toList());
+
+            long vipCount = 0;
+            long normalCount = 0;
+            BigDecimal minPrice = null;
+
+            Train train = trip.getTrain();
+            for (Carriage carriage : train.getCarriages()) {
+                for (Seat seat : carriage.getSeats()) {
+                    if (!bookedSeatIds.contains(seat.getSeatId())) {
+                        if (minPrice == null || seat.getPrice().compareTo(minPrice) < 0) {
+                            minPrice = seat.getPrice();
+                        }
+                        if ("VIP".equalsIgnoreCase(seat.getSeatType())) {
+                            vipCount++;
+                        } else {
+                            normalCount++;
+                        }
+                    }
+                }
+            }
+
+            if (minPrice == null) minPrice = BigDecimal.ZERO;
+
+            tripMinPrices.put(trip.getTripId(), minPrice);
+            availableVipCounts.put(trip.getTripId(), vipCount);
+            availableNormalCounts.put(trip.getTripId(), normalCount);
+        }
+
+        model.addAttribute("availableTrips", allTrips);
+        model.addAttribute("availableVipCounts", availableVipCounts);
+        model.addAttribute("availableNormalCounts", availableNormalCounts);
+        model.addAttribute("tripMinPrices", tripMinPrices);
+
+        return "trip/all-trips";
+    }
+
+    // ===== SỬA HÀM NÀY (Thêm allTripStatus) =====
     @GetMapping
     public String listTrips(Model model) {
         model.addAttribute("trips", tripService.getAllTrips());
-        model.addAttribute("allTripStatus", TripStatus.values());
+        model.addAttribute("allTripStatus", TripStatus.values()); // <-- Gửi status ra list
         return "trip/list";
     }
+    // =============================================
 
     private void addCommonAttributes(Model model) {
         List<Train> availableTrains = trainService.getAllTrains().stream()
@@ -133,6 +205,7 @@ public class TripController {
             model.addAttribute("trip", trip.get());
             model.addAttribute("allTrains", trainService.getAllTrains());
             model.addAttribute("allRoutes", routeService.getAllRoutes());
+            return "trip/form"; // <-- THÊM RETURN
         }
         return "redirect:/trips";
     }
@@ -176,7 +249,7 @@ public class TripController {
             redirectAttributes.addFlashAttribute("successMessage", "Trip deleted successfully.");
         } catch (DataIntegrityViolationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể xóa chuyến này. Đã có booking hoặc vé liên quan đến chuyến này.");
-        } catch (IllegalStateException e) { // <-- Bắt lỗi mới
+        } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error deleting trip: " + e.getMessage());

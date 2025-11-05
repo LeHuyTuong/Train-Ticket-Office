@@ -44,7 +44,6 @@ public class Ticket extends BaseEntity {
     private String passengerPhone;
     private String passengerIdCard;
 
-    private BigDecimal distanceKm;
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
@@ -53,5 +52,4 @@ public class Ticket extends BaseEntity {
     private LocalDateTime bookedAt;
 
     private LocalDateTime checkedInAt;
-
 }

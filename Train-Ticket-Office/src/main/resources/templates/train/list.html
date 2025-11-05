@@ -24,8 +24,6 @@
             <th>ID</th>
             <th>Code</th>
             <th>Name</th>
-            <th>Total Carriages</th>
-            <th>Seat Capacity</th>
             <th>Status</th>
             <th>Actions</th>
         </tr>
@@ -35,8 +33,6 @@
             <td th:text="${train.id}"></td>
             <td th:text="${train.code}"></td>
             <td th:text="${train.name}"></td>
-            <td th:text="${train.totalCarriages}"></td>
-            <td th:text="${train.seatCapacity}"></td>
             <td>
                 <span th:text="${train.status.description}"
                       th:classappend="${train.status.name() == 'AVAILABLE'} ? 'badge bg-success' :

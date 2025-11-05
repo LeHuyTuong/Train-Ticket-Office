@@ -47,8 +47,12 @@ public class RouteServiceImpl implements RouteService {
             existingRoute.setCode(route.getCode());
             existingRoute.setStartStation(route.getStartStation());
             existingRoute.setEndStation(route.getEndStation());
-            existingRoute.setTotalDistanceKm(route.getTotalDistanceKm());
-            existingRoute.setEstimatedDurationMinutes(route.getEstimatedDurationMinutes());
+
+            // ===== SỬA LỖI Ở ĐÂY (Xóa 2 dòng) =====
+            // existingRoute.setTotalDistanceKm(route.getTotalDistanceKm());
+            // existingRoute.setEstimatedDurationMinutes(route.getEstimatedDurationMinutes());
+            // ===================================
+
             existingRoute.setStatus(route.getStatus());
 
             return routeRepository.save(existingRoute);

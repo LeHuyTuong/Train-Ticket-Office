@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List; // <-- Thêm import
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,7 +25,6 @@ import java.util.UUID;
 @Service
 public class TicketServiceImpl implements TicketService {
 
-    // (Các trường (fields) và constructor giữ nguyên...)
     private final TicketRepository ticketRepository;
     private final BookingRepository bookingRepository;
     private final SeatRepository seatRepository;
@@ -44,12 +43,11 @@ public class TicketServiceImpl implements TicketService {
         this.stationRepository = stationRepository;
     }
 
-    // (Hàm createTicketForBooking, getTicketIdByCode, checkInTicket, cancelTicket giữ nguyên...)
-
     @Override
     @Transactional
     public String createTicketForBooking(Long bookingId, Map<String, Object> requestData) {
-        // ... (code cũ của bạn)
+        // (Hàm này có vẻ là logic cũ, bạn nên xem xét xóa nó
+        // và thay bằng một hàm service tạo Ticket trực tiếp từ Booking)
         try {
             Long seatId = ((Number) requestData.get("seatId")).longValue();
             String passengerName = (String) requestData.get("passengerName");
@@ -58,7 +56,7 @@ public class TicketServiceImpl implements TicketService {
 
             Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
             if (bookingOpt.isEmpty()) { return null; }
-            Booking booking = bookingOpt.get();
+            Booking booking = bookingOpt.get(); // <-- Booking đã chứa giá
 
             Optional<Seat> seatOpt = seatRepository.findById(seatId);
             if (seatOpt.isEmpty()) { return null; }
@@ -87,8 +85,14 @@ public class TicketServiceImpl implements TicketService {
             ticket.setPassengerPhone(passengerPhone);
             ticket.setPassengerIdCard(passengerIdCard);
 
-            ticket.setDistanceKm(BigDecimal.valueOf(200.0));
-            ticket.setTotalPrice(BigDecimal.valueOf(150000.0));
+            // ===== SỬA LỖI Ở ĐÂY =====
+            // 1. Xóa dòng lỗi 'setDistanceKm' vì trường này không còn
+            // ticket.setDistanceKm(BigDecimal.valueOf(200.0)); // <-- XÓA DÒNG NÀY
+
+            // 2. Lấy giá chính xác từ Booking (đã được tính khi tạo)
+            ticket.setTotalPrice(booking.getPrice()); // <-- SỬA DÒNG NÀY
+            // =========================
+
             ticket.setStatus(TicketStatus.ACTIVE);
             ticket.setBookedAt(LocalDateTime.now());
 
@@ -110,7 +114,6 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public boolean checkInTicket(Long ticketId) {
-        // ... (code cũ của bạn)
         Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
 
         if (ticketOpt.isEmpty()) { return false; } // 404
@@ -127,7 +130,6 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public boolean cancelTicket(Long ticketId) {
-        // ... (code cũ của bạn)
         Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
 
         if (ticketOpt.isEmpty()) { return false; } // 404
@@ -142,9 +144,6 @@ public class TicketServiceImpl implements TicketService {
         ticketRepository.save(ticket);
         return true;
     }
-
-    // ===== HÀM MỚI (BẮT BUỘC) =====
-    // Repository đã có sẵn 2 hàm này vì nó kế thừa JpaRepository
 
     @Override
     @Transactional(readOnly = true)

@@ -46,7 +46,11 @@ public class StationServiceImpl implements StationService {
             existingStation.setName(station.getName());
             existingStation.setCity(station.getCity());
             existingStation.setProvince(station.getProvince());
-            existingStation.setKmFromStart(station.getKmFromStart());
+
+            // ===== SỬA LỖI Ở ĐÂY (Xóa dòng) =====
+            // existingStation.setKmFromStart(station.getKmFromStart());
+            // ===================================
+
             existingStation.setStatus(station.getStatus());
 
             return stationRepository.save(existingStation);

@@ -2,7 +2,7 @@ package com.example.trainticketoffice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
+import java.math.BigDecimal; // <-- BỎ IMPORT NÀY
 
 @Data
 @AllArgsConstructor
@@ -27,12 +27,6 @@ public class Route extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "end_station_id", nullable = false)
     private Station endStation;
-
-    @Column(name = "total_distance_km", nullable = false, precision = 8, scale = 2)
-    private BigDecimal totalDistanceKm;
-
-    @Column(name = "estimated_duration_minutes", nullable = false)
-    private Integer estimatedDurationMinutes;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

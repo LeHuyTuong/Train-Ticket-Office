@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Hóa đơn thanh toán VNPAY</title>
+    <style>
+        .invoice { max-width: 700px; margin: 30px auto; padding: 20px; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-family: Arial, sans-serif; }
+        .inv-head { text-align:center; color:#005a9f; }
+        .row { display:flex; justify-content:space-between; margin:8px 0; }
+
+        /* CSS cho thông báo lỗi/thành công */
+        .status-box {
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+<div class="invoice" layout:fragment="content">
+    <h2 class="inv-head">HÓA ĐƠN THANH TOÁN</h2>
+
+    <div th:if="${transactionStatus == 'Thành công'}" class="status-box status-success">
+        Giao dịch Thành công!
+    </div>
+    <div th:if="${transactionStatus != 'Thành công'}" class="status-box status-fail">
+        Giao dịch Thất bại hoặc đã bị Hủy.
+    </div>
+    <div class="row"><strong>Mã giao dịch (VNPay):</strong> <span th:text="${transactionNo}"></span></div>
+    <div class="row"><strong>Mã đơn hàng (Shop):</strong> <span th:text="${bookingId}"></span></div>
+    <div class="row"><strong>Ngân hàng:</strong> <span th:text="${bankCode}"></span></div>
+    <div class="row"><strong>Số tiền:</strong> <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT')}"></span> VND</div>
+    <div class="row"><strong>Thời gian:</strong> <span th:text="${#temporals.format(payDate, 'dd/MM/yyyy HH:mm:ss')}"></span></div>
+    <div class="row"><strong>Trạng thái:</strong> <span th:text="${transactionStatus}"></span></div>
+
+    <div style="text-align:center; margin-top:20px;">
+        <a th:href="@{/bookings}" style="display:inline-block; padding:10px 18px; background:#005a9f; color:#fff; text-decoration:none; border-radius:6px;">Về danh sách vé</a>
+    </div>
+</div>
+</body>
+</html>
