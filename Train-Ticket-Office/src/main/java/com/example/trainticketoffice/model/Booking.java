@@ -6,16 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal; // <-- THÊM
-import java.time.LocalDate;
-import java.time.LocalDateTime; // <-- THÊM
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Booking extends BaseEntity{
+public class Booking extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,35 +22,37 @@ public class Booking extends BaseEntity{
     private Long bookingId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "trip_id")
+    @JoinColumn(name = "trip_id", nullable = false)
     private Trip trip;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "seat_id")
+    @JoinColumn(name = "seat_id", nullable = false)
     private Seat seat;
 
-    @Column(nullable = false, length = 100)
+    // ===== CÁC TRƯỜNG CHỮ - DÙNG NVARCHAR ĐỂ LƯU UNICODE =====
+    @Column(name = "passenger_name", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String passengerName;
 
-    @Column(length = 20)
+    @Column(name = "phone", length = 20, columnDefinition = "NVARCHAR(20)")
     private String phone;
 
-    @Column(length = 100)
+    @Column(name = "email", length = 100, columnDefinition = "NVARCHAR(100)")
     private String email;
 
-    // ===== THÊM TRƯỜNG NÀY =====
+    // ===== GIÁ TIỀN =====
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    // ===== TRẠNG THÁI ĐẶT VÉ =====
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BookingStatus status = BookingStatus.BOOKED;
 
-    // ===== SỬA TỪ LocalDate thành LocalDateTime =====
+    // ===== THỜI GIAN ĐẶT =====
     @Column(name = "booking_time", nullable = false)
     private LocalDateTime bookingTime;
 }

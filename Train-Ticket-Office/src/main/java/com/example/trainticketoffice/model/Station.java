@@ -2,7 +2,6 @@ package com.example.trainticketoffice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal; // <-- BỎ IMPORT NÀY
 
 @Data
 @AllArgsConstructor
@@ -17,16 +16,16 @@ public class Station extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "code", unique = true, nullable = false, length = 10)
+    @Column(name = "code", unique = true, nullable = false, length = 10, columnDefinition = "NVARCHAR(10)")
     private String code;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String name;
 
-    @Column(name = "city", nullable = false, length = 50)
+    @Column(name = "city", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String city;
 
-    @Column(name = "province", nullable = false, length = 50)
+    @Column(name = "province", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String province;
 
     @Enumerated(EnumType.STRING)

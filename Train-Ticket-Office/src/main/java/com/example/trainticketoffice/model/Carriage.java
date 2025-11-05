@@ -2,6 +2,7 @@ package com.example.trainticketoffice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +10,6 @@ import java.util.List;
 @Entity
 @Table(name = "carriages")
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Carriage extends BaseEntity {
@@ -20,24 +19,27 @@ public class Carriage extends BaseEntity {
     @Column(name = "carriage_id")
     private Long carriageId;
 
-    // Toa này thuộc tàu nào
+    // ===== TOA NÀY THUỘC TÀU NÀO =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "train_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore // tránh vòng lặp khi serialize JSON
     private Train train;
 
-    // Ví dụ: "Toa 1", "Toa 2"
-    @Column(name = "name", nullable = false)
+    // ===== TÊN TOA =====
+    @Column(name = "name", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String name;
 
-    // Ví dụ: "Ngồi mềm điều hòa", "Giường nằm"
-    @Column(name = "type", nullable = false)
+    // ===== LOẠI TOA =====
+    @Column(name = "type", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String type;
 
-    // Thứ tự sắp xếp
+    // ===== THỨ TỰ SẮP XẾP =====
     @Column(name = "position")
     private int position;
 
-    // Một toa có nhiều ghế
+    // ===== MỘT TOA CÓ NHIỀU GHẾ =====
     @OneToMany(mappedBy = "carriage", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

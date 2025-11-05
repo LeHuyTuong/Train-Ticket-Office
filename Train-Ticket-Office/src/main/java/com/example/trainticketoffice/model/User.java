@@ -2,10 +2,7 @@ package com.example.trainticketoffice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import javax.management.relation.Role;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Data
 @AllArgsConstructor
@@ -13,31 +10,30 @@ import java.time.LocalTime;
 @Entity
 @Getter
 @Setter
-@Table(name = "Users")
+@Table(name = "users")
+public class User {
 
-public class User{
-    // TODO : Quốc Bảo Repo + Service CRUD
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "email",nullable = false)
+    @Column(name = "email", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String email;
 
-    @Column(name = "password",nullable = false)
+    @Column(name = "password", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String password;
 
-    @Column(name = "fullName",nullable = false)
+    @Column(name = "full_name", nullable = false, columnDefinition = "NVARCHAR(100)")
     private String fullName;
 
-    @Column(name = "phone",nullable = false)
+    @Column(name = "phone", nullable = false, columnDefinition = "NVARCHAR(20)")
     private String phone;
 
-    @Column(name = "create_Date")
+    @Column(name = "create_date")
     private LocalDate createDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role",nullable = false)
+    @Column(name = "role", nullable = false)
     private Role role;
 
     public enum Role {

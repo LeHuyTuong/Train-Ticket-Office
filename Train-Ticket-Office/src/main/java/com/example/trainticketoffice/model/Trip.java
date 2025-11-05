@@ -10,11 +10,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "trips")
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Trip  {
+public class Trip {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,10 +29,10 @@ public class Trip  {
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    @Column(name = "departure_station")
+    @Column(name = "departure_station", columnDefinition = "NVARCHAR(255)")
     private String departureStation;
 
-    @Column(name = "arrival_station")
+    @Column(name = "arrival_station", columnDefinition = "NVARCHAR(255)")
     private String arrivalStation;
 
     @NotNull(message = "Departure time is mandatory")

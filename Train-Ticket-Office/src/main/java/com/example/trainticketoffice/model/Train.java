@@ -2,13 +2,11 @@ package com.example.trainticketoffice.model;
 
 import com.example.trainticketoffice.common.TrainStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,11 +24,11 @@ public class Train {
 
     @NotBlank(message = "Train code is mandatory")
     @Size(min = 2, max = 10, message = "Code must be between 2 and 10 characters")
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "NVARCHAR(10)")
     private String code;
 
     @NotBlank(message = "Train name is mandatory")
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
     private String name;
 
     @Enumerated(EnumType.STRING)

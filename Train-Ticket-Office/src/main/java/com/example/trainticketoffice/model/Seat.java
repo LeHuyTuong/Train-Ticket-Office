@@ -1,18 +1,12 @@
 package com.example.trainticketoffice.model;
 
 import com.example.trainticketoffice.common.SeatStatus;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-
 import java.math.BigDecimal;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 
 @Entity
 @Table(name = "seats")
@@ -32,18 +26,18 @@ public class Seat extends BaseEntity {
     private Carriage carriage;
 
     @NotBlank(message = "Seat number is mandatory")
-    @Column(name = "seat_number", nullable = false)
+    @Column(name = "seat_number", nullable = false, columnDefinition = "NVARCHAR(20)")
     private String seatNumber;
 
     @NotBlank(message = "Seat type is mandatory")
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(50)")
     private String seatType; // "normal", "vip"
-
 
     @NotNull(message = "Price is mandatory")
     @DecimalMin(value = "0.0", inclusive = true, message = "Price must be >= 0")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private SeatStatus status;
