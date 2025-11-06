@@ -4,68 +4,158 @@
     <meta charset="UTF-8">
     <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">Train Ticket Office</title>
 
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
 
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        /* (Giữ nguyên toàn bộ CSS của bạn ở đây...) */
         :root {
             --primary-color: #004a99;
             --secondary-color: #f2c94c;
-            --bg-light-yellow: #fffbe6;
+            --bg-light: #f9f9f9;
+            --sidebar-width: 240px;
         }
-        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-light-yellow); }
-        .navbar-dark.bg-primary { background-color: var(--primary-color) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
-        .navbar-brand { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem; }
-        .content-card { background-color: #ffffff; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); margin-top: 2rem; margin-bottom: 2rem; }
-        .page-title { color: var(--primary-color); font-family: 'Montserrat', sans-serif; font-weight: 700; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; display: inline-block; margin-bottom: 1.5rem; }
-        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); font-weight: 600; padding: 0.6rem 1.2rem; }
-        .btn-primary:hover { background-color: #003366; border-color: #003366; }
-        .btn-secondary { font-weight: 600; padding: 0.6rem 1.2rem; }
-        .table thead { background-color: var(--primary-color); color: white; text-transform: uppercase; }
-        .table-hover tbody tr:hover { background-color: rgba(0, 74, 153, 0.08); }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-light);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--primary-color);
+            color: white;
+            padding-top: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar .sidebar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: white;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            border-radius: 6px;
+            margin: 0.25rem 0;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+
+        .content-card {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .page-title {
+            color: var(--primary-color);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 8px;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 600;
+            padding: 0.55rem 1.2rem;
+            border-radius: 6px;
+        }
+
+        .btn-primary:hover {
+            background-color: #003366;
+            border-color: #003366;
+        }
+
+        /* Table */
+        .table thead {
+            background-color: var(--primary-color);
+            color: #fff;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 74, 153, 0.08);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" th:href="@{/}">Train Ticket Office</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="mainNav">
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-brand">Train Ticket</div>
+    <a th:href="@{/routes/search}" th:classappend="${requestURI == '/routes/search' ? 'active' : ''}"><i class="bi bi-search"></i> Tìm Tuyến</a>
+    <a th:href="@{/bookings}" th:classappend="${requestURI == '/bookings' ? 'active' : ''}"><i class="bi bi-ticket-perforated"></i> Vé Của Tôi</a>
 
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/routes/search}" th:classappend="${requestURI == '/routes/search' ? 'active' : ''}">Tìm Tuyến</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/bookings}" th:classappend="${requestURI == '/bookings' ? 'active' : ''}">Vé Của Tôi</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/routes}" th:classappend="${#strings.startsWith(requestURI, '/routes') and not #strings.startsWith(requestURI, '/routes/search') ? 'active' : ''}">Quản lý Tuyến</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/trips}" th:classappend="${#strings.startsWith(requestURI, '/trips') ? 'active' : ''}">Quản lý Chuyến</a>
-                </li>
+    <!-- Menu admin (nếu user có quyền) -->
+    <a th:href="@{/routes}" th:classappend="${#strings.startsWith(requestURI, '/routes') and not #strings.startsWith(requestURI, '/routes/search') ? 'active' : ''}"><i class="bi bi-signpost-2"></i> Quản lý Tuyến</a>
+    <a th:href="@{/trips}" th:classappend="${#strings.startsWith(requestURI, '/trips') ? 'active' : ''}"><i class="bi bi-train-freight-front"></i> Quản lý Chuyến</a>
 
+    <a th:href="@{/logout}"><i class="bi bi-box-arrow-right"></i> Đăng Xuất</a>
+</div>
 
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/logout}">Đăng Xuất</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<div class="container mt-4">
+<!-- Main Content -->
+<div class="main-content">
     <div class="content-card">
         <div layout:fragment="content">
+            <!-- Nội dung sẽ render ở đây -->
         </div>
     </div>
 </div>

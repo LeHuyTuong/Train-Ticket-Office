@@ -2,203 +2,206 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng Nhập - Hệ Thống Bán Vé Tàu Lửa</title>
+    <title>Đăng Nhập - Vé Tàu Việt Nam</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
-        /* Biến CSS để dễ thay đổi màu sắc */
         :root {
-            --primary-color: #004a99; /* Xanh đậm đường sắt */
-            --secondary-color: #f2c94c; /* Vàng tàu hỏa */
-            --text-dark: #333;
-            --text-light: #f8f8f8;
-            --bg-light: #ffffff;
-            --bg-yellow-light: #fffbe6; /* MÀU VÀNG NHẠT BẠN MUỐN */
-            --shadow-light: rgba(0, 0, 0, 0.1);
-            --shadow-medium: rgba(0, 0, 0, 0.2);
+            --primary-color: #009ffd;
+            --secondary-color: #2a2a72;
+            --accent-color: #f9ca24;
+            --bg-page: #f0f4f8;
+            --card-bg: rgba(255,255,255,0.2);
         }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
 
         body {
-            font-family: 'Roboto', sans-serif;
-
-            /* ===== THAY ĐỔI 1: NỀN MÀU VÀNG NHẠT ===== */
-            background-color: var(--bg-yellow-light);
-            /* Bỏ hình nền tàu hỏa */
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            color: var(--text-dark);
-        }
-
-        /* ===== THAY ĐỔI 2: DIV BỌC MỚI ĐỂ "NHỎ GỌN" LẠI ===== */
-        .main-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            animation: fadeInUp 1s ease-out; /* Hiệu ứng cho cả cụm */
-        }
-
-        /* Header hệ thống */
-        .system-header {
-            /* ===== THAY ĐỔI 3: ĐỔI MÀU CHỮ ===== */
-            color: var(--primary-color); /* Đổi sang màu xanh đậm để đọc được trên nền vàng */
-            margin-bottom: 20px; /* Giảm khoảng cách với hộp login */
-            text-align: center;
-            /* Bỏ animation riêng lẻ */
-        }
-        .system-header h1 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 3.5rem;
-            margin: 0;
-            text-shadow: none; /* Bỏ shadow vì nền đã sáng */
-        }
-        .system-header p {
-            font-size: 1.2rem;
-            margin-top: 10px;
-            color: #555; /* Đổi màu chữ */
+            background: linear-gradient(135deg, #e0f7ff, #dbe6f1);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
         }
 
-        .login-container {
-            background-color: var(--bg-light);
-            padding: 2.5rem 3.5rem;
-            border-radius: 12px;
-            box-shadow: 0 15px 30px var(--shadow-medium);
+        .login-card {
+            display: flex;
             width: 100%;
-            max-width: 450px;
-            text-align: center;
-            border-top: 6px solid var(--primary-color);
-            /* Bỏ animation riêng lẻ */
+            max-width: 900px;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            backdrop-filter: blur(15px);
+            background: var(--card-bg);
+            animation: fadeIn 1s ease;
         }
 
-        h2 {
+        @keyframes fadeIn {
+            from {opacity:0; transform: translateY(20px);}
+            to {opacity:1; transform: translateY(0);}
+        }
+
+        .login-left {
+            width:50%;
+            padding: 3rem 2.5rem;
+            display:flex;
+            flex-direction: column;
+            justify-content:center;
+        }
+
+        .login-left h1 {
             color: var(--primary-color);
-            margin-bottom: 1.8rem;
-            font-size: 2.2rem;
+            font-size: 2.4rem;
+            margin-bottom: 10px;
             font-weight: 700;
-            border-bottom: 2px solid var(--secondary-color);
-            padding-bottom: 10px;
-            display: inline-block;
+        }
+
+        .login-left p.slogan {
+            font-size: 1rem;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 30px;
         }
 
         .form-group {
             margin-bottom: 1.5rem;
-            text-align: left;
+            position: relative;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.6rem;
-            font-weight: 500;
-            color: var(--text-dark);
-            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 6px;
         }
 
         .form-group input {
-            width: 100%;
-            padding: 1rem 1.2rem;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1.05rem;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            width:100%;
+            padding:12px 40px 12px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.15);
+            background: rgba(255,255,255,0.85);
+            font-size: 1rem;
+            transition: all 0.3s ease;
         }
 
         .form-group input:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 8px rgba(0, 74, 153, 0.4);
+            box-shadow: 0 0 12px rgba(0,159,253,0.4);
             outline: none;
         }
 
-        .login-button {
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--primary-color);
-            color: var(--text-light);
+        .form-group i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
             font-size: 1.2rem;
-            font-weight: 700;
+        }
+
+        .login-button {
+            width:100%;
+            padding: 14px;
+            border:none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #009ffd, #2a2a72);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 74, 153, 0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+            position: relative;
         }
 
         .login-button:hover {
-            background-color: #003366;
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 74, 153, 0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
-        /* Hiệu ứng Animation (chỉ cần 1 cái) */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Right branding */
+        .login-right {
+            width:50%;
+            position: relative;
+            background: url('/images/train-bg.jpg') center/cover no-repeat;
         }
 
-        /* Responsive cho màn hình nhỏ */
-        @media (max-width: 600px) {
-            .system-header h1 {
-                font-size: 2.5rem;
-            }
-            .system-header p {
-                font-size: 1rem;
-            }
-            .login-container {
-                padding: 2rem;
-                margin: 0 15px;
-            }
-            h2 {
-                font-size: 1.8rem;
-            }
-            .form-group input, .login-button {
-                padding: 0.8rem;
-                font-size: 1rem;
-            }
+        .login-right::before {
+            content:"";
+            position: absolute;
+            inset:0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.25), rgba(0,0,0,0.7));
         }
 
+        .branding-content {
+            position: absolute;
+            inset:0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: var(--accent-color);
+            z-index:2;
+            padding: 20px;
+        }
+
+        .branding-content h2 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .branding-content p {
+            font-size: 1.1rem;
+        }
+
+        @media(max-width: 850px){
+            .login-card { flex-direction: column; max-width: 400px; }
+            .login-left, .login-right { width:100%; }
+            .login-right { height: 180px; }
+            .login-left { padding:2rem; }
+        }
     </style>
 </head>
 <body>
 
-<div class="main-wrapper">
-    <div class="system-header">
-        <h1>Hệ Thống Bán Vé Tàu Lửa</h1>
-        <p>An toàn - Tiện lợi - Nhanh chóng</p>
-    </div>
+<div class="login-card">
 
-    <div class="login-container">
-        <h2>Đăng Nhập</h2>
+    <div class="login-left">
+        <h1>Đăng nhập hệ thống</h1>
+        <p class="slogan">Hệ thống quản lý và đặt vé tàu an toàn, tiện lợi và chuyên nghiệp</p>
 
         <form method="post" th:action="@{/login}">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="email@gmail.com" required>
+                <i class="bi bi-envelope-fill"></i>
+            </div>
 
             <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required placeholder="example@gmail.com">
+                <label>Mật khẩu</label>
+                <input type="password" name="password" placeholder="********" required>
+                <i class="bi bi-lock-fill"></i>
             </div>
 
-            <div class="form-group">
-                <label for="password">Mật khẩu:</label>
-                <input type="password" id="password" name="password" required placeholder="********">
-            </div>
-
-            <div>
-                <button type="submit" class="login-button">Đăng Nhập Ngay</button>
-            </div>
+            <button type="submit" class="login-button">Đăng nhập</button>
         </form>
-
     </div>
+
+    <div class="login-right">
+        <div class="branding-content">
+            <h2>Vé Tàu Việt Nam</h2>
+            <p>Di chuyển an toàn - Nhanh chóng - Tiện lợi</p>
+        </div>
+    </div>
+
 </div>
 
 </body>

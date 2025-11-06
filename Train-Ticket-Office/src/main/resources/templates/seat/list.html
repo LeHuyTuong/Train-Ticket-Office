@@ -3,73 +3,187 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/_admin_layout}">
 <head>
-    <title>Seat Management</title>
+    <title>Quản Lý Ghế</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: url('/images/train01.jpg') center/cover no-repeat fixed;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .container-card {
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 30px 25px;
+            margin: 30px auto;
+            max-width: 1100px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 30px;
+            color: #004a99;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #009ffd, #2a2a72);
+            color: #fff;
+            border: none;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: #fff;
+            border: none;
+        }
+        .btn-info:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+        }
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        table {
+            background: rgba(255,255,255,0.85);
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        table th {
+            background: linear-gradient(135deg,#009ffd,#2a2a72);
+            color: #fff;
+        }
+
+        table tr:hover {
+            background: rgba(0,159,253,0.15);
+        }
+
+        .badge {
+            font-weight: 600;
+        }
+
+        .filter-form {
+            padding: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container-card { padding: 20px 15px; }
+            .page-title { font-size: 26px; }
+        }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
-    <h2 class="page-title">Seat Management</h2>
+    <div class="container-card">
+        <h2 class="page-title">Quản Lý Ghế</h2>
 
-    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <div class="mb-3">
-        <a th:href="@{/seats/new}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Add New Seat
-        </a>
+        <div class="mb-3">
+            <a th:href="@{/seats/new}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Thêm Ghế Mới
+            </a>
+        </div>
+
+        <form th:action="@{/seats}" method="GET" class="row g-3 mb-4 filter-form">
+            <div class="col-md-5">
+                <label for="carriageId" class="form-label fw-bold">Lọc theo Toa (Filter by Carriage)</label>
+                <select name="carriageId" id="carriageId" class="form-select">
+                    <option value="">-- Hiển thị tất cả --</option>
+                    <option th:each="carriage : ${allCarriages}"
+                            th:value="${carriage.carriageId}"
+                            th:text="|Tàu ${carriage.train.code} - ${carriage.name} (${carriage.type})|"
+                            th:selected="${carriage.carriageId == selectedCarriageId}"></option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-info">Lọc</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tàu</th>
+                    <th>Toa</th>
+                    <th>Số Ghế</th>
+                    <th>Loại Ghế</th>
+                    <th>Giá Vé (VNĐ)</th>
+                    <th>Trạng Thái</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="seat : ${seats}">
+                    <td th:text="${seat.seatId}"></td>
+                    <td th:text="${seat.carriage.train.code}"></td>
+                    <td th:text="${seat.carriage.name}"></td>
+                    <td th:text="${seat.seatNumber}"></td>
+                    <td th:text="${seat.seatType}"></td>
+                    <td th:text="${#numbers.formatDecimal(seat.price, 0, 'COMMA', 0, 'POINT')}"></td>
+                    <td>
+                        <span th:if="${seat.status == T(com.example.trainticketoffice.common.SeatStatus).AVAILABLE}" class="badge bg-success" th:text="${seat.status}"></span>
+                        <span th:if="${seat.status == T(com.example.trainticketoffice.common.SeatStatus).BOOKED}" class="badge bg-danger" th:text="${seat.status}"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{/seats/edit/{id}(id=${seat.seatId})}" class="btn btn-sm btn-warning">Chỉnh sửa</a>
+                        <a th:href="@{/seats/delete/{id}(id=${seat.seatId})}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Xóa</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(seats)}">
+                    <td colspan="8" class="text-center">Không tìm thấy ghế nào.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">⬅ Quay Lại Dashboard</a>
     </div>
-
-    <form th:action="@{/seats}" method="GET" class="row g-3 mb-4 p-3 bg-light border rounded">
-        <div class="col-md-5">
-            <label for="carriageId" class="form-label fw-bold">Lọc theo Toa (Filter by Carriage)</label>
-            <select name="carriageId" id="carriageId" class="form-select">
-                <option value="">-- Hiển thị tất cả --</option>
-                <option th:each="carriage : ${allCarriages}"
-                        th:value="${carriage.carriageId}"
-                        th:text="|Tàu ${carriage.train.code} - ${carriage.name} (${carriage.type})|"
-                        th:selected="${carriage.carriageId == selectedCarriageId}"></option>
-            </select>
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-info">Lọc</button>
-        </div>
-    </form>
-
-    <table class="table table-striped table-hover">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Tàu</th>
-            <th>Toa</th>
-            <th>Số Ghế</th>
-            <th>Loại Ghế</th>
-            <th>Giá Vé (VNĐ)</th> <th>Trạng Thái</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="seat : ${seats}">
-            <td th:text="${seat.seatId}"></td>
-            <td th:text="${seat.carriage.train.code}"></td>
-            <td th:text="${seat.carriage.name}"></td>
-            <td th:text="${seat.seatNumber}"></td>
-            <td th:text="${seat.seatType}"></td>
-            <td th:text="${#numbers.formatDecimal(seat.price, 0, 'COMMA', 0, 'POINT')}"></td> <td>
-            <span th:if="${seat.status == T(com.example.trainticketoffice.common.SeatStatus).AVAILABLE}" class="badge bg-success" th:text="${seat.status}"></span>
-            <span th:if="${seat.status == T(com.example.trainticketoffice.common.SeatStatus).BOOKED}" class="badge bg-danger" th:text="${seat.status}"></span>
-        </td>
-            <td>
-                <a th:href="@{/seats/edit/{id}(id=${seat.seatId})}" class="btn btn-sm btn-warning">Edit</a>
-                <a th:href="@{/seats/delete/{id}(id=${seat.seatId})}" class="btn btn-sm btn-danger"
-                   onclick="return confirm('Are you sure?')">Delete</a>
-            </td>
-        </tr>
-        <tr th:if="${#lists.isEmpty(seats)}">
-            <td colspan="8" class="text-center">Không tìm thấy ghế nào.</td>
-        </tr>
-        </tbody>
-    </table>
-
-    <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
 </div>
 </body>
 </html>
