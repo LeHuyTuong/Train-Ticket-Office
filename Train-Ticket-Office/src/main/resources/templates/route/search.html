@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/_customer_layout}">
 <head>
-    <title>Tìm Kiếm Chuyến Tàu | Train Ticket Office</title>
+    <title>Kết Quả Tìm Kiếm | Train Ticket Office</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -39,24 +39,11 @@
             margin-bottom: 30px;
         }
 
-        label {
-            font-weight: 600;
-            color: #003366;
-        }
-
         .form-select {
             border-radius: 10px;
             padding: 12px 14px;
             border: 1px solid #cfd9e0;
-            width: 100%;
             margin-bottom: 18px;
-            font-size: 1rem;
-            transition: 0.25s;
-        }
-
-        .form-select:focus {
-            border-color: #004a99;
-            box-shadow: 0 0 8px rgba(0,74,153,0.25);
         }
 
         .btn-custom {
@@ -76,25 +63,24 @@
         }
 
         .no-results {
-            margin-top: 20px;
-            background: rgba(255, 235, 59, 0.9);
-            border-left: 4px solid #ff9800;
-            padding: 14px 18px;
-            border-radius: 8px;
+            margin-top: 25px;
+            background: rgba(255, 77, 77, 0.95);
+            border-left: 5px solid #d32f2f;
+            padding: 16px 20px;
+            border-radius: 10px;
             font-weight: 600;
-            font-size: 15px;
-            color: #6b5200;
+            color: #fff;
             text-align: center;
-            animation: fadeIn .4s ease;
         }
+
+        .no-results i { margin-right: 6px; }
     </style>
 </head>
 
 <body>
 <div layout:fragment="content">
-
     <div class="form-container">
-        <h2 class="page-title">Tìm Kiếm Chuyến Tàu</h2>
+        <h2 class="page-title">Kết Quả Tìm Kiếm</h2>
 
         <form th:action="@{/trips/search}" method="GET">
             <div class="row g-3">
@@ -121,12 +107,12 @@
 
             <div class="text-center mt-4">
                 <button type="submit" class="btn-custom">
-                    <i class="bi bi-search"></i> Tìm chuyến
+                    <i class="bi bi-search"></i> Tìm chuyến khác
                 </button>
             </div>
         </form>
 
-        <!-- Hiển thị nếu không có chuyến -->
+        <!-- ✅ Thong bao loi -->
         <div th:if="${not #lists.isEmpty(param.startStationId)
                      and not #lists.isEmpty(param.endStationId)
                      and #lists.isEmpty(trips)}"
@@ -134,7 +120,6 @@
             <i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy chuyến tàu phù hợp.
         </div>
     </div>
-
 </div>
 </body>
 </html>
