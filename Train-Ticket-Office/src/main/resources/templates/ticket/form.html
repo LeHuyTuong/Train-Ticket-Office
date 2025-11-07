@@ -46,12 +46,25 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.25);
         }
 
+        /* SỬA: Ghế đã BÁN (PAID) */
         .seat-item input[type="checkbox"]:disabled + .seat-label {
             background: #e0e0e0;
             border-color: #aaa;
             cursor: not-allowed;
         }
         .seat-item input[type="checkbox"]:disabled + .seat-label .seat-number { color: #999; text-decoration: line-through; }
+
+        /* THÊM: Ghế đang GIỮ (HELD) */
+        .seat-item input[type="checkbox"]:disabled + .seat-label.held {
+            background: #fff9e0; /* Màu vàng nhạt */
+            border-color: #ffc107;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.held .seat-number {
+            color: #ff9800;
+            text-decoration: none;
+        }
 
         #total-price { font-size: 1.3rem; font-weight: 700; color: #d9534f; }
 
@@ -62,6 +75,8 @@
 <div layout:fragment="content">
 
     <h2 class="page-title">Bước 1: Chọn Ghế & Toa</h2>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
     <form th:action="@{/bookings}" method="POST">
         <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
@@ -78,7 +93,7 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label fw-bold">2. Chọn Ghế</label>
+            <label class="form-label fw-bold">2. Chọn Ghế (Click để chọn/bỏ chọn)</label>
             <div class="seat-map-container">
                 <div th:each="carriage, iter : ${carriages}"
                      th:id="|carriage-grid-${carriage.carriageId}|"
@@ -90,7 +105,8 @@
                                    name="seatIds"
                                    th:id="|seat-${seat.seatId}|"
                                    th:value="${seat.seatId}"
-                                   th:data-price="${seat.price}" th:disabled="${bookedSeatIds.contains(seat.seatId)}"
+                                   th:data-price="${seat.price}"
+                                   th:disabled="${paidSeatIds.contains(seat.seatId) or heldSeatIds.contains(seat.seatId)}"
                                    class="seat-checkbox" />
                             <label th:for="|seat-${seat.seatId}|" class="seat-label">
                                 <span class="seat-number" th:text="${seat.seatNumber}"></span>
@@ -104,11 +120,23 @@
         </div>
 
         <div class="mb-3">
-            <h3 class="mt-3">Tổng Tiền: <span id="total-price">0</span> VNĐ</h3>
+            <h3 class="mt-3">Tổng Tiền (Tạm tính): <span id="total-price">0</span> VNĐ</h3>
+            <small class="form-text text-muted">Giá cuối cùng sẽ được tính sau khi áp dụng giảm giá (nếu có) ở bước tiếp theo.</small>
         </div>
 
         <div class="mb-3">
-            <label for="passengerName" class="form-label fw-bold">Tên Hành Khách</label>
+            <label for="passengerType" class="form-label fw-bold">Loại Hành Khách (Áp dụng cho tất cả vé)</label>
+            <select id="passengerType" name="passengerType" class="form-select" required>
+                <option value="ADULT" selected>Người Lớn (10-60 tuổi)</option>
+                <option value="CHILD">Trẻ Em (6-9 tuổi) - Giảm 50%</option>
+                <option value="SENIOR">Người Cao Tuổi (>60 tuổi) - Giảm 15%</option>
+                <option value="INFANT">Em Bé (<6 tuổi) - Miễn phí (nếu ngồi chung)</option>
+            </select>
+            <small class="form-text text-muted">(Nếu đặt cho nhiều loại hành khách, vui lòng đặt thành nhiều đơn hàng riêng biệt)</small>
+        </div>
+
+        <div class="mb-3">
+            <label for="passengerName" class="form-label fw-bold">Tên Hành Khách (Đại diện)</label>
             <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
         </div>
 
@@ -136,14 +164,44 @@
             const carriageTabs = document.querySelectorAll('.carriage-tab');
             const seatGrids = document.querySelectorAll('.seat-grid');
 
+            // THÊM: Logic cho F5 (sessionStorage)
+            const tripId = /*[[${selectedTrip.tripId}]]*/ 0;
+            const storageKey = 'selectedSeats_' + tripId;
+
+            // 1. Tải lại các ghế đã chọn từ sessionStorage khi load trang
+            function loadSelectedSeats() {
+                const selected = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+                selected.forEach(seatId => {
+                    const cb = document.getElementById('seat-' + seatId);
+                    if (cb && !cb.disabled) {
+                        cb.checked = true;
+                    }
+                });
+                calculateTotal();
+            }
+
+            // 2. Lưu các ghế đã chọn vào sessionStorage mỗi khi thay đổi
+            function saveSelectedSeats() {
+                let selected = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        selected.push(cb.value); // Chỉ lưu ID
+                    }
+                });
+                sessionStorage.setItem(storageKey, JSON.stringify(selected));
+            }
+
+            // 3. Tính tổng
             function calculateTotal() {
                 let total = 0;
                 checkboxes.forEach(cb => { if(cb.checked) total += parseFloat(cb.dataset.price); });
                 totalElement.textContent = total.toLocaleString('vi-VN');
+                saveSelectedSeats(); // <-- Gọi hàm lưu ở đây
             }
 
             checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
 
+            // 4. Logic chuyển tab toa tàu (giữ nguyên)
             carriageTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     carriageTabs.forEach(t => t.classList.remove('active'));
@@ -152,6 +210,18 @@
                     document.getElementById(this.dataset.target).classList.add('active');
                 });
             });
+
+            // 5. THÊM: Gán class .held cho ghế đang bị giữ
+            const heldSeatIds = /*[[${heldSeatIds}]]*/ [];
+            heldSeatIds.forEach(seatId => {
+                const cb = document.getElementById('seat-' + seatId);
+                if (cb && cb.disabled) {
+                    cb.nextElementSibling.classList.add('held'); // Thêm class 'held' vào <label>
+                }
+            });
+
+            // 6. Tải các lựa chọn đã lưu khi F5
+            loadSelectedSeats();
         });
     </script>
 

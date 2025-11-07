@@ -45,8 +45,8 @@ public class TripController {
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
-                                      // SỬA: Thêm (required = false)
-                                      @RequestParam(value = "departureDate", required = false)
+                                      // SỬA: Bỏ (required = false)
+                                      @RequestParam("departureDate")
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
                                       Model model) {
 
@@ -61,12 +61,10 @@ public class TripController {
         }
 
         List<Trip> availableTrips;
-        if (departureDate != null) {
-            availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
-        } else {
-            availableTrips = tripService.findTripsByRoute(routeOpt.get(0));
-        }
+        // SỬA: Chỉ dùng logic tìm theo ngày
+        availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
 
+        // (Logic còn lại của hàm giữ nguyên)
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
@@ -118,6 +116,7 @@ public class TripController {
         return "trip/trip-results";
     }
 
+    // (Tất cả các hàm Quản lý (Admin) khác giữ nguyên)
     @GetMapping("/all")
     public String showAllTrips(Model model) {
 
@@ -173,14 +172,12 @@ public class TripController {
         return "trip/all-trips";
     }
 
-    // ===== SỬA HÀM NÀY (Thêm allTripStatus) =====
     @GetMapping
     public String listTrips(Model model) {
         model.addAttribute("trips", tripService.getAllTrips());
         model.addAttribute("allTripStatus", TripStatus.values()); // <-- Gửi status ra list
         return "trip/list";
     }
-    // =============================================
 
     private void addCommonAttributes(Model model) {
         List<Train> availableTrains = trainService.getAllTrains().stream()

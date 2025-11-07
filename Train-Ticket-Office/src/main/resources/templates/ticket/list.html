@@ -118,61 +118,63 @@
         </div>
 
         <div th:if="${not #lists.isEmpty(bookings)}">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>Mã Đặt Vé</th>
-                    <th>Mã Tàu</th>
-                    <th>Ngày Khởi Hành</th>
-                    <th>Ghế</th>
-                    <th>Thanh Toán</th>
-                    <th>Trạng Thái Chuyến</th>
-                    <th>Hành Động</th>
-                </tr>
-                </thead>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Mã Đặt Vé</th>
+                        <th>Mã Tàu</th>
+                        <th>Ngày Khởi Hành</th>
+                        <th>Ghế</th>
+                        <th>Thanh Toán</th>
+                        <th>Trạng Thái Chuyến</th>
+                        <th>Hành Động</th>
+                    </tr>
+                    </thead>
 
-                <tbody>
-                <tr th:each="booking : ${bookings}">
-                    <td th:text="${booking.bookingId}"></td>
-                    <td th:text="${booking.trip.train.code}"></td>
-                    <td th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy HH:mm')}"></td>
-                    <td th:text="${booking.seat.seatNumber}"></td>
+                    <tbody>
+                    <tr th:each="booking : ${bookings}">
+                        <td th:text="${booking.bookingId}"></td>
+                        <td th:text="${booking.trip.train.code}"></td>
+                        <td th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td th:text="${booking.seat.seatNumber}"></td>
 
-                    <td>
-                        <span th:if="${booking.status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
-                        <span th:if="${booking.status.name() == 'BOOKED'}" class="badge bg-warning text-dark">Chờ thanh toán</span>
-                        <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge bg-secondary">Đã hủy</span>
-                        <span th:if="${booking.status.name() == 'COMPLETED'}" class="badge bg-primary">Hoàn thành</span>
-                    </td>
+                        <td>
+                            <span th:if="${booking.status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
+                            <span th:if="${booking.status.name() == 'BOOKED'}" class="badge bg-warning text-dark">Chờ thanh toán</span>
+                            <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge bg-secondary">Đã hủy</span>
+                            <span th:if="${booking.status.name() == 'COMPLETED'}" class="badge bg-primary">Hoàn thành</span>
+                        </td>
 
-                    <td>
-                        <span th:text="${booking.trip.status.description}"
-                              th:classappend="${booking.trip.status.name() == 'COMPLETED'} ? 'badge bg-success' :
-                                             (${booking.trip.status.name() == 'IN_PROGRESS'} ? 'badge bg-danger' :
-                                             (${booking.trip.status.name() == 'CANCELLED'} ? 'badge bg-secondary' :
-                                             (${booking.trip.status.name() == 'DELAYED'} ? 'badge bg-warning text-dark' : 'badge bg-info')))">
-                        </span>
-                    </td>
+                        <td>
+                            <span th:text="${booking.trip.status.description}"
+                                  th:classappend="${booking.trip.status.name() == 'COMPLETED'} ? 'badge bg-success' :
+                                                 (${booking.trip.status.name() == 'IN_PROGRESS'} ? 'badge bg-danger' :
+                                                 (${booking.trip.status.name() == 'CANCELLED'} ? 'badge bg-secondary' :
+                                                 (${booking.trip.status.name() == 'DELAYED'} ? 'badge bg-warning text-dark' : 'badge bg-info')))">
+                            </span>
+                        </td>
 
-                    <td class="actions">
-                        <a th:href="@{/bookings/{id}(id=${booking.bookingId})}" class="btn btn-info btn-sm">Xem</a>
+                        <td class="actions">
+                            <a th:href="@{/bookings/{id}(id=${booking.bookingId})}" class="btn btn-info btn-sm">Xem</a>
 
-                        <a th:if="${booking.status.name() == 'BOOKED'}"
-                           th:href="@{/bookings/delete/{id}(id=${booking.bookingId})}"
-                           class="btn btn-danger btn-sm"
-                           onclick="return confirm('Bạn có chắc muốn hủy vé này?')">
-                            Hủy
-                        </a>
+                            <a th:if="${booking.status.name() == 'BOOKED' or booking.status.name() == 'PAID'}"
+                               th:href="@{/bookings/delete/{id}(id=${booking.bookingId})}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Bạn có chắc muốn hủy vé này? Chính sách hoàn tiền sẽ được áp dụng nếu vé đã thanh toán.')">
+                                Hủy
+                            </a>
 
-                        <a th:if="${booking.status.name() == 'BOOKED'}"
-                           th:href="@{/payments/bookings/{id}(id=${booking.bookingId})}"
-                           class="btn btn-success btn-sm">
-                            Thanh Toán
-                        </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                            <a th:if="${booking.status.name() == 'BOOKED' and booking.order != null}"
+                               th:href="@{/payments/order/{id}(id=${booking.order.orderId})}"
+                               class="btn btn-success btn-sm">
+                                Thanh Toán Đơn Hàng
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <a th:href="@{/}" class="btn btn-secondary mt-3">⬅ Về Trang Chủ</a>

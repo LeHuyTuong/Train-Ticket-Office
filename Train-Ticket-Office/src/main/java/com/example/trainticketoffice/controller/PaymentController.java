@@ -2,7 +2,9 @@ package com.example.trainticketoffice.controller;
 
 import com.example.trainticketoffice.common.PaymentStatus;
 import com.example.trainticketoffice.model.Booking;
+import com.example.trainticketoffice.model.Order; // THÊM
 import com.example.trainticketoffice.model.Payment;
+import com.example.trainticketoffice.repository.OrderRepository; // THÊM
 import com.example.trainticketoffice.service.BookingService;
 import com.example.trainticketoffice.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,27 +28,27 @@ import java.util.Optional;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final BookingService bookingService;
+    private final OrderRepository orderRepository; // SỬA
 
-
-    @GetMapping("/bookings/{bookingId}")
-    public String showPaymentPage(@PathVariable Long bookingId,
+    // SỬA: Dùng orderId
+    @GetMapping("/order/{orderId}")
+    public String showPaymentPage(@PathVariable Long orderId,
                                   Model model,
                                   RedirectAttributes redirectAttributes) {
-        Optional<Booking> booking = bookingService.findById(bookingId);
-        if (booking.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thông tin đặt vé");
+        // SỬA: Tìm Order
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng");
             return "redirect:/bookings";
         }
 
-        // (Kiểm tra logic thời gian chờ ở đây nếu cần, nhưng ServiceImpl đã làm)
-
-        model.addAttribute("booking", booking.get());
-        return "payment/checkout"; // Trả về trang checkout (nơi có nút VNPay)
+        model.addAttribute("order", orderOpt.get()); // SỬA
+        return "payment/checkout";
     }
 
-    @PostMapping("/bookings/{bookingId}")
-    public String startPayment(@PathVariable Long bookingId,
+    // SỬA: Dùng orderId
+    @PostMapping("/order/{orderId}")
+    public String startPayment(@PathVariable Long orderId,
                                @RequestParam(value = "bankCode", required = false) String bankCode,
                                @RequestParam(value = "orderInfo", required = false) String orderInfo,
                                @RequestParam(value = "orderType", required = false) String orderType,
@@ -55,55 +57,50 @@ public class PaymentController {
                                RedirectAttributes redirectAttributes) {
         try {
             String paymentUrl = paymentService.createPaymentRedirectUrl(
-                    bookingId,
+                    orderId, // SỬA
                     bankCode,
                     orderInfo,
                     orderType,
                     locale,
                     resolveClientIp(request)
             );
-            return "redirect:" + paymentUrl; // Chuyển hướng đến trang VNPay
+            return "redirect:" + paymentUrl;
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/payments/bookings/" + bookingId;
+            return "redirect:/payments/order/" + orderId; // SỬA
         }
     }
 
-    // ===== SỬA HÀM NÀY ĐỂ TRẢ VỀ "invoice.html" =====
     @GetMapping("/vnpay-return")
     public String handleVnpayReturn(HttpServletRequest request, Model model) {
         Map<String, String> params = new HashMap<>();
         request.getParameterMap().forEach((key, value) -> params.put(key, value[0]));
 
         try {
-            // 1. Xử lý logic thanh toán (mock)
             Payment payment = paymentService.handleVnpayReturn(params);
 
-            // 2. Chuẩn bị dữ liệu cho file invoice.html
             boolean isSuccess = payment.getStatus() == PaymentStatus.SUCCESS;
 
-            // Lấy mã giao dịch (nếu VNPay trả về) hoặc dùng mã của mình
             String transactionNo = payment.getVnpTransactionNo() != null
                     ? payment.getVnpTransactionNo()
                     : payment.getTransactionRef();
 
             model.addAttribute("transactionNo", transactionNo);
-            model.addAttribute("bookingId", payment.getBooking().getBookingId());
+            // SỬA: Gửi OrderId ra view
+            model.addAttribute("orderId", payment.getOrder().getOrderId());
             model.addAttribute("bankCode", payment.getBankCode());
             model.addAttribute("amount", payment.getAmount());
             model.addAttribute("payDate", payment.getPayDate());
             model.addAttribute("transactionStatus", isSuccess ? "Thành công" : "Thất bại");
 
-            // 3. Trả về file invoice.html mới của bạn
             return "payment/invoice";
 
         } catch (IllegalArgumentException ex) {
-            // Xử lý lỗi nếu không tìm thấy giao dịch
             model.addAttribute("errorMessage", ex.getMessage());
-            return "payment/result"; // Trả về file result cũ nếu lỗi nặng
+            model.addAttribute("transactionStatus", "Thất bại");
+            return "payment/invoice"; // Trả về invoice dù lỗi
         }
     }
-    // =============================================
 
     private String resolveClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");

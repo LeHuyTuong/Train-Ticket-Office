@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
+    <title>Bước 2: Xác Nhận Đơn Hàng</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="page-title">Bước 2: Xác Nhận Đơn Hàng</h2>
+
+    <div class="alert alert-success">
+        <h4 class="alert-heading">Giữ chỗ thành công!</h4>
+        <p>Đơn hàng của bạn đã được tạo (giữ trong 15 phút). Vui lòng hoàn tất thanh toán cho toàn bộ đơn hàng để xác nhận.</p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Tóm tắt đơn hàng</h5>
+            <p class="mb-1">
+                <strong>Mã Đơn Hàng:</strong> <span th:text="${order.orderId}"></span>
+            </p>
+            <p class="mb-1">
+                <strong>Số lượng vé:</strong> <span th:text="${#lists.size(bookings)}"></span>
+            </p>
+            <p class="mb-1">
+                <strong>Tổng tiền:</strong>
+                <span class="fw-bold text-danger fs-5"
+                      th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'">
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <h4 class="mb-3">Chi tiết vé trong đơn hàng</h4>
+    <div th:if="${not #lists.isEmpty(bookings)}">
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>Hành Khách</th>
+                <th>Chuyến Tàu</th>
+                <th>Ghế</th>
+                <th>Loại</th>
+                <th>Giá Gốc</th>
+                <th>Giá Cuối</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="booking : ${bookings}">
+                <td th:text="${booking.passengerName}"></td>
+                <td th:text="${booking.trip.train.code}"></td>
+                <td th:text="|${booking.seat.seatNumber} (${booking.seat.carriage.name})|"></td>
+                <td th:text="${booking.passengerType}"></td>
+                <td th:text="${#numbers.formatDecimal(booking.originalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                <td th:text="${#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <a th:href="@{/payments/order/{id}(id=${order.orderId})}" class="btn btn-success btn-lg">
+        Thanh toán VNPay (Tổng cộng <span th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')}"></span>đ)
+    </a>
+
+    <a th:href="@{/bookings}" class="btn btn-secondary btn-lg mt-3">Để sau (Về "Vé Của Tôi")</a>
+</div>
+</body>
+</html>

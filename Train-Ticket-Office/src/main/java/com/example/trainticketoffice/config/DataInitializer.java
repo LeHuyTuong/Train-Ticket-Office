@@ -32,6 +32,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PaymentRepository paymentRepository;
     private final CarriageRepository carriageRepository;
     private final BookingRepository bookingRepository;
+    private final OrderRepository orderRepository; // <-- THÊM
 
     // Các biến tạm để chia sẻ giữa các hàm
     private User customer;
@@ -41,7 +42,8 @@ public class DataInitializer implements CommandLineRunner {
     private Seat se1_vip_seat_A1, se1_normal_seat_B1, se3_vip_seat_A1;
     private Trip tripSE1, tripSE3;
 
-    public DataInitializer(UserService userService, UserRepository userRepository, StationService stationService, StationRepository stationRepository, RouteService routeService, TrainService trainService, SeatService seatService, TripService tripService, BookingService bookingService, TicketRepository ticketRepository, PaymentRepository paymentRepository, CarriageRepository carriageRepository, BookingRepository bookingRepository) {
+    // SỬA: Thêm OrderRepository vào constructor
+    public DataInitializer(UserService userService, UserRepository userRepository, StationService stationService, StationRepository stationRepository, RouteService routeService, TrainService trainService, SeatService seatService, TripService tripService, BookingService bookingService, TicketRepository ticketRepository, PaymentRepository paymentRepository, CarriageRepository carriageRepository, BookingRepository bookingRepository, OrderRepository orderRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.stationService = stationService;
@@ -55,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
         this.paymentRepository = paymentRepository;
         this.carriageRepository = carriageRepository;
         this.bookingRepository = bookingRepository;
+        this.orderRepository = orderRepository; // <-- THÊM
     }
 
     @Override
@@ -70,7 +73,7 @@ public class DataInitializer implements CommandLineRunner {
             createRoutes();
             createTrainsAndSeats();
             createTrips(today);
-            createBookingsAndTickets();
+            createBookingsAndTickets(); // <-- SỬA LOGIC TRONG HÀM NÀY
 
             System.out.println("--- Realistic Data Initialization COMPLETE ---");
 
@@ -80,6 +83,8 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    // (Các hàm createUsers, createStations, createRoutes, createTrainsAndSeats, createTrip, createTrips giữ nguyên)
+    // ... (Giữ nguyên các hàm không đổi) ...
     private void createUsers(LocalDate today) {
         System.out.println("Creating Users...");
         User staff = new User();
@@ -113,7 +118,6 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createStations() {
         System.out.println("Creating 34 Stations...");
-        // Lưu các ga chính lại để tạo Route
         stationHaNoi = createStation("HNO", "Ga Hà Nội", "Hà Nội", "Hà Nội");
         createStation("GBA", "Ga Giáp Bát", "Hà Nội", "Hà Nội");
         createStation("PLY", "Ga Phủ Lý", "Hà Nam", "Hà Nam");
@@ -146,8 +150,6 @@ public class DataInitializer implements CommandLineRunner {
         createStation("BHO", "Ga Biên Hòa", "Đồng Nai", "Đồng Nai");
         createStation("DAN", "Ga Dĩ An", "Bình Dương", "Bình Dương");
         stationSaiGon = createStation("SGO", "Ga Sài Gòn", "Hồ Chí Minh", "Hồ Chí Minh");
-
-        // 2 ga phụ cho đủ 34
         createStation("PYG", "Ga Chợ Gã", "Nghệ An", "Nghệ An");
         createStation("MIN", "Ga Minh Khôi", "Thanh Hóa", "Thanh Hóa");
     }
@@ -190,9 +192,7 @@ public class DataInitializer implements CommandLineRunner {
 
         List<Train> allTrains = List.of(trainSE1, trainSE2, trainSE3, trainSE4, trainSE5, trainSE6);
 
-        // Tạo 2 toa VIP và 5 toa thường cho MỖI tàu
         for (Train train : allTrains) {
-            // 2 Toa VIP (Giường nằm)
             for (int i = 1; i <= 2; i++) {
                 Carriage carriage = new Carriage();
                 carriage.setTrain(train);
@@ -200,46 +200,36 @@ public class DataInitializer implements CommandLineRunner {
                 carriage.setType("Giường nằm 4 chỗ");
                 carriage.setPosition(i);
                 carriage = carriageRepository.save(carriage);
-
-                // Mỗi toa VIP có 20 ghế (giường)
                 for (int j = 1; j <= 20; j++) {
                     Seat seat = new Seat();
                     seat.setCarriage(carriage);
                     seat.setSeatNumber("A" + j);
                     seat.setSeatType("VIP");
-                    seat.setPrice(new BigDecimal("1800000.00")); // Giá tuyến dài
+                    seat.setPrice(new BigDecimal("1800000.00"));
                     seat.setStatus(SeatStatus.AVAILABLE);
                     seat.setIsActive(true);
                     seat = seatService.saveSeat(seat);
-
-                    // Lưu lại ghế A1 của tàu SE1 và SE3 để test booking
                     if (train.getCode().equals("SE1") && i == 1 && j == 1) se1_vip_seat_A1 = seat;
                     if (train.getCode().equals("SE3") && i == 1 && j == 1) se3_vip_seat_A1 = seat;
                 }
             }
-
-            // 5 Toa Thường (Ngồi mềm)
             for (int i = 1; i <= 5; i++) {
-                int toaPos = i + 2; // (tiếp nối 2 toa VIP)
+                int toaPos = i + 2;
                 Carriage carriage = new Carriage();
                 carriage.setTrain(train);
                 carriage.setName("Toa " + toaPos + " (Thường)");
                 carriage.setType("Ngồi mềm điều hòa");
                 carriage.setPosition(toaPos);
                 carriage = carriageRepository.save(carriage);
-
-                // Mỗi toa thường có 50 ghế
                 for (int j = 1; j <= 50; j++) {
                     Seat seat = new Seat();
                     seat.setCarriage(carriage);
                     seat.setSeatNumber("B" + j);
                     seat.setSeatType("normal");
-                    seat.setPrice(new BigDecimal("1100000.00")); // Giá tuyến dài
+                    seat.setPrice(new BigDecimal("1100000.00"));
                     seat.setStatus(SeatStatus.AVAILABLE);
                     seat.setIsActive(true);
                     seat = seatService.saveSeat(seat);
-
-                    // Lưu lại ghế B1 của tàu SE1
                     if (train.getCode().equals("SE1") && i == 1 && j == 1) se1_normal_seat_B1 = seat;
                 }
             }
@@ -260,53 +250,48 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createTrips(LocalDate today) {
         System.out.println("Creating Trips (Schedule)...");
-
-        // (Tuyến dài ~ 33-35 tiếng)
         tripSE1 = createTrip(trainSE1, routeHnSg,
-                today.plusDays(7).atTime(19, 30), // 19:30 Tối
-                today.plusDays(9).atTime(4, 30),  // 4:30 Sáng (2 ngày sau)
+                today.plusDays(7).atTime(19, 30),
+                today.plusDays(9).atTime(4, 30),
                 TripStatus.UPCOMING);
-
         createTrip(trainSE2, routeSgHn,
                 today.plusDays(7).atTime(19, 30),
                 today.plusDays(9).atTime(4, 30),
                 TripStatus.UPCOMING);
-
         tripSE3 = createTrip(trainSE3, routeHnSg,
-                today.plusDays(8).atTime(22, 0),  // 22:00 Tối
-                today.plusDays(10).atTime(7, 0), // 7:00 Sáng
+                today.plusDays(8).atTime(22, 0),
+                today.plusDays(10).atTime(7, 0),
                 TripStatus.UPCOMING);
-
         createTrip(trainSE4, routeSgHn,
                 today.plusDays(8).atTime(22, 0),
                 today.plusDays(10).atTime(7, 0),
                 TripStatus.UPCOMING);
-
-        // (Tuyến ngắn HN-DNG ~ 16 tiếng)
         createTrip(trainSE5, routeHnDng,
-                today.plusDays(5).atTime(9, 0),   // 9:00 Sáng
-                today.plusDays(6).atTime(1, 0),   // 1:00 Sáng (hôm sau)
+                today.plusDays(5).atTime(9, 0),
+                today.plusDays(6).atTime(1, 0),
                 TripStatus.UPCOMING);
-
-        // (Tuyến ngắn SG-NT ~ 8 tiếng)
         createTrip(trainSE6, routeSgNt,
-                today.plusDays(6).atTime(10, 0),  // 10:00 Sáng
-                today.plusDays(6).atTime(18, 0),  // 18:00 Tối (cùng ngày)
+                today.plusDays(6).atTime(10, 0),
+                today.plusDays(6).atTime(18, 0),
                 TripStatus.UPCOMING);
     }
 
+    // ===== SỬA HOÀN TOÀN HÀM NÀY (ĐỂ DÙNG LOGIC ORDER MỚI) =====
     private void createBookingsAndTickets() {
-        System.out.println("Creating sample Bookings, Tickets, and Payments...");
+        System.out.println("Creating sample Orders, Bookings, Tickets, and Payments...");
 
-        // --- BOOKING 1: (SE1, Ghế A1) - ĐÃ THANH TOÁN ---
-        Booking booking1 = bookingService.createBooking(
+        // --- ĐƠN HÀNG 1: (SE1, Ghế A1) - ĐÃ THANH TOÁN ---
+        Order order1 = bookingService.createOrder(
                 customer.getId(),
                 tripSE1.getTripId(),
-                se1_vip_seat_A1.getSeatId(),
+                List.of(se1_vip_seat_A1.getSeatId()), // Phải là List
                 customer.getFullName(),
+                "ADULT", // Thêm loại hành khách
                 customer.getPhone(),
                 customer.getEmail()
         );
+        // Lấy booking ra từ order
+        Booking booking1 = order1.getBookings().get(0);
 
         Ticket ticket1 = new Ticket();
         ticket1.setCode("TICKET-SE1-A1");
@@ -324,9 +309,9 @@ public class DataInitializer implements CommandLineRunner {
         ticketRepository.save(ticket1);
 
         Payment payment1 = new Payment();
-        payment1.setBooking(booking1);
+        payment1.setOrder(order1); // SỬA: setOrder
         payment1.setUser(customer);
-        payment1.setAmount(booking1.getPrice());
+        payment1.setAmount(order1.getTotalPrice()); // SỬA: Lấy giá từ Order
         payment1.setStatus(PaymentStatus.SUCCESS);
         payment1.setTransactionRef("TXN_PAID_123");
         payment1.setOrderInfo("Thanh toán vé tàu (Data init)");
@@ -335,32 +320,38 @@ public class DataInitializer implements CommandLineRunner {
         payment1.setPayDate(LocalDateTime.now().minusDays(1).plusMinutes(15));
         paymentRepository.save(payment1);
 
+        // Cập nhật trạng thái cho Order và Booking
+        order1.setStatus(PaymentStatus.SUCCESS);
+        orderRepository.save(order1);
+
         booking1.setStatus(BookingStatus.PAID);
         bookingRepository.save(booking1);
 
 
-        // --- BOOKING 2: (SE1, Ghế B1) - CHƯA THANH TOÁN ---
-        Booking booking2 = bookingService.createBooking(
+        // --- ĐƠN HÀNG 2: (SE1, Ghế B1) - CHƯA THANH TOÁN ---
+        Order order2 = bookingService.createOrder(
                 customer.getId(),
                 tripSE1.getTripId(),
-                se1_normal_seat_B1.getSeatId(),
+                List.of(se1_normal_seat_B1.getSeatId()), // Phải là List
                 "Người Đi Cùng",
+                "ADULT", // Thêm loại hành khách
                 customer.getPhone(),
                 customer.getEmail()
         );
-        // (Không tạo Ticket, Payment. Status mặc định là BOOKED)
+        // (Không tạo Ticket, Payment. Status mặc định là BOOKED và Order PENDING)
         // Ghế se1_normal_seat_B1 sẽ có status = BOOKED
 
 
-        // --- BOOKING 3: (SE3, Ghế A1) - CHƯA THANH TOÁN ---
-        Booking booking3 = bookingService.createBooking(
+        // --- ĐƠN HÀNG 3: (SE3, Ghế A1) - CHƯA THANH TOÁN ---
+        Order order3 = bookingService.createOrder(
                 customer.getId(),
                 tripSE3.getTripId(),
-                se3_vip_seat_A1.getSeatId(),
+                List.of(se3_vip_seat_A1.getSeatId()), // Phải là List
                 customer.getFullName(),
+                "ADULT", // Thêm loại hành khách
                 customer.getPhone(),
                 customer.getEmail()
         );
-        // (Status mặc định là BOOKED)
+        // (Status mặc định là BOOKED và Order PENDING)
     }
 }

@@ -9,6 +9,7 @@ import com.example.trainticketoffice.model.*;
 import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.TripService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor; // THÊM
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,22 +17,20 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors; // THÊM
 
 @Service
+@RequiredArgsConstructor // THÊM: Để thay thế @Autowired
 public class TripServiceImpl implements TripService {
 
-    @Autowired
-    private TripRepository tripRepository;
-    @Autowired
-    private TrainRepository trainRepository;
-    @Autowired
-    private BookingRepository bookingRepository;
-    @Autowired
-    private TicketRepository ticketRepository;
-    @Autowired
-    private SeatRepository seatRepository;
-    @Autowired
-    private PaymentRepository paymentRepository;
+    // SỬA: Bỏ @Autowired, thêm 'final'
+    private final TripRepository tripRepository;
+    private final TrainRepository trainRepository;
+    private final BookingRepository bookingRepository;
+    private final TicketRepository ticketRepository;
+    private final SeatRepository seatRepository;
+    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository; // THÊM
 
     @Override
     public List<Trip> getAllTrips() {
@@ -65,6 +64,7 @@ public class TripServiceImpl implements TripService {
         return tripRepository.save(trip);
     }
 
+    // ===== SỬA HOÀN TOÀN LOGIC HÀM NÀY =====
     @Override
     @Transactional
     public void deleteTrip(Long id) {
@@ -79,17 +79,36 @@ public class TripServiceImpl implements TripService {
                 id, List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.CANCELLED, BookingStatus.COMPLETED)
         );
 
+        // 1. Lấy ra các Order (đơn hàng) duy nhất từ các booking
+        List<Order> orders = bookings.stream()
+                .map(Booking::getOrder)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 2. Xóa Tickets
         for (Booking booking : bookings) {
             List<Ticket> tickets = ticketRepository.findByBooking(booking);
-            ticketRepository.deleteAll(tickets);
-
-            List<Payment> payments = paymentRepository.findByBooking(booking);
-            paymentRepository.deleteAll(payments);
+            ticketRepository.deleteAllInBatch(tickets);
         }
 
-        bookingRepository.deleteAll(bookings);
+        // 3. Xóa Payments (liên kết với Order)
+        for (Order order : orders) {
+            // SỬA: Lỗi nằm ở đây, phải tìm theo Order
+            List<Payment> payments = paymentRepository.findByOrder(order);
+            paymentRepository.deleteAllInBatch(payments);
+        }
+
+        // 4. Xóa Bookings
+        bookingRepository.deleteAllInBatch(bookings);
+
+        // 5. Xóa Orders
+        orderRepository.deleteAllInBatch(orders);
+
+        // 6. Xóa Chuyến (Trip)
         tripRepository.delete(trip);
     }
+    // ======================================
 
     @Override
     public List<Trip> findTripsByRoute(Route route) {

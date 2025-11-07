@@ -1,17 +1,20 @@
 package com.example.trainticketoffice.service;
 
 import com.example.trainticketoffice.model.Booking;
+import com.example.trainticketoffice.model.Order; // THÊM
 
 import java.util.List;
 import java.util.Optional;
 
 public interface BookingService {
-    Booking createBooking(Integer userId,
-                          Long tripId,
-                          Long seatId,
-                          String passengerName,
-                          String phone,
-                          String email);
+    // SỬA: Thay thế createBooking bằng createOrder
+    Order createOrder(Integer userId,
+                      Long tripId,
+                      List<Long> seatIds,
+                      String passengerName,
+                      String passengerType, // THÊM
+                      String phone,
+                      String email);
 
     List<Booking> findAllBookings();
 
@@ -19,8 +22,8 @@ public interface BookingService {
 
     Optional<Booking> findById(Long bookingId);
 
-    void customerCancelBooking(Long bookingId, Integer userId);
+    // SỬA: Trả về % hoàn tiền
+    int customerCancelBooking(Long bookingId, Integer userId);
 
-    // THÊM HÀM NÀY
     void autoCancelExpiredBookingsForTrip(Long tripId);
 }
