@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
+import java.math.BigDecimal; // <-- THÊM
 import java.time.LocalDateTime;
 @Entity
 @Table(name = "payments")
@@ -21,15 +21,17 @@ public class Payment extends BaseEntity {
     @Column(name = "payment_id")
     private Long paymentId;
 
-    // SỬA: Liên kết với Order, không phải Booking
+    // ===== SỬA TỪ Booking SANG Order =====
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id", nullable = false) // Đổi từ booking_id sang order_id
     private Order order;
+    // ===================================
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // ===== SỬA TỪ double =====
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 

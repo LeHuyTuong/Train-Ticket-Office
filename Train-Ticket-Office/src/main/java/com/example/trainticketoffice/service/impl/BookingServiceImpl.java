@@ -1,9 +1,8 @@
 package com.example.trainticketoffice.service.impl;
 
 import com.example.trainticketoffice.common.BookingStatus;
-import com.example.trainticketoffice.common.PaymentStatus; // THÊM
+import com.example.trainticketoffice.common.PaymentStatus;
 import com.example.trainticketoffice.common.SeatStatus;
-import com.example.trainticketoffice.common.TicketStatus;
 import com.example.trainticketoffice.model.*;
 import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.BookingService;
@@ -12,10 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode; // THÊM
-import java.time.Duration; // THÊM
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList; // THÊM
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,100 +29,120 @@ public class BookingServiceImpl implements BookingService {
     private final SeatRepository seatRepository;
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository; // THÊM
+    private final OrderRepository orderRepository;
 
-    // THÊM: Hằng số cho giảm giá
-    // (Giả sử: Trẻ em 6-9t. Người già > 60t. Em bé < 6t)
-    private static final BigDecimal CHILD_DISCOUNT_PERCENT = new BigDecimal("0.5"); // Giảm 50%
-    private static final BigDecimal SENIOR_DISCOUNT_PERCENT = new BigDecimal("0.15"); // Giảm 15%
-    private static final BigDecimal INFANT_PRICE = BigDecimal.ZERO; // Miễn phí
-
-
+    /**
+     * Implement phương thức rút gọn (gọi từ Controller).
+     * Nó gọi phương thức đầy đủ với passengerType = null.
+     */
     @Override
     @Transactional
     public Order createOrder(Integer userId,
                              Long tripId,
                              List<Long> seatIds,
                              String passengerName,
-                             String passengerType,
                              String phone,
                              String email) {
+        // Gọi hàm đầy đủ, gán passengerType là null (hoặc "ADULT" nếu bạn muốn)
+        return this.createOrder(userId, tripId, seatIds, passengerName, null, phone, email);
+    }
+
+    /**
+     * Implement phương thức đầy đủ (gọi từ DataInitializer và Controller).
+     */
+    @Override
+    @Transactional
+    public Order createOrder(Integer userId,
+                             Long tripId,
+                             List<Long> seatIds,
+                             String passengerName,
+                             String passengerType, // Biến này đã được nhận
+                             String phone,
+                             String email) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng với mã " + userId));
 
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chuyến đi với mã " + tripId));
 
-        // 1. Tạo Order trước
+        // 1. TẠO VÀ LƯU ORDER TRƯỚC TIÊN
         Order order = new Order();
         order.setUser(user);
         order.setOrderTime(LocalDateTime.now());
-        order.setBookings(new ArrayList<>());
+        order.setStatus(PaymentStatus.PENDING);
+        order.setTotalPrice(BigDecimal.ZERO);
 
-        BigDecimal totalOrderPrice = BigDecimal.ZERO;
+        Order savedOrder = orderRepository.save(order);
+
+        BigDecimal calculatedTotalPrice = BigDecimal.ZERO;
+        List<Booking> createdBookings = new ArrayList<>();
 
         for (Long seatId : seatIds) {
             Seat seat = seatRepository.findById(seatId)
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế với mã " + seatId));
 
-            // 2. Kiểm tra ghế (logic giữ nguyên từ file cũ)
+            // 2. KIỂM TRA GHẾ
             if (seat.getStatus() == SeatStatus.BOOKED) {
                 autoCancelExpiredBookingsForTrip(tripId);
-                seat = seatRepository.findById(seatId).get(); // Lấy lại trạng thái ghế
+                seat = seatRepository.findById(seatId)
+                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế sau khi làm mới: " + seatId));
                 if(seat.getStatus() == SeatStatus.BOOKED) {
-                    throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã được đặt trước đó và vẫn còn thời hạn giữ.");
+                    throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã được đặt.");
                 }
             }
+
             boolean hasConflict = bookingRepository.existsByTrip_TripIdAndSeat_SeatIdAndStatusIn(
                     trip.getTripId(),
                     seat.getSeatId(),
                     List.of(BookingStatus.BOOKED, BookingStatus.PAID)
             );
+
             if (hasConflict) {
                 throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã được giữ chỗ cho chuyến đi này");
             }
 
-            // 3. Tính giá (Logic giá theo KM sẽ ở đây, hiện tại dùng giá ghế)
-            BigDecimal originalPrice = seat.getPrice();
-            BigDecimal finalPrice = originalPrice;
-
-            // 4. Áp dụng giảm giá
-            if ("CHILD".equals(passengerType)) {
-                finalPrice = originalPrice.subtract(originalPrice.multiply(CHILD_DISCOUNT_PERCENT));
-            } else if ("SENIOR".equals(passengerType)) {
-                finalPrice = originalPrice.subtract(originalPrice.multiply(SENIOR_DISCOUNT_PERCENT));
-            } else if ("INFANT".equals(passengerType)) {
-                finalPrice = INFANT_PRICE;
-            }
-
-            // 5. Tạo Booking
+            // 3. TẠO BOOKING
             Booking booking = new Booking();
             booking.setUser(user);
             booking.setTrip(trip);
             booking.setSeat(seat);
-            booking.setOrder(order); // <-- Liên kết Booking với Order
             booking.setPassengerName(passengerName);
-            booking.setPassengerType(passengerType);
+            // (Lưu ý: passengerType chưa được dùng, bạn cần thêm trường này vào Booking.java nếu muốn lưu)
             booking.setPhone(phone);
             booking.setEmail(email);
-            booking.setStatus(BookingStatus.BOOKED); // Chờ thanh toán
-            booking.setBookingTime(order.getOrderTime());
-            booking.setOriginalPrice(originalPrice);
-            booking.setPrice(finalPrice.setScale(0, RoundingMode.HALF_UP));
+            booking.setStatus(BookingStatus.BOOKED);
+            booking.setBookingTime(LocalDateTime.now());
 
-            // 6. Cập nhật ghế
+            // TÍNH TOÁN GIẢM GIÁ (logic cơ bản)
+            BigDecimal finalPrice = seat.getPrice();
+            if ("CHILD".equals(passengerType)) {
+                finalPrice = finalPrice.multiply(BigDecimal.valueOf(0.5)); // Giảm 50%
+            } else if ("SENIOR".equals(passengerType)) {
+                finalPrice = finalPrice.multiply(BigDecimal.valueOf(0.75)); // Giảm 25%
+            }
+            // Làm tròn tiền về số nguyên gần nhất
+            booking.setPrice(finalPrice.setScale(0, BigDecimal.ROUND_HALF_UP));
+
+            booking.setOrder(savedOrder); // Gán Order (đã có ID) vào Booking
+
+            createdBookings.add(booking);
+            calculatedTotalPrice = calculatedTotalPrice.add(booking.getPrice());
+
             seat.setStatus(SeatStatus.BOOKED);
             seatRepository.save(seat);
-
-            bookingRepository.save(booking); // Lưu booking
-            order.getBookings().add(booking);
-            totalOrderPrice = totalOrderPrice.add(finalPrice);
         }
 
-        // 7. Lưu Order
-        order.setTotalPrice(totalOrderPrice.setScale(0, RoundingMode.HALF_UP));
-        return orderRepository.save(order);
+        // 4. LƯU TẤT CẢ BOOKING
+        bookingRepository.saveAll(createdBookings);
+
+        // 5. CẬP NHẬT LẠI ORDER
+        savedOrder.setTotalPrice(calculatedTotalPrice);
+        savedOrder.setBookings(createdBookings);
+
+        return orderRepository.save(savedOrder);
     }
+
 
     @Override
     public List<Booking> findAllBookings() { return bookingRepository.findAll(); }
@@ -134,75 +152,47 @@ public class BookingServiceImpl implements BookingService {
     public Optional<Booking> findById(Long bookingId) { return bookingRepository.findById(bookingId); }
 
     @Transactional
-    public void internalCancelBooking(Booking booking, boolean releaseSeat) {
-        // SỬA: Cập nhật trạng thái, không xóa
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
-
-        if (releaseSeat) {
-            Seat seat = booking.getSeat();
-            if (seat != null) {
-                seat.setStatus(SeatStatus.AVAILABLE);
-                seatRepository.save(seat);
-            }
+    public void internalCancelBooking(Booking booking) {
+        Seat seat = booking.getSeat();
+        if (seat != null) {
+            seat.setStatus(SeatStatus.AVAILABLE);
+            seatRepository.save(seat);
         }
 
-        // Hủy các vé (Ticket) liên quan (nếu có)
         List<Ticket> tickets = ticketRepository.findByBooking(booking);
-        for(Ticket ticket : tickets) {
-            ticket.setStatus(TicketStatus.CANCELLED);
-            ticketRepository.save(ticket);
+        ticketRepository.deleteAll(tickets);
+
+        // Sửa lỗi (findByBooking -> findByOrder)
+        Order order = booking.getOrder();
+        if (order != null) {
+            // Dùng findByOrder như trong PaymentRepository
+            List<Payment> payments = paymentRepository.findByOrder(order);
+            paymentRepository.deleteAll(payments);
         }
+
+        bookingRepository.delete(booking);
     }
 
     @Override
     @Transactional
-    public int customerCancelBooking(Long bookingId, Integer userId) {
+    public void customerCancelBooking(Long bookingId, Integer userId) {
+
+        // ===== ĐÂY LÀ DÒNG BỊ LỖI CÚ PHÁP (ĐÃ SỬA) =====
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy booking với ID: " + bookingId));
+        // =============================================
 
         if (!booking.getUser().getId().equals(userId)) {
             throw new IllegalStateException("Bạn không có quyền hủy booking này.");
         }
 
-        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.COMPLETED) {
-            throw new IllegalStateException("Vé đã ở trạng thái cuối (Đã hủy hoặc Hoàn thành).");
+        if (booking.getStatus() == BookingStatus.PAID || booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new IllegalStateException("Không thể hủy vé đã thanh toán/hoàn thành. Vui lòng liên hệ quầy vé.");
         }
 
-        int refundPercent = 0;
+        // (Cần thêm logic: Hủy vé này cũng nên cập nhật lại tổng tiền của Order)
 
-        // THÊM: Logic hoàn tiền
-        if (booking.getStatus() == BookingStatus.PAID) {
-            LocalDateTime departureTime = booking.getTrip().getDepartureTime();
-            long hoursBefore = Duration.between(LocalDateTime.now(), departureTime).toHours();
-
-            // Chính sách: (Giảng viên yêu cầu)
-            // >= 24h: hoàn 80% (mất 20%)
-            // 4h - 24h: hoàn 50% (mất 50%)
-            // < 4h: mất 100%
-            if (hoursBefore >= 24) {
-                refundPercent = 80;
-            } else if (hoursBefore >= 4) {
-                refundPercent = 50;
-            } else {
-                refundPercent = 0;
-            }
-
-            // (Trong dự án thực tế, đây là nơi gọi API hoàn tiền của VNPay)
-            // Giả lập: Cập nhật DB và ghi log
-            System.out.println("Hoàn tiền " + refundPercent + "% cho booking " + bookingId);
-
-            // Cập nhật lại giá của Order (nếu hủy 1 vé trong đơn)
-            Order order = booking.getOrder();
-            if(order != null) {
-                order.setTotalPrice(order.getTotalPrice().subtract(booking.getPrice()));
-                orderRepository.save(order);
-            }
-        }
-
-        // Hủy vé (BOOKED hoặc PAID)
-        internalCancelBooking(booking, true);
-        return refundPercent;
+        internalCancelBooking(booking);
     }
 
     @Override
@@ -214,10 +204,9 @@ public class BookingServiceImpl implements BookingService {
         int cancelCount = 0;
         for (Booking booking : booked) {
             if (booking.getBookingTime().isBefore(cutoffTime)) {
-                // SỬA: Chỉ hủy nếu Order liên quan cũng PENDING
-                // (booking.getOrder() == null là logic cũ, giữ lại để an toàn)
-                if (booking.getOrder() == null || booking.getOrder().getStatus() == PaymentStatus.PENDING) {
-                    internalCancelBooking(booking, true);
+                // Chỉ hủy nếu booking này chưa thuộc 1 Order đã thanh toán
+                if (booking.getOrder() == null || booking.getOrder().getStatus() != PaymentStatus.SUCCESS) {
+                    internalCancelBooking(booking);
                     cancelCount++;
                 }
             }

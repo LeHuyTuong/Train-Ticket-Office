@@ -4,9 +4,10 @@ import com.example.trainticketoffice.common.PaymentStatus;
 import com.example.trainticketoffice.model.Booking;
 import com.example.trainticketoffice.model.Order; // THÊM
 import com.example.trainticketoffice.model.Payment;
-import com.example.trainticketoffice.repository.OrderRepository; // THÊM
 import com.example.trainticketoffice.service.BookingService;
+// import com.example.trainticketoffice.service.OrderService; // (Nếu có)
 import com.example.trainticketoffice.service.PaymentService;
+import com.example.trainticketoffice.repository.OrderRepository; // THÊM
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -28,26 +29,30 @@ import java.util.Optional;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final OrderRepository orderRepository; // SỬA
+    private final BookingService bookingService;
+    private final OrderRepository orderRepository; // THÊM
 
-    // SỬA: Dùng orderId
-    @GetMapping("/order/{orderId}")
+    // ===== SỬA URL VÀ LOGIC HÀM NÀY =====
+    // URL mới: /payments/orders/{orderId} (SỐ NHIỀU)
+    @GetMapping("/orders/{orderId}")
     public String showPaymentPage(@PathVariable Long orderId,
                                   Model model,
                                   RedirectAttributes redirectAttributes) {
-        // SỬA: Tìm Order
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        if (orderOpt.isEmpty()) {
+        // Tìm Order thay vì Booking
+        Optional<Order> order = orderRepository.findById(orderId);
+        if (order.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng");
             return "redirect:/bookings";
         }
 
-        model.addAttribute("order", orderOpt.get()); // SỬA
+        model.addAttribute("order", order.get());
+        // Trả về trang "checkout" MỚI (xem file số 4)
         return "payment/checkout";
     }
 
-    // SỬA: Dùng orderId
-    @PostMapping("/order/{orderId}")
+    // ===== SỬA URL VÀ LOGIC HÀM NÀY =====
+    // URL mới: /payments/orders/{orderId} (SỐ NHIỀU)
+    @PostMapping("/orders/{orderId}")
     public String startPayment(@PathVariable Long orderId,
                                @RequestParam(value = "bankCode", required = false) String bankCode,
                                @RequestParam(value = "orderInfo", required = false) String orderInfo,
@@ -56,18 +61,20 @@ public class PaymentController {
                                HttpServletRequest request,
                                RedirectAttributes redirectAttributes) {
         try {
+            // Truyền orderId thay vì bookingId
             String paymentUrl = paymentService.createPaymentRedirectUrl(
-                    orderId, // SỬA
+                    orderId,
                     bankCode,
                     orderInfo,
                     orderType,
                     locale,
                     resolveClientIp(request)
             );
-            return "redirect:" + paymentUrl;
+            return "redirect:" + paymentUrl; // Chuyển hướng đến trang VNPay
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/payments/order/" + orderId; // SỬA
+            // Quay lại trang checkout (số nhiều)
+            return "redirect:/payments/orders/" + orderId;
         }
     }
 
@@ -78,7 +85,6 @@ public class PaymentController {
 
         try {
             Payment payment = paymentService.handleVnpayReturn(params);
-
             boolean isSuccess = payment.getStatus() == PaymentStatus.SUCCESS;
 
             String transactionNo = payment.getVnpTransactionNo() != null
@@ -86,8 +92,7 @@ public class PaymentController {
                     : payment.getTransactionRef();
 
             model.addAttribute("transactionNo", transactionNo);
-            // SỬA: Gửi OrderId ra view
-            model.addAttribute("orderId", payment.getOrder().getOrderId());
+            model.addAttribute("orderId", payment.getOrder().getOrderId()); // Sửa: Lấy OrderId
             model.addAttribute("bankCode", payment.getBankCode());
             model.addAttribute("amount", payment.getAmount());
             model.addAttribute("payDate", payment.getPayDate());
@@ -97,8 +102,7 @@ public class PaymentController {
 
         } catch (IllegalArgumentException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("transactionStatus", "Thất bại");
-            return "payment/invoice"; // Trả về invoice dù lỗi
+            return "payment/result";
         }
     }
 

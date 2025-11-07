@@ -3,7 +3,7 @@ package com.example.trainticketoffice.controller;
 import com.example.trainticketoffice.common.BookingStatus;
 import com.example.trainticketoffice.model.*;
 import com.example.trainticketoffice.repository.BookingRepository;
-import com.example.trainticketoffice.repository.OrderRepository; // THÊM
+import com.example.trainticketoffice.repository.OrderRepository;
 import com.example.trainticketoffice.repository.TripRepository;
 import com.example.trainticketoffice.service.BookingService;
 import com.example.trainticketoffice.service.SeatService;
@@ -29,8 +29,9 @@ public class BookingController {
     private final TripRepository tripRepository;
     private final SeatService seatService;
     private final BookingRepository bookingRepository;
-    private final OrderRepository orderRepository; // THÊM
+    private final OrderRepository orderRepository;
 
+    // ===== SỬA HÀM NÀY =====
     @GetMapping("/new")
     public String showCreateForm(@RequestParam("tripId") Long tripId, Model model,
                                  HttpSession session) {
@@ -45,51 +46,55 @@ public class BookingController {
             return "redirect:/";
         }
 
-        // THÊM: Chạy auto-cancel để giải phóng ghế
+        // 1. Chạy logic dọn dẹp 15 phút (ĐÃ CÓ)
         bookingService.autoCancelExpiredBookingsForTrip(tripId);
 
         Trip selectedTrip = tripOpt.get();
         Train train = selectedTrip.getTrain();
-
         List<Carriage> carriages = train.getCarriages();
-
         List<Seat> allSeatsOnTrain = carriages.stream()
                 .flatMap(carriage -> carriage.getSeats().stream())
                 .collect(Collectors.toList());
 
-        // SỬA: Tách 2 loại ghế
-        List<Long> paidSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
-                        tripId,
-                        List.of(BookingStatus.PAID, BookingStatus.COMPLETED) // Ghế đã bán
-                )
-                .stream()
+        // 2. Lấy TẤT CẢ booking (chờ, đã trả, hoàn thành)
+        List<Booking> allBookingsForTrip = bookingRepository.findAllByTrip_TripIdAndStatusIn(
+                tripId,
+                List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
+        );
+
+        // 3. Lọc ra 2 danh sách ID riêng biệt
+        // (Ghế đã thanh toán hoặc hoàn thành -> Màu Xám)
+        List<Long> paidSeatIds = allBookingsForTrip.stream()
+                .filter(b -> b.getStatus() == BookingStatus.PAID || b.getStatus() == BookingStatus.COMPLETED)
                 .map(booking -> booking.getSeat().getSeatId())
                 .collect(Collectors.toList());
 
-        List<Long> heldSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
-                        tripId,
-                        List.of(BookingStatus.BOOKED) // Ghế đang giữ
-                )
-                .stream()
+        // (Ghế đang chờ thanh toán -> Màu Vàng)
+        List<Long> pendingSeatIds = allBookingsForTrip.stream()
+                .filter(b -> b.getStatus() == BookingStatus.BOOKED)
                 .map(booking -> booking.getSeat().getSeatId())
                 .collect(Collectors.toList());
 
         model.addAttribute("selectedTrip", selectedTrip);
         model.addAttribute("carriages", carriages);
         model.addAttribute("allSeats", allSeatsOnTrain);
-        model.addAttribute("paidSeatIds", paidSeatIds); // SỬA
-        model.addAttribute("heldSeatIds", heldSeatIds); // THÊM
+
+        // 4. Gửi 2 danh sách mới ra view
+        model.addAttribute("paidSeatIds", paidSeatIds);
+        model.addAttribute("pendingSeatIds", pendingSeatIds);
+
         model.addAttribute("currentUser", currentUser);
 
         return "ticket/form";
     }
+    // ========================
 
     @PostMapping
     public String createBooking(HttpSession session,
                                 @RequestParam("tripId") Long tripId,
                                 @RequestParam("seatIds") List<Long> seatIds,
                                 @RequestParam("passengerName") String passengerName,
-                                @RequestParam("passengerType") String passengerType, // THÊM
+                                @RequestParam("passengerType") String passengerType,
                                 @RequestParam(value = "phone", required = false) String phone,
                                 @RequestParam(value = "email", required = false) String email,
                                 RedirectAttributes redirectAttributes) {
@@ -105,7 +110,7 @@ public class BookingController {
         }
 
         try {
-            // SỬA: Gọi service mới để tạo Order (giỏ hàng)
+            // Gọi hàm createOrder (7 tham số)
             Order createdOrder = bookingService.createOrder(
                     currentUser.getId(),
                     tripId,
@@ -116,9 +121,8 @@ public class BookingController {
                     email
             );
 
-            // SỬA: Chuyển hướng đến trang xác nhận Order
             redirectAttributes.addFlashAttribute("newOrderId", createdOrder.getOrderId());
-            return "redirect:/bookings/confirm-order";
+            return "redirect:/bookings/confirm";
 
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -126,11 +130,9 @@ public class BookingController {
         }
     }
 
-    // SỬA: Đổi tên hàm và mapping
-    @GetMapping("/confirm-order")
-    public String showConfirmOrderPage(Model model, HttpSession session,
-                                       @ModelAttribute("newOrderId") Long newOrderId,
-                                       RedirectAttributes redirectAttributes) {
+    @GetMapping("/confirm")
+    public String showConfirmPage(Model model, HttpSession session,
+                                  @ModelAttribute("newOrderId") Long newOrderId) {
 
         User currentUser = (User) session.getAttribute("userLogin");
         if (currentUser == null) {
@@ -138,25 +140,17 @@ public class BookingController {
         }
 
         if (newOrderId == null || newOrderId == 0) {
-            // THÊM: Bắt lỗi nếu F5 trang confirm
-            redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng đã được xử lý hoặc đã hết hạn. Vui lòng đặt lại.");
-            return "redirect:/";
-        }
-
-        Optional<Order> orderOpt = orderRepository.findById(newOrderId);
-
-        if (orderOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng.");
             return "redirect:/bookings";
         }
 
-        Order newOrder = orderOpt.get();
+        Order newOrder = orderRepository.findById(newOrderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
 
         model.addAttribute("order", newOrder);
         model.addAttribute("bookings", newOrder.getBookings());
         model.addAttribute("totalPrice", newOrder.getTotalPrice());
 
-        return "payment/confirm-order"; // <-- Trang HTML MỚI
+        return "payment/confirm-payment";
     }
 
     @GetMapping
@@ -175,8 +169,6 @@ public class BookingController {
     public String viewBooking(@PathVariable Long bookingId,
                               Model model,
                               RedirectAttributes redirectAttributes) {
-        // GIỮ NGUYÊN LOGIC GỐC CỦA BẠN (Không kiểm tra session)
-        // để đáp ứng yêu cầu "vô thẳng bằng URL"
         Optional<Booking> booking = bookingService.findById(bookingId);
         if (booking.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thông tin đặt vé");
@@ -197,23 +189,8 @@ public class BookingController {
         }
 
         try {
-            // SỬA: Nhận % hoàn tiền
-            int refundPercent = bookingService.customerCancelBooking(bookingId, currentUser.getId());
-
-            String successMessage = "Đã hủy booking " + bookingId + " thành công.";
-
-            // THÊM: Thông báo hoàn tiền
-            if (refundPercent > 0) {
-                successMessage += " Bạn sẽ được hoàn lại " + refundPercent + "% số tiền vé.";
-            } else if (refundPercent == 0) {
-                // Kiểm tra xem vé đã thanh toán chưa
-                Optional<Booking> b = bookingService.findById(bookingId);
-                if (b.isPresent() && b.get().getStatus() == BookingStatus.CANCELLED && b.get().getOriginalPrice().compareTo(BigDecimal.ZERO) > 0) {
-                    successMessage += " Không áp dụng hoàn tiền do đã qua thời gian quy định.";
-                }
-            }
-
-            redirectAttributes.addFlashAttribute("successMessage", successMessage);
+            bookingService.customerCancelBooking(bookingId, currentUser.getId());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã hủy booking " + bookingId + " thành công. Ghế đã được giải phóng.");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + ex.getMessage());
         }
