@@ -4,13 +4,15 @@ import com.example.trainticketoffice.model.Station;
 import com.example.trainticketoffice.service.StationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // <-- THÊM
+import org.springframework.data.repository.query.Param; // <-- THÊM
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import java.util.List; // <-- THÊM
 import java.util.Optional;
 
 @Controller
@@ -24,12 +26,27 @@ public class StationController {
         this.stationService = stationService;
     }
 
+    // ===== SỬA HÀM GET MAPPING CHÍNH =====
     @GetMapping
-    public String listStations(Model model) {
-        List<Station> stations = stationService.getAllStations();
+    public String listStations(Model model,
+                               @RequestParam(value = "page", defaultValue = "1") int page,
+                               @Param("keyword") String keyword) {
+
+        Page<Station> stationPage = stationService.listAll(page, keyword);
+
+        List<Station> stations = stationPage.getContent();
+        long totalItems = stationPage.getTotalElements();
+        int totalPages = stationPage.getTotalPages();
+
         model.addAttribute("stations", stations);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalItems", totalItems);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("keyword", keyword); // Gửi từ khóa ra view
+
         return "station/list";
     }
+    // ===================================
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
