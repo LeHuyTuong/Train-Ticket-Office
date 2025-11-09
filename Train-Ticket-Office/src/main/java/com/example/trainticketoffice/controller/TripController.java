@@ -12,6 +12,7 @@ import com.example.trainticketoffice.service.TripService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page; // <-- THÊM
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -44,9 +45,9 @@ public class TripController {
 
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
+                                      // ... (Hàm này giữ nguyên)
                                       @RequestParam("endStationId") Integer endStationId,
-                                      // SỬA: Bỏ (required = false)
-                                      @RequestParam("departureDate")
+                                      @RequestParam(value = "departureDate", required = false)
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
                                       Model model) {
 
@@ -61,10 +62,12 @@ public class TripController {
         }
 
         List<Trip> availableTrips;
-        // SỬA: Chỉ dùng logic tìm theo ngày
-        availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
+        if (departureDate != null) {
+            availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
+        } else {
+            availableTrips = tripService.findTripsByRoute(routeOpt.get(0));
+        }
 
-        // (Logic còn lại của hàm giữ nguyên)
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
@@ -116,10 +119,9 @@ public class TripController {
         return "trip/trip-results";
     }
 
-    // (Tất cả các hàm Quản lý (Admin) khác giữ nguyên)
     @GetMapping("/all")
     public String showAllTrips(Model model) {
-
+        // ... (Hàm này giữ nguyên)
         List<Trip> allTrips = tripService.getAllTrips().stream()
                 .filter(trip -> trip.getStatus() == TripStatus.UPCOMING || trip.getStatus() == TripStatus.DELAYED)
                 .collect(Collectors.toList());
@@ -172,12 +174,28 @@ public class TripController {
         return "trip/all-trips";
     }
 
+    // ===== SỬA HÀM NÀY (Thêm Phân trang và Lọc) =====
     @GetMapping
-    public String listTrips(Model model) {
-        model.addAttribute("trips", tripService.getAllTrips());
-        model.addAttribute("allTripStatus", TripStatus.values()); // <-- Gửi status ra list
+    public String listTrips(Model model,
+                            @RequestParam(value = "page", defaultValue = "1") int page,
+                            @RequestParam(value = "stationId", required = false) Integer stationId) {
+
+        Page<Trip> tripPage = tripService.listAllAdmin(page, stationId);
+
+        List<Trip> trips = tripPage.getContent();
+
+        model.addAttribute("trips", trips);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalItems", tripPage.getTotalElements());
+        model.addAttribute("totalPages", tripPage.getTotalPages());
+        model.addAttribute("selectedStationId", stationId); // Gửi ID đã chọn
+
+        model.addAttribute("allTripStatus", TripStatus.values()); // Giữ nguyên
+        model.addAttribute("allStations", stationService.getAllStations()); // Gửi DS Ga cho dropdown
+
         return "trip/list";
     }
+    // =============================================
 
     private void addCommonAttributes(Model model) {
         List<Train> availableTrains = trainService.getAllTrains().stream()
@@ -190,6 +208,7 @@ public class TripController {
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
+        // ... (Hàm này giữ nguyên)
         model.addAttribute("trip", new Trip());
         addCommonAttributes(model);
         return "trip/form";
@@ -197,18 +216,20 @@ public class TripController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
+        // ... (Hàm này giữ nguyên)
         Optional<Trip> trip = tripService.getTripById(id);
         if (trip.isPresent()) {
             model.addAttribute("trip", trip.get());
             model.addAttribute("allTrains", trainService.getAllTrains());
             model.addAttribute("allRoutes", routeService.getAllRoutes());
-            return "trip/form"; // <-- THÊM RETURN
+            return "trip/form";
         }
         return "redirect:/trips";
     }
 
     @PostMapping("/save")
     public String saveTrip(@Valid @ModelAttribute("trip") Trip trip,
+                           // ... (Hàm này giữ nguyên)
                            BindingResult result, Model model,
                            RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
@@ -241,6 +262,7 @@ public class TripController {
 
     @GetMapping("/delete/{id}")
     public String deleteTrip(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        // ... (Hàm này giữ nguyên, redirect về /trips)
         try {
             tripService.deleteTrip(id);
             redirectAttributes.addFlashAttribute("successMessage", "Trip deleted successfully.");
@@ -254,9 +276,12 @@ public class TripController {
         return "redirect:/trips";
     }
 
+    // ===== SỬA HÀM NÀY (Để giữ lại bộ lọc/phân trang) =====
     @PostMapping("/update-status/{id}")
     public String updateTripStatus(@PathVariable("id") Long id,
                                    @RequestParam("status") TripStatus newStatus,
+                                   @RequestParam(value = "page", defaultValue = "1") int page,
+                                   @RequestParam(value = "stationId", required = false) Integer stationId,
                                    RedirectAttributes redirectAttributes) {
         try {
             tripService.updateTripStatus(id, newStatus);
@@ -264,6 +289,12 @@ public class TripController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
-        return "redirect:/trips";
+
+        // Trả về trang list VỚI tham số
+        String redirectUrl = "/trips?page=" + page;
+        if (stationId != null) {
+            redirectUrl += "&stationId=" + stationId;
+        }
+        return "redirect:" + redirectUrl;
     }
 }
