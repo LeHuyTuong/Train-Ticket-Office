@@ -15,188 +15,55 @@
             --bg-light: #f9f9f9;
             --sidebar-width: 240px;
         }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-light);
-        }
-
-        /* Sidebar */
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-light); }
         .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: var(--primary-color);
-            color: white;
-            padding-top: 1rem;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s;
-            overflow-y: auto;
+            width: var(--sidebar-width); height: 100vh; position: fixed; top: 0; left: 0;
+            background-color: var(--primary-color); color: white; padding-top: 1rem;
+            display: flex; flex-direction: column; transition: all 0.3s; overflow-y: auto;
         }
-
-        .sidebar.collapsed {
-            width: 70px;
-        }
-
+        .sidebar.collapsed { width: 70px; }
         .sidebar .sidebar-brand {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 1.5rem;
-            padding: 0.8rem 1rem;
-            margin-bottom: 1rem;
-            text-align: center;
-            color: white;
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-            white-space: nowrap;
-            /* ===== THÊM: Đảm bảo link không có gạch chân ===== */
+            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem;
+            padding: 0.8rem 1rem; margin-bottom: 1rem; text-align: center; color: white;
+            border-bottom: 1px solid rgba(255,255,255,0.3); white-space: nowrap;
             text-decoration: none;
         }
-
         .sidebar a {
-            color: white;
-            text-decoration: none;
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            align-items: center;
-            font-weight: 500;
-            border-radius: 6px;
-            margin: 0.25rem 0;
-            transition: background 0.2s, padding 0.2s;
+            color: white; text-decoration: none; padding: 0.75rem 1.5rem;
+            display: flex; align-items: center; font-weight: 500;
+            border-radius: 6px; margin: 0.25rem 0; transition: background 0.2s, padding 0.2s;
         }
-
-        .sidebar a i {
-            margin-right: 10px;
-        }
-
-        .sidebar.collapsed a span {
-            display: none;
-        }
-
-        /* ===== THÊM: Ẩn icon toggle khi sidebar thu gọn ===== */
-        .sidebar.collapsed .sidebar-toggle span {
-            display: none;
-        }
-        .sidebar.collapsed .sidebar-toggle {
-            text-align: center;
-            padding-left: 0;
-            padding-right: 0;
-        }
-
+        .sidebar a i { margin-right: 10px; }
+        .sidebar.collapsed a span { display: none; }
+        .sidebar.collapsed .sidebar-toggle span { display: none; }
+        .sidebar.collapsed .sidebar-toggle { text-align: center; padding-left: 0; padding-right: 0; }
         .sidebar a:hover, .sidebar a.active {
-            background-color: var(--secondary-color);
-            color: var(--primary-color);
-            font-weight: 600;
+            background-color: var(--secondary-color); color: var(--primary-color); font-weight: 600;
         }
-
         .sidebar .dropdown-menu {
-            position: static;
-            float: none;
-            background-color: transparent;
-            border: none;
-            box-shadow: none;
-            padding-left: 1.5rem;
-            /* ===== THÊM: CSS cho dropdown-item ===== */
-            width: 100%;
-            margin: 0;
-            padding-top: 0;
+            position: static; float: none; background-color: transparent;
+            border: none; box-shadow: none; padding-left: 1.5rem;
+            width: 100%; margin: 0; padding-top: 0;
         }
-
-        .sidebar .dropdown-item {
-            padding-left: 1.2rem; /* Thụt lề cho link con */
-        }
-
-        .sidebar .dropdown-toggle::after {
-            margin-left: auto;
-            transition: transform 0.2s;
-        }
-
-        /* ===== THÊM: Xoay icon mũi tên khi active ===== */
-        .sidebar a.dropdown-toggle.active::after {
-            transform: rotate(90deg);
-        }
-
-        /* Toggle button */
+        .sidebar .dropdown-item { padding-left: 1.2rem; }
+        .sidebar .dropdown-toggle::after { margin-left: auto; transition: transform 0.2s; }
+        .sidebar a.dropdown-toggle.active::after { transform: rotate(90deg); }
         .sidebar-toggle {
-            cursor: pointer;
-            padding: 0.5rem 1.5rem;
-            color: white;
-            text-align: left; /* Đổi từ center sang left */
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
+            cursor: pointer; padding: 0.5rem 1.5rem; color: white;
+            text-align: left; font-size: 1.2rem; margin-bottom: 1rem;
         }
-        .sidebar-toggle i {
-            margin-right: 10px;
-        }
-
-        /* Main content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 2rem;
-            transition: margin-left 0.3s;
-        }
-
-        .sidebar.collapsed + .main-content {
-            margin-left: 70px;
-        }
-
-        .content-card {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-        }
-
+        .sidebar-toggle i { margin-right: 10px; }
+        .main-content { margin-left: var(--sidebar-width); padding: 2rem; transition: margin-left 0.3s; }
+        .sidebar.collapsed + .main-content { margin-left: 70px; }
+        .content-card { background-color: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
         .page-title {
-            color: var(--primary-color);
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            border-bottom: 3px solid var(--secondary-color);
-            padding-bottom: 8px;
-            display: inline-block;
-            margin-bottom: 1.5rem;
-            font-size: 1.75rem;
+            color: var(--primary-color); font-family: 'Montserrat', sans-serif; font-weight: 700;
+            border-bottom: 3px solid var(--secondary-color); padding-bottom: 8px;
+            display: inline-block; margin-bottom: 1.5rem; font-size: 1.75rem;
         }
-
-        /* Buttons */
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            font-weight: 600;
-            padding: 0.55rem 1.2rem;
-            border-radius: 6px;
-        }
-
-        .btn-primary:hover {
-            background-color: #003366;
-            border-color: #003366;
-        }
-
-        /* Table */
-        .table thead {
-            background-color: var(--primary-color);
-            color: #fff;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-        }
-
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 74, 153, 0.08);
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-content { margin-left: 0; padding: 1rem; }
         }
     </style>
 </head>
@@ -205,11 +72,9 @@
 <div class="sidebar" id="sidebar">
 
     <a th:href="@{/admin/dashboard}" class="sidebar-brand"><span>Train Admin</span></a>
-
     <div class="sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i> <span>Thu gọn</span></div>
 
     <a th:href="@{/admin/dashboard}" th:classappend="${#strings.equals(requestURI, '/admin/dashboard') ? 'active' : ''}"><i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span></a>
-
     <a th:href="@{/routes}" th:classappend="${#strings.startsWith(requestURI, '/routes') ? 'active' : ''}"><i class="bi bi-signpost-2"></i> <span>Quản lý Tuyến</span></a>
     <a th:href="@{/trips}" th:classappend="${#strings.startsWith(requestURI, '/trips') ? 'active' : ''}"><i class="bi bi-train-freight-front"></i> <span>Quản lý Chuyến</span></a>
     <a th:href="@{/stations}" th:classappend="${#strings.startsWith(requestURI, '/stations') ? 'active' : ''}"><i class="bi bi-map"></i> <span>Quản lý Ga</span></a>
@@ -217,15 +82,15 @@
     <a class="dropdown-toggle" href="#" id="trainDropdown"
        th:classappend="${#strings.startsWith(requestURI, '/trains') or
                         #strings.startsWith(requestURI, '/carriages') or
-                        #strings.startsWith(requestURI, '/seats') ? 'active' : ''}">
-        <i class="bi bi-building"></i> <span>Quản lý Tàu</span>
+                        #strings.startsWith(requestURI, '/seats') or
+                        #strings.startsWith(requestURI, '/seat-types') ? 'active' : ''}">
+        <i class="bi bi-building"></i> <span>Quản lý Tàu/Vé</span>
     </a>
     <ul class="dropdown-menu" id="trainMenu">
         <li><a class="dropdown-item" th:href="@{/trains}" th:classappend="${#strings.startsWith(requestURI, '/trains') ? 'active' : ''}">Quản lý Tàu</a></li>
-        <li><a class="dropdown-item" th:href="@{/carriages}" th:classappend="${#strings.startsWith(requestURI, '/carriages') ? 'active' : ''}">Quản lý Toa</a></li>
-        <li><a class="dropdown-item" th:href="@{/seats}" th:classappend="${#strings.startsWith(requestURI, '/seats') ? 'active' : ''}">Quản lý Ghế</a></li>
-    </ul>
+        <li><a class="dropdown-item" th:href="@{/seat-types}" th:classappend="${#strings.startsWith(requestURI, '/seat-types') ? 'active' : ''}">Quản lý Loại Ghế (Giá)</a></li>
 
+    </ul>
     <a th:href="@{/logout}"><i class="bi bi-box-arrow-right"></i> <span>Đăng Xuất</span></a>
 </div>
 
@@ -247,9 +112,9 @@
     toggleBtn.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
         if (sidebar.classList.contains('collapsed')) {
-            toggleBtnText.textContent = ''; // Ẩn chữ khi thu gọn
+            toggleBtnText.textContent = '';
         } else {
-            toggleBtnText.textContent = 'Thu gọn'; // Hiện lại chữ
+            toggleBtnText.textContent = 'Thu gọn';
         }
     });
 
@@ -257,7 +122,6 @@
     const trainDropdown = document.getElementById('trainDropdown');
     const trainMenu = document.getElementById('trainMenu');
 
-    // ===== CẢI TIẾN: Tự động mở dropdown nếu đang ở trang con =====
     if (trainDropdown.classList.contains('active')) {
         trainMenu.style.display = 'block';
     } else {
@@ -266,9 +130,7 @@
 
     trainDropdown.addEventListener('click', function(e){
         e.preventDefault();
-        // Toggle (bật/tắt)
         trainMenu.style.display = (trainMenu.style.display === 'none') ? 'block' : 'none';
-        // Thêm/xóa class active để xoay mũi tên
         trainDropdown.classList.toggle('active', trainMenu.style.display === 'block');
     });
 </script>

@@ -127,6 +127,10 @@
             </div>
 
             <div>
+                <label>Khoảng cách (KM)</label>
+                <input type="number" th:field="*{distanceKm}" class="form-control" placeholder="Nhập số KM (Ga chuẩn = 0)" required>
+            </div>
+            <div>
                 <label>Trạng thái</label>
                 <select th:field="*{status}" class="form-select" required>
                     <option th:each="s : ${statusTypes}" th:value="${s}" th:text="${s == 'ACTIVE' ? 'Hoạt động' : 'Ngưng hoạt động'}"></option>

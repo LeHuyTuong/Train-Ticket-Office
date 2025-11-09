@@ -5,108 +5,22 @@
 <head>
     <title>Vé Của Tôi</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
-
     <style>
-        body {
-            background: url('/images/train01.jpg') center/cover no-repeat fixed;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .container-card {
-            backdrop-filter: blur(12px);
-            background: rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 30px 25px;
-            margin: 30px auto;
-            max-width: 1000px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-        }
-
-        .page-title {
-            font-weight: 700;
-            font-size: 30px;
-            color: #004a99;
-            margin-bottom: 20px;
-        }
-
-        table {
-            background: rgba(255,255,255,0.85);
-            border-radius: 10px;
-            overflow: hidden;
-            width: 100%;
-        }
-
-        table th, table td {
-            padding: 12px 15px;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        table th {
-            background: linear-gradient(135deg,#009ffd,#2a2a72);
-            color: #fff;
-            text-transform: uppercase;
-        }
-
-        table tr:hover {
-            background: rgba(0,159,253,0.15);
-        }
-
-        .btn {
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.25s ease;
-        }
-
-        .btn-info {
-            background: #2a9df4;
-            color: #fff;
-        }
-
-        .btn-info:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: #fff;
-        }
-
-        .btn-success {
-            background: #2ecc71;
-            color: #fff;
-        }
-
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-            font-weight: 600;
-        }
-
-        .btn-secondary:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .badge {
-            font-weight: 600;
-            padding: 6px 10px;
-            border-radius: 8px;
-        }
-
-        .actions {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+        /* (CSS giữ nguyên) */
+        body { background: url('/images/train01.jpg') center/cover no-repeat fixed; font-family: 'Montserrat', sans-serif; }
+        .container-card { backdrop-filter: blur(12px); background: rgba(255,255,255,0.2); border-radius: 16px; padding: 30px 25px; margin: 30px auto; max-width: 1000px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+        .page-title { font-weight: 700; font-size: 30px; color: #004a99; margin-bottom: 20px; }
+        table { background: rgba(255,255,255,0.85); border-radius: 10px; overflow: hidden; width: 100%; }
+        table th, table td { padding: 12px 15px; text-align: center; vertical-align: middle; }
+        table th { background: linear-gradient(135deg,#009ffd,#2a2a72); color: #fff; text-transform: uppercase; }
+        table tr:hover { background: rgba(0,159,253,0.15); }
+        .btn { border-radius: 10px; font-weight: 600; transition: all 0.25s ease; }
+        .badge { font-weight: 600; padding: 6px 10px; border-radius: 8px; }
+        .actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
     </style>
 </head>
-
 <body>
 <div layout:fragment="content">
-
     <div class="container-card">
         <h2 class="page-title">Vé Của Tôi</h2>
 
@@ -124,19 +38,18 @@
                     <th>Mã Đặt Vé</th>
                     <th>Mã Tàu</th>
                     <th>Ngày Khởi Hành</th>
-                    <th>Ghế</th>
-                    <th>Thanh Toán</th>
+                    <th>Toa (Ghế)</th> <th>Thanh Toán</th>
                     <th>Trạng Thái Chuyến</th>
                     <th>Hành Động</th>
                 </tr>
                 </thead>
-
                 <tbody>
                 <tr th:each="booking : ${bookings}">
                     <td th:text="${booking.bookingId}"></td>
                     <td th:text="${booking.trip.train.code}"></td>
                     <td th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy HH:mm')}"></td>
-                    <td th:text="${booking.seat.seatNumber}"></td>
+
+                    <td th:text="${booking.seat.carriage.name + ' (' + booking.seat.seatNumber + ')'}"></td>
 
                     <td>
                         <span th:if="${booking.status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
@@ -144,7 +57,6 @@
                         <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge bg-secondary">Đã hủy</span>
                         <span th:if="${booking.status.name() == 'COMPLETED'}" class="badge bg-primary">Hoàn thành</span>
                     </td>
-
                     <td>
                         <span th:text="${booking.trip.status.description}"
                               th:classappend="${booking.trip.status.name() == 'COMPLETED'} ? 'badge bg-success' :
@@ -153,17 +65,14 @@
                                              (${booking.trip.status.name() == 'DELAYED'} ? 'badge bg-warning text-dark' : 'badge bg-info')))">
                         </span>
                     </td>
-
                     <td class="actions">
                         <a th:href="@{/bookings/{id}(id=${booking.bookingId})}" class="btn btn-info btn-sm">Xem</a>
-
                         <a th:if="${booking.status.name() == 'BOOKED'}"
                            th:href="@{/bookings/delete/{id}(id=${booking.bookingId})}"
                            class="btn btn-danger btn-sm"
                            onclick="return confirm('Bạn có chắc muốn hủy vé này?')">
                             Hủy
                         </a>
-
                         <a th:if="${booking.status.name() == 'BOOKED' and booking.order != null}"
                            th:href="@{/payments/orders/{id}(id=${booking.order.orderId})}"
                            class="btn btn-success btn-sm">
@@ -174,7 +83,6 @@
                 </tbody>
             </table>
         </div>
-
         <a th:href="@{/}" class="btn btn-secondary mt-3">⬅ Về Trang Chủ</a>
     </div>
 </div>

@@ -16,17 +16,20 @@ public class Station extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "code", unique = true, nullable = false, length = 10, columnDefinition = "NVARCHAR(10)")
+    @Column(name = "code", unique = true, nullable = false, length = 10, columnDefinition = "nvarchar(10)") // SỬA
     private String code;
 
-    @Column(name = "name", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
+    @Column(name = "name", nullable = false, length = 100, columnDefinition = "nvarchar(100)") // SỬA
     private String name;
 
-    @Column(name = "city", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
+    @Column(name = "city", nullable = false, length = 50, columnDefinition = "nvarchar(50)") // SỬA
     private String city;
 
-    @Column(name = "province", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
+    @Column(name = "province", nullable = false, length = 50, columnDefinition = "nvarchar(50)") // SỬA
     private String province;
+
+    @Column(name = "distance_km")
+    private Integer distanceKm;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

@@ -7,26 +7,13 @@
     <title>Xác Nhận & Thanh toán VNPay</title>
     <style>
         .vnpay-button {
-            background-color: #005a9f;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            background-color: #005a9f; color: white; border: none;
+            border-radius: 8px; padding: 15px 30px; font-size: 1.2rem;
+            font-weight: bold; display: inline-flex; align-items: center;
+            cursor: pointer; transition: background-color 0.3s;
         }
-        .vnpay-button:hover {
-            background-color: #004a80;
-        }
-        .vnpay-button img {
-            width: 100px;
-            height: auto;
-            margin-right: 15px;
-        }
+        .vnpay-button:hover { background-color: #004a80; }
+        .vnpay-button img { width: 100px; height: auto; margin-right: 15px; }
     </style>
 </head>
 <body>
@@ -47,6 +34,9 @@
                 <p class="mb-1"><strong>Chuyến đi:</strong>
                     <span th:text="${firstBooking.trip.departureStation + ' → ' + firstBooking.trip.arrivalStation}"></span>
                 </p>
+                <p class="mb-1"><strong>Loại vé (ví dụ):</strong>
+                    <span th:text="${firstBooking.seat.carriage.seatType.name}"></span>
+                </p>
             </th:block>
 
             <p class="mb-1"><strong>Tổng tiền:</strong>
@@ -60,7 +50,6 @@
     <h4 class="mb-3">Chọn hình thức thanh toán</h4>
 
     <form th:action="@{/payments/orders/{id}(id=${order.orderId})}" method="post" class="p-4">
-
         <input type="hidden" name="orderInfo" th:value="${'Thanh toan don hang ' + order.orderId}">
 
         <div class="mt-4 d-flex gap-2">

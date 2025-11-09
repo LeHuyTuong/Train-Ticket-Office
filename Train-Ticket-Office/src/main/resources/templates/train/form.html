@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/_admin_layout}">
 <head>
-    <title>Quản Lý Tàu</title>
+    <title th:text="${train.id == null ? 'Thêm Tàu Mới' : 'Cập Nhật Tàu'}">Form Tàu</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -16,16 +16,17 @@
             border-radius: 16px;
             padding: 40px;
             margin-top: 30px;
-            max-width: 900px;
+            max-width: 800px;
             margin-left: auto;
             margin-right: auto;
             box-shadow: 0 12px 30px rgba(0,0,0,0.25);
         }
         .page-title {
             font-weight: 700;
-            font-size: 30px;
+            font-size: 28px;
             color: #004a99;
             margin-bottom: 25px;
+            text-align: center;
         }
         label {
             font-weight: 600;
@@ -70,82 +71,53 @@
             opacity: 0.9;
             transform: translateY(-2px);
         }
-        .btn-danger {
-            background: #dc3545;
-            color: #fff;
-        }
-        .alert-danger {
-            border-radius: 10px;
+        .invalid-feedback {
             font-weight: 600;
-        }
-        table {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(8px);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        table th, table td {
-            padding: 12px;
-        }
-        .badge {
-            font-weight: 600;
-        }
-        @media (max-width: 768px) {
-            .form-container {
-                padding: 30px 20px;
-            }
-            .page-title {
-                font-size: 26px;
-            }
+            color: #dc3545;
+            background: rgba(255,255,255,0.8);
+            padding: 5px;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="form-container">
-        <h2 class="page-title">Quản Lý Tàu</h2>
+        <h2 class="page-title" th:text="${train.id == null ? 'Thêm Tàu Mới' : 'Cập Nhật Tàu'}">Form Tàu</h2>
 
-        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-        <div class="mb-3 d-flex justify-content-end">
-            <a th:href="@{/trains/new}" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> Thêm Tàu Mới
-            </a>
-        </div>
+        <form th:action="@{/trains/save}" th:object="${train}" method="POST">
+            <input type="hidden" th:field="*{id}" />
 
-        <table class="table table-striped table-hover">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Mã Tàu</th>
-                <th>Tên Tàu</th>
-                <th>Trạng Thái</th>
-                <th>Hành Động</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="train : ${trains}">
-                <td th:text="${train.id}"></td>
-                <td th:text="${train.code}"></td>
-                <td th:text="${train.name}"></td>
-                <td>
-                    <span th:if="${train.status.name() == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
-                    <span th:if="${train.status.name() == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
-                </td>
-                <td class="d-flex gap-2">
-                    <a th:href="@{/trains/edit/{id}(id=${train.id})}" class="btn btn-secondary btn-sm">Chỉnh sửa</a>
-                    <a th:href="@{/trains/delete/{id}(id=${train.id})}" class="btn btn-danger btn-sm"
-                       onclick="return confirm('Bạn có chắc chắn muốn xóa tàu này?')">Xóa</a>
-                </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(trains)}">
-                <td colspan="5" class="text-center">Không tìm thấy tàu nào.</td>
-            </tr>
-            </tbody>
-        </table>
+            <div class="mb-3">
+                <label for="code">Mã Tàu (Code)</label>
+                <input type="text" th:field="*{code}" id="code" class="form-control"
+                       th:classappend="${#fields.hasErrors('code')} ? 'is-invalid' : ''" required>
+                <div th:if="${#fields.hasErrors('code')}" th:errors="*{code}" class="invalid-feedback"></div>
+            </div>
 
-        <a th:href="@{/admin/dashboard}" class="btn btn-secondary mt-3">Quay lại Dashboard</a>
+            <div class="mb-3">
+                <label for="name">Tên Tàu</label>
+                <input type="text" th:field="*{name}" id="name" class="form-control"
+                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''" required>
+                <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="invalid-feedback"></div>
+            </div>
+
+            <div class="mb-3">
+                <label for="status">Trạng Thái</label>
+                <select th:field="*{status}" id="status" class="form-select">
+                    <option th:each="s : ${allTrainStatus}"
+                            th:value="${s}"
+                            th:text="${s.description}"></option>
+                </select>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-center gap-3">
+                <button type="submit" class="btn btn-success px-4">Lưu Tàu</button>
+                <a th:href="@{/trains}" class="btn btn-secondary px-4">Quay về danh sách</a>
+            </div>
+        </form>
     </div>
 </div>
 </body>

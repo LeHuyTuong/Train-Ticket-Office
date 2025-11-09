@@ -32,9 +32,9 @@ public class SeatServiceImpl implements SeatService {
     @Override
     public Seat saveSeat(Seat seat) {
         if (seat.getSeatId() == null) {
+            // Kiểm tra trùng lặp khi tạo mới
             if (seatRepository.existsByCarriageAndSeatNumber(seat.getCarriage(), seat.getSeatNumber())) {
-
-                throw new IllegalStateException("Seat number '" + seat.getSeatNumber() + "' already exists on carriage '" + seat.getCarriage().getName() + "'!");
+                throw new IllegalStateException("Số ghế '" + seat.getSeatNumber() + "' đã tồn tại trên toa '" + seat.getCarriage().getName() + "'.");
             }
         }
         return seatRepository.save(seat);
@@ -43,7 +43,7 @@ public class SeatServiceImpl implements SeatService {
     @Override
     public void deleteSeat(Long id) {
         if (!seatRepository.existsById(id)) {
-            throw new RuntimeException("Seat not found with ID: " + id);
+            throw new RuntimeException("Không tìm thấy Ghế: " + id);
         }
         seatRepository.deleteById(id);
     }

@@ -15,7 +15,6 @@ import java.util.Optional;
 @Service
 public class StationServiceImpl implements StationService {
 
-    // ===== SỐ LƯỢNG GA TRÊN MỖI TRANG (THEO YÊU CẦU CỦA BẠN) =====
     public static final int STATIONS_PER_PAGE = 5;
 
     @Autowired
@@ -26,21 +25,16 @@ public class StationServiceImpl implements StationService {
         return stationRepository.findAll();
     }
 
-    // ===== IMPLEMENT PHƯƠNG THỨC MỚI =====
     @Override
     public Page<Station> listAll(int pageNum, String keyword) {
-        // Trang bắt đầu từ 0, nên (pageNum - 1)
         Pageable pageable = PageRequest.of(pageNum - 1, STATIONS_PER_PAGE);
 
         if (keyword != null && !keyword.isEmpty()) {
-            // Nếu có từ khóa, gọi hàm tìm kiếm
             return stationRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(keyword, keyword, pageable);
         }
 
-        // Nếu không có từ khóa, phân trang tất cả
         return stationRepository.findAll(pageable);
     }
-    // ===================================
 
     @Override
     public Station getStationById(Integer id) {
@@ -68,6 +62,11 @@ public class StationServiceImpl implements StationService {
             existingStation.setName(station.getName());
             existingStation.setCity(station.getCity());
             existingStation.setProvince(station.getProvince());
+
+            // ===== THÊM DÒNG NÀY =====
+            existingStation.setDistanceKm(station.getDistanceKm());
+            // ========================
+
             existingStation.setStatus(station.getStatus());
 
             return stationRepository.save(existingStation);

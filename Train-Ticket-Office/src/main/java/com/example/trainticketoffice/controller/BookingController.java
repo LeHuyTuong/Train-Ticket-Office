@@ -6,19 +6,24 @@ import com.example.trainticketoffice.repository.BookingRepository;
 import com.example.trainticketoffice.repository.OrderRepository;
 import com.example.trainticketoffice.repository.TripRepository;
 import com.example.trainticketoffice.service.BookingService;
-import com.example.trainticketoffice.service.SeatService;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+// import com.example.trainticketoffice.service.SeatService; // (Không cần)
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.Month;
 
 @Controller
 @RequestMapping("/bookings")
@@ -27,26 +32,30 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final TripRepository tripRepository;
-    private final SeatService seatService;
     private final BookingRepository bookingRepository;
     private final OrderRepository orderRepository;
 
-    // ===== SỬA HÀM NÀY =====
+    private static final BigDecimal HOLIDAY_SURCHARGE_RATE = new BigDecimal("1.20");
+
+    private boolean isHoliday(LocalDate date) {
+        if (date.getMonth() == Month.JANUARY && date.getDayOfMonth() == 1) return true;
+        if (date.getMonth() == Month.APRIL && date.getDayOfMonth() == 30) return true;
+        if (date.getMonth() == Month.MAY && date.getDayOfMonth() == 1) return true;
+        if (date.getMonth() == Month.SEPTEMBER && date.getDayOfMonth() == 2) return true;
+        return false;
+    }
+
+    // ===== SỬA LẠI HOÀN TOÀN HÀM NÀY (Quay về logic "Bản đồ ghế") =====
     @GetMapping("/new")
     public String showCreateForm(@RequestParam("tripId") Long tripId, Model model,
                                  HttpSession session) {
 
         User currentUser = (User) session.getAttribute("userLogin");
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
+        if (currentUser == null) return "redirect:/login";
 
         Optional<Trip> tripOpt = tripRepository.findById(tripId);
-        if (tripOpt.isEmpty()) {
-            return "redirect:/";
-        }
+        if (tripOpt.isEmpty()) return "redirect:/";
 
-        // 1. Chạy logic dọn dẹp 15 phút (ĐÃ CÓ)
         bookingService.autoCancelExpiredBookingsForTrip(tripId);
 
         Trip selectedTrip = tripOpt.get();
@@ -56,20 +65,39 @@ public class BookingController {
                 .flatMap(carriage -> carriage.getSeats().stream())
                 .collect(Collectors.toList());
 
-        // 2. Lấy TẤT CẢ booking (chờ, đã trả, hoàn thành)
+        Station startStation = selectedTrip.getRoute().getStartStation();
+        Station endStation = selectedTrip.getRoute().getEndStation();
+        if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) {
+            model.addAttribute("errorMessage", "Lỗi cấu hình: Ga chưa có thông tin KM.");
+            return "customer/Home";
+        }
+        int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
+        if (distanceKm == 0) distanceKm = 20;
+
+        boolean isTripOnHoliday = isHoliday(selectedTrip.getDepartureTime().toLocalDate());
+        BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
+
+        Map<Long, BigDecimal> seatPrices = new HashMap<>();
+        for (Seat seat : allSeatsOnTrain) {
+            SeatType seatType = seat.getCarriage().getSeatType();
+            if (seatType != null && seatType.getPricePerKm() != null) {
+                BigDecimal basePrice = seatType.getPricePerKm().multiply(BigDecimal.valueOf(distanceKm));
+                BigDecimal priceWithSurcharge = basePrice.multiply(currentSurchargeRate);
+                priceWithSurcharge = priceWithSurcharge.setScale(0, RoundingMode.HALF_UP);
+                seatPrices.put(seat.getSeatId(), priceWithSurcharge);
+            } else {
+                seatPrices.put(seat.getSeatId(), BigDecimal.valueOf(999999));
+            }
+        }
+
         List<Booking> allBookingsForTrip = bookingRepository.findAllByTrip_TripIdAndStatusIn(
                 tripId,
                 List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
         );
-
-        // 3. Lọc ra 2 danh sách ID riêng biệt
-        // (Ghế đã thanh toán hoặc hoàn thành -> Màu Xám)
         List<Long> paidSeatIds = allBookingsForTrip.stream()
                 .filter(b -> b.getStatus() == BookingStatus.PAID || b.getStatus() == BookingStatus.COMPLETED)
                 .map(booking -> booking.getSeat().getSeatId())
                 .collect(Collectors.toList());
-
-        // (Ghế đang chờ thanh toán -> Màu Vàng)
         List<Long> pendingSeatIds = allBookingsForTrip.stream()
                 .filter(b -> b.getStatus() == BookingStatus.BOOKED)
                 .map(booking -> booking.getSeat().getSeatId())
@@ -78,21 +106,22 @@ public class BookingController {
         model.addAttribute("selectedTrip", selectedTrip);
         model.addAttribute("carriages", carriages);
         model.addAttribute("allSeats", allSeatsOnTrain);
-
-        // 4. Gửi 2 danh sách mới ra view
+        model.addAttribute("seatPrices", seatPrices);
         model.addAttribute("paidSeatIds", paidSeatIds);
         model.addAttribute("pendingSeatIds", pendingSeatIds);
-
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("isHoliday", isTripOnHoliday);
+        model.addAttribute("surchargeRate", HOLIDAY_SURCHARGE_RATE);
 
-        return "ticket/form";
+        return "ticket/form"; // <-- TRẢ VỀ FILE "form.html" (Bản đồ ghế)
     }
-    // ========================
+    // ==============================================================
 
+    // ===== SỬA HÀM POST NÀY (Quay về logic `seatIds`) =====
     @PostMapping
     public String createBooking(HttpSession session,
                                 @RequestParam("tripId") Long tripId,
-                                @RequestParam("seatIds") List<Long> seatIds,
+                                @RequestParam("seatIds") List<Long> seatIds, // SỬA
                                 @RequestParam("passengerName") String passengerName,
                                 @RequestParam("passengerType") String passengerType,
                                 @RequestParam(value = "phone", required = false) String phone,
@@ -100,9 +129,7 @@ public class BookingController {
                                 RedirectAttributes redirectAttributes) {
 
         User currentUser = (User) session.getAttribute("userLogin");
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
+        if (currentUser == null) return "redirect:/login";
 
         if (seatIds == null || seatIds.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất một ghế.");
@@ -110,17 +137,15 @@ public class BookingController {
         }
 
         try {
-            // Gọi hàm createOrder (7 tham số)
             Order createdOrder = bookingService.createOrder(
                     currentUser.getId(),
                     tripId,
-                    seatIds,
+                    seatIds, // SỬA
                     passengerName,
                     passengerType,
                     phone,
                     email
             );
-
             redirectAttributes.addFlashAttribute("newOrderId", createdOrder.getOrderId());
             return "redirect:/bookings/confirm";
 
@@ -129,42 +154,30 @@ public class BookingController {
             return "redirect:/bookings/new?tripId=" + tripId;
         }
     }
+    // =======================================================
 
+    // (Các hàm /confirm, / (list), /{id}, /delete/{id} giữ nguyên)
     @GetMapping("/confirm")
     public String showConfirmPage(Model model, HttpSession session,
                                   @ModelAttribute("newOrderId") Long newOrderId) {
-
         User currentUser = (User) session.getAttribute("userLogin");
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
-
-        if (newOrderId == null || newOrderId == 0) {
-            return "redirect:/bookings";
-        }
-
+        if (currentUser == null) return "redirect:/login";
+        if (newOrderId == null || newOrderId == 0) return "redirect:/bookings";
         Order newOrder = orderRepository.findById(newOrderId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
-
         model.addAttribute("order", newOrder);
         model.addAttribute("bookings", newOrder.getBookings());
         model.addAttribute("totalPrice", newOrder.getTotalPrice());
-
         return "payment/confirm-payment";
     }
-
     @GetMapping
     public String listBookings(HttpSession session, Model model) {
         User currentUser = (User) session.getAttribute("userLogin");
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
-
+        if (currentUser == null) return "redirect:/login";
         List<Booking> bookings = bookingService.findAllBookingsByUserId(currentUser.getId());
         model.addAttribute("bookings", bookings);
         return "ticket/list";
     }
-
     @GetMapping("/{bookingId}")
     public String viewBooking(@PathVariable Long bookingId,
                               Model model,
@@ -177,24 +190,18 @@ public class BookingController {
         model.addAttribute("booking", booking.get());
         return "ticket/detail";
     }
-
     @GetMapping("/delete/{bookingId}")
     public String deleteBooking(@PathVariable Long bookingId,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
-
         User currentUser = (User) session.getAttribute("userLogin");
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
-
+        if (currentUser == null) return "redirect:/login";
         try {
             bookingService.customerCancelBooking(bookingId, currentUser.getId());
-            redirectAttributes.addFlashAttribute("successMessage", "Đã hủy booking " + bookingId + " thành công. Ghế đã được giải phóng.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã hủy booking " + bookingId + " thành công.");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + ex.getMessage());
         }
-
         return "redirect:/bookings";
     }
 }

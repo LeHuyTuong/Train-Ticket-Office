@@ -4,6 +4,7 @@ import com.example.trainticketoffice.common.TicketStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -12,12 +13,11 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Ticket extends BaseEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, columnDefinition = "NVARCHAR(50)")
+    @Column(unique = true, nullable = false, columnDefinition = "nvarchar(255)")
     private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,9 +28,19 @@ public class Ticket extends BaseEntity {
     @JoinColumn(name = "trip_id", nullable = false)
     private Trip trip;
 
+    // ===== THÊM TRƯỜNG NÀY TRỞ LẠI =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seat_id")
     private Seat seat;
+    // ===================================
+
+    // ===== XÓA 2 TRƯỜNG NÀY =====
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "carriage_id", nullable = false)
+    // private Carriage carriage;
+    // @Column(name = "seat_number", length = 30, columnDefinition = "nvarchar(30)")
+    // private String seatNumber;
+    // =============================
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_station_id", nullable = false)
@@ -40,13 +50,11 @@ public class Ticket extends BaseEntity {
     @JoinColumn(name = "to_station_id", nullable = false)
     private Station toStation;
 
-    @Column(columnDefinition = "NVARCHAR(100)")
+    @Column(columnDefinition = "nvarchar(255)")
     private String passengerName;
-
-    @Column(columnDefinition = "NVARCHAR(20)")
+    @Column(columnDefinition = "nvarchar(50)")
     private String passengerPhone;
-
-    @Column(columnDefinition = "NVARCHAR(20)")
+    @Column(columnDefinition = "nvarchar(50)")
     private String passengerIdCard;
 
     private BigDecimal totalPrice;
@@ -54,7 +62,7 @@ public class Ticket extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketStatus status;
-
     private LocalDateTime bookedAt;
-    private LocalDateTime   checkedInAt;
+
+    private LocalDateTime checkedInAt;
 }
