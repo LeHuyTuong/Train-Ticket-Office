@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
+        /* (CSS giữ nguyên) */
         body { font-family: 'Montserrat', sans-serif; background: #f0f4f8; padding: 20px; }
         .trip-info-box {
             background: linear-gradient(135deg, #004a99, #003366);
@@ -76,7 +77,7 @@
 
     <h2 class="page-title">Bước 1: Chọn Ghế & Toa</h2>
 
-    <form th:action="@{/bookings}" method="POST">
+    <form th:action="@{/bookings/passenger-details}" method="GET">
         <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
 
         <div class="mb-3">
@@ -104,7 +105,8 @@
                                    name="seatIds"
                                    th:id="|seat-${seat.seatId}|"
                                    th:value="${seat.seatId}"
-                                   th:data-price="${seatPrices[seat.seatId]}" th:disabled="${paidSeatIds.contains(seat.seatId) or pendingSeatIds.contains(seat.seatId)}"
+                                   th:data-price="${seatPrices[seat.seatId]}"
+                                   th:disabled="${paidSeatIds.contains(seat.seatId) or pendingSeatIds.contains(seat.seatId)}"
                                    class="seat-checkbox" />
 
                             <label th:for="|seat-${seat.seatId}|" class="seat-label"
@@ -122,52 +124,24 @@
         </div>
 
         <div class="mb-3">
-            <h3 class="mt-3">Tổng Tiền (Đã giảm trừ): <span id="total-price">0</span> VNĐ</h3>
-        </div>
-
-        <div class="mb-3">
-            <label for="passengerName" class="form-label fw-bold">Tên Hành Khách</label>
-            <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="passengerType" class="form-label fw-bold">Loại Hành Khách (Giảm giá)</label>
-            <select id="passengerType" name="passengerType" class="form-select" required>
-                <option value="ADULT" selected>Người Lớn (Giá 100%)</option>
-                <option value="CHILD">Trẻ Em (6-10t) (Giảm 50%)</option>
-                <option value="INFANT">Trẻ Em (<6t) (Miễn phí)</option>
-                <option value="SENIOR">Người Cao Tuổi (Giảm 25%)</option>
-            </select>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="phone" class="form-label fw-bold">Số Điện Thoại</label>
-                <input type="tel" id="phone" name="phone" class="form-control" th:value="${currentUser.phone}" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="email" class="form-label fw-bold">Email</label>
-                <input type="email" id="email" name="email" class="form-control" th:value="${currentUser.email}" required>
-            </div>
+            <h3 class="mt-3">Tổng Tiền (Tạm tính): <span id="total-price">0</span> VNĐ</h3>
         </div>
 
         <div class="mt-4">
-            <button type="submit" class="btn btn-success btn-lg">Đến Bước 2: Xác Nhận</button>
+            <button type="submit" class="btn btn-success btn-lg">Tiếp Tục: Nhập Thông Tin</button>
             <a th:href="@{/}" class="btn btn-secondary btn-lg">Hủy (Về Trang chủ)</a>
         </div>
     </form>
 
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
-            // (Sửa lỗi cú pháp Thymeleaf)
-            const IS_HOLIDAY = /*[[${isHoliday}]]*/ false;
-            const SURCHARGE_RATE = /*[[${surchargeRate}]]*/ 1.0;
+            // (Không cần IS_HOLIDAY nữa, vì giá đã bao gồm phụ thu)
 
             const checkboxes = document.querySelectorAll('.seat-checkbox');
             const totalElement = document.getElementById('total-price');
             const carriageTabs = document.querySelectorAll('.carriage-tab');
             const seatGrids = document.querySelectorAll('.seat-grid');
-            const passengerTypeSelect = document.getElementById('passengerType');
+            // (Xóa passengerTypeSelect)
 
             const tripIdInput = document.querySelector('input[name="tripId"]');
             if (!tripIdInput) {
@@ -177,24 +151,20 @@
 
             const storageKey = 'selectedSeats_TRIP_' + tripIdInput.value;
 
+            // SỬA HÀM TÍNH TỔNG (Chỉ cộng giá gốc)
             function calculateTotal() {
                 let total = 0;
-                let passengerDiscountRate = 1.0;
-                const passengerType = passengerTypeSelect.value;
 
-                if (passengerType === 'INFANT') passengerDiscountRate = 0.0;
-                else if (passengerType === 'CHILD') passengerDiscountRate = 0.5;
-                else if (passengerType === 'SENIOR') passengerDiscountRate = 0.75;
-
+                // 1. Tính tổng giá gốc (đã bao gồm phụ thu lễ)
                 checkboxes.forEach(cb => {
                     if(cb.checked) {
                         let basePrice = parseFloat(cb.dataset.price);
-                        total += (basePrice * passengerDiscountRate);
+                        total += basePrice;
                     }
                 });
 
-                let roundedTotal = Math.round(total / 1000) * 1000;
-                totalElement.textContent = roundedTotal.toLocaleString('vi-VN');
+                // 2. Làm tròn (nếu cần, nhưng giá đã tròn sẵn)
+                totalElement.textContent = total.toLocaleString('vi-VN');
             }
 
             function saveSelectedSeats() {
@@ -244,7 +214,7 @@
                 });
             });
 
-            passengerTypeSelect.addEventListener('change', calculateTotal);
+            // (Xóa sự kiện change của passengerTypeSelect)
 
             loadSelectedSeats();
             calculateTotal();

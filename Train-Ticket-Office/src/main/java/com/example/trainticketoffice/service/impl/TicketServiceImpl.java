@@ -2,12 +2,12 @@ package com.example.trainticketoffice.service.impl;
 
 import com.example.trainticketoffice.common.TicketStatus;
 import com.example.trainticketoffice.model.Booking;
-import com.example.trainticketoffice.model.Seat; // THÊM LẠI
+import com.example.trainticketoffice.model.Seat;
 import com.example.trainticketoffice.model.Station;
 import com.example.trainticketoffice.model.Ticket;
 import com.example.trainticketoffice.model.Trip;
 import com.example.trainticketoffice.repository.BookingRepository;
-import com.example.trainticketoffice.repository.SeatRepository; // THÊM LẠI
+import com.example.trainticketoffice.repository.SeatRepository;
 import com.example.trainticketoffice.repository.TicketRepository;
 import com.example.trainticketoffice.repository.StationRepository;
 import com.example.trainticketoffice.service.TicketService;
@@ -27,29 +27,28 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
     private final BookingRepository bookingRepository;
-    private final SeatRepository seatRepository; // KHÔI PHỤC
+    private final SeatRepository seatRepository;
     private final StationRepository stationRepository;
 
     @Autowired
     public TicketServiceImpl(
             TicketRepository ticketRepository,
             BookingRepository bookingRepository,
-            SeatRepository seatRepository, // KHÔI PHỤC
+            SeatRepository seatRepository,
             StationRepository stationRepository
     ) {
         this.ticketRepository = ticketRepository;
         this.bookingRepository = bookingRepository;
-        this.seatRepository = seatRepository; // KHÔI PHỤC
+        this.seatRepository = seatRepository;
         this.stationRepository = stationRepository;
     }
 
-    // ===== IMPLEMENT HÀM MỚI (LOGIC BẢN ĐỒ GHẾ) =====
     @Override
     @Transactional
     public Ticket createTicketForBooking(Booking booking) {
         try {
             Trip trip = booking.getTrip();
-            Seat seat = booking.getSeat(); // Lấy Seat từ Booking
+            Seat seat = booking.getSeat();
 
             Optional<Station> fromStationOpt = stationRepository.findById(trip.getRoute().getStartStation().getId());
             Optional<Station> toStationOpt = stationRepository.findById(trip.getRoute().getEndStation().getId());
@@ -66,15 +65,15 @@ public class TicketServiceImpl implements TicketService {
             ticket.setTrip(trip);
             ticket.setFromStation(fromStationOpt.get());
             ticket.setToStation(toStationOpt.get());
-
-            // SỬA: Gán Seat (từ logic Bản đồ ghế)
             ticket.setSeat(seat);
-            // (Không gán carriage, seatNumber nữa)
 
             ticket.setPassengerName(booking.getPassengerName());
             ticket.setPassengerPhone(booking.getPhone());
-            // (Trường IdCard/CCCD không có trong Booking, cần thêm nếu muốn)
-            // ticket.setPassengerIdCard("...");
+
+            // ===== THÊM SAO CHÉP 2 TRƯỜNG MỚI =====
+            ticket.setPassengerIdCard(booking.getPassengerIdCard());
+            ticket.setDob(booking.getDob());
+            // ===================================
 
             ticket.setTotalPrice(booking.getPrice());
             ticket.setStatus(TicketStatus.ACTIVE);
@@ -87,19 +86,13 @@ public class TicketServiceImpl implements TicketService {
             return null;
         }
     }
-    // ======================================
 
-
-    // (Hàm cũ này đã lỗi thời, không còn dùng logic Seat)
     @Override
     @Transactional
     public String createTicketForBooking(Long bookingId, Map<String, Object> requestData) {
         System.err.println("CẢNH BÁO: Hàm createTicketForBooking(Map) đã lỗi thời và không nên được gọi.");
-
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isEmpty()) { return null; }
-
-        // Gọi hàm logic mới
         Ticket newTicket = this.createTicketForBooking(bookingOpt.get());
         return newTicket != null ? newTicket.getCode() : null;
     }

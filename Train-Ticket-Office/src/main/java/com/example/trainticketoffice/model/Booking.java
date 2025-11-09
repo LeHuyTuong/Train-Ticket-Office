@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate; // THÊM
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,7 +30,6 @@ public class Booking extends BaseEntity{
     @JoinColumn(name = "trip_id")
     private Trip trip;
 
-    // ===== THÊM TRƯỜNG NÀY TRỞ LẠI =====
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "seat_id")
     private Seat seat;
@@ -40,6 +40,17 @@ public class Booking extends BaseEntity{
 
     @Column(nullable = false, length = 100, columnDefinition = "nvarchar(100)")
     private String passengerName;
+
+    @Column(length = 20, columnDefinition = "nvarchar(20)")
+    private String passengerType;
+
+    // ===== 2 TRƯỜNG MỚI (LƯU VÀO DB) =====
+    @Column(length = 20, columnDefinition = "nvarchar(20)")
+    private String passengerIdCard; // CCCD/Passport
+
+    @Column(name = "date_of_birth")
+    private LocalDate dob; // Ngày sinh
+    // ===================================
 
     @Column(length = 20, columnDefinition = "nvarchar(20)")
     private String phone;

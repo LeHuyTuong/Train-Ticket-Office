@@ -1,28 +1,22 @@
 package com.example.trainticketoffice.service;
 
 import com.example.trainticketoffice.model.Booking;
+import com.example.trainticketoffice.model.BookingRequest; // THÊM
 import com.example.trainticketoffice.model.Order;
+import com.example.trainticketoffice.model.User; // THÊM
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface BookingService {
 
     /**
-     * SỬA LẠI HÀM NÀY (Quay lại dùng List<SeatId>)
+     * SỬA LẠI HOÀN TOÀN HÀM NÀY
+     * Nó sẽ nhận 1 BookingRequest chứa danh sách hành khách
      */
-    Order createOrder(Integer userId,
-                      Long tripId,
-                      List<Long> seatIds, // SỬA
-                      String passengerName,
-                      String passengerType,
-                      String phone,
-                      String email);
+    Order createOrder(BookingRequest bookingRequest, User user);
 
-    // Xóa hàm overloading (6 tham số)
-    // Order createOrder(Integer userId, Long tripId, List<Long> seatIds, ...);
-
+    // (Xóa các hàm createOrder cũ)
 
     List<Booking> findAllBookings();
     List<Booking> findAllBookingsByUserId(Integer userId);

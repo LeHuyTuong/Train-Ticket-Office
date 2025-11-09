@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate; // THÊM
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,19 +29,9 @@ public class Ticket extends BaseEntity {
     @JoinColumn(name = "trip_id", nullable = false)
     private Trip trip;
 
-    // ===== THÊM TRƯỜNG NÀY TRỞ LẠI =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seat_id")
     private Seat seat;
-    // ===================================
-
-    // ===== XÓA 2 TRƯỜNG NÀY =====
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "carriage_id", nullable = false)
-    // private Carriage carriage;
-    // @Column(name = "seat_number", length = 30, columnDefinition = "nvarchar(30)")
-    // private String seatNumber;
-    // =============================
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_station_id", nullable = false)
@@ -55,7 +46,12 @@ public class Ticket extends BaseEntity {
     @Column(columnDefinition = "nvarchar(50)")
     private String passengerPhone;
     @Column(columnDefinition = "nvarchar(50)")
-    private String passengerIdCard;
+    private String passengerIdCard; // (Đã có)
+
+    // ===== THÊM TRƯỜNG NÀY =====
+    @Column(name = "date_of_birth")
+    private LocalDate dob; // Ngày sinh
+    // ==========================
 
     private BigDecimal totalPrice;
 

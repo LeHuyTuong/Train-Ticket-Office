@@ -2,8 +2,8 @@ package com.example.trainticketoffice.service.impl;
 
 import com.example.trainticketoffice.common.BookingStatus;
 import com.example.trainticketoffice.common.PaymentStatus;
-import com.example.trainticketoffice.common.SeatStatus; // THÊM LẠI
-import com.example.trainticketoffice.model.*;
+import com.example.trainticketoffice.common.SeatStatus;
+import com.example.trainticketoffice.model.*; // (Dùng *)
 import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.BookingService;
 import jakarta.transaction.Transactional;
@@ -15,11 +15,10 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.Period; // THÊM
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +30,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
-    private final SeatRepository seatRepository; // THÊM LẠI
-    // private final CarriageRepository carriageRepository; // (Không cần)
+    private final SeatRepository seatRepository;
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
@@ -45,23 +43,38 @@ public class BookingServiceImpl implements BookingService {
         return false;
     }
 
-    // (Xóa hàm createOrder 6 tham số)
+    // ===== HÀM VALIDATE TUỔI (BACKEND) =====
+    private void validateAge(String passengerType, LocalDate dob) {
+        if (dob == null) {
+            throw new IllegalStateException("Vui lòng nhập Ngày sinh.");
+        }
 
-    // ===== VIẾT LẠI HOÀN TOÀN HÀM NÀY (LOGIC "BẢN ĐỒ GHẾ") =====
+        int age = Period.between(dob, LocalDate.now()).getYears();
+
+        switch (passengerType) {
+            case "INFANT":
+                if (age >= 6) throw new IllegalStateException("Tuổi của Trẻ Em (Miễn phí) phải dưới 6. Tuổi nhập vào là: " + age);
+                break;
+            case "CHILD":
+                if (age < 6 || age > 10) throw new IllegalStateException("Tuổi của Trẻ Em (Giảm giá) phải từ 6-10. Tuổi nhập vào là: " + age);
+                break;
+            case "SENIOR":
+                // (Giả sử tuổi hưu là 60)
+                if (age < 60) throw new IllegalStateException("Tuổi của Người Cao Tuổi phải từ 60 trở lên. Tuổi nhập vào là: " + age);
+                break;
+            case "ADULT":
+                if (age < 11 || age >= 60) throw new IllegalStateException("Tuổi của Người Lớn phải từ 11-59. Tuổi nhập vào là: " + age);
+                break;
+        }
+    }
+    // =====================================
+
     @Override
     @Transactional
-    public Order createOrder(Integer userId,
-                             Long tripId,
-                             List<Long> seatIds, // SỬA
-                             String passengerName,
-                             String passengerType,
-                             String phone,
-                             String email) {
+    public Order createOrder(BookingRequest bookingRequest, User user) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng: " + userId));
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chuyến đi: " + tripId));
+        Trip trip = tripRepository.findById(bookingRequest.getTripId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chuyến đi: " + bookingRequest.getTripId()));
 
         Station startStation = trip.getRoute().getStartStation();
         Station endStation = trip.getRoute().getEndStation();
@@ -82,52 +95,57 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> createdBookings = new ArrayList<>();
         boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
 
-        for (Long seatId : seatIds) {
-            Seat seat = seatRepository.findById(seatId)
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế: " + seatId));
+        for (PassengerInfo passenger : bookingRequest.getPassengers()) {
+
+            // ===== THÊM VALIDATION (BACKEND) =====
+            validateAge(passenger.getPassengerType(), passenger.getDob());
+            // ====================================
+
+            Seat seat = seatRepository.findById(passenger.getSeatId())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế: " + passenger.getSeatId()));
 
             Carriage carriage = seat.getCarriage();
-            if (carriage.getSeatType() == null || carriage.getSeatType().getPricePerKm() == null) {
+            SeatType seatType = carriage.getSeatType();
+            if (seatType == null || seatType.getPricePerKm() == null) {
                 throw new IllegalStateException("Lỗi cấu hình: Toa " + carriage.getName() + " chưa có Loại Ghế/Giá.");
             }
-            SeatType seatType = carriage.getSeatType();
             BigDecimal pricePerKm = seatType.getPricePerKm();
 
-            // 1. KIỂM TRA GHẾ (LOGIC SEAT)
             if (seat.getStatus() == SeatStatus.BOOKED) {
-                autoCancelExpiredBookingsForTrip(tripId); // Dọn dẹp
-                seat = seatRepository.findById(seatId)
-                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế sau khi làm mới: " + seatId));
-                if(seat.getStatus() == SeatStatus.BOOKED) {
-                    throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã được đặt.");
-                }
+                throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã bị đặt mất. Vui lòng thử lại.");
             }
-            // Dùng hàm repository cũ (đã khôi phục)
             if (bookingRepository.existsByTrip_TripIdAndSeat_SeatIdAndStatusIn(trip.getTripId(), seat.getSeatId(), List.of(BookingStatus.BOOKED, BookingStatus.PAID))) {
-                throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã được giữ chỗ cho chuyến đi này");
+                throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã bị giữ chỗ.");
             }
 
-            // 2. TẠO BOOKING
             Booking booking = new Booking();
             booking.setUser(user);
             booking.setTrip(trip);
-            booking.setSeat(seat); // Gán Ghế
-            // (Không gán Carriage hay seatNumber, vì đã có trong Seat)
-            booking.setPassengerName(passengerName);
-            booking.setPhone(phone);
-            booking.setEmail(email);
+            booking.setSeat(seat);
+
+            booking.setPassengerName(passenger.getPassengerName());
+            booking.setPhone(passenger.getPhone());
+            booking.setEmail(passenger.getEmail());
+            booking.setPassengerType(passenger.getPassengerType());
+
+            // ===== THÊM SAO CHÉP 2 TRƯỜNG MỚI =====
+            booking.setPassengerIdCard(passenger.getPassengerIdCard());
+            booking.setDob(passenger.getDob());
+            // ===================================
+
             booking.setStatus(BookingStatus.BOOKED);
             booking.setBookingTime(LocalDateTime.now());
 
-            // 3. TÍNH GIÁ ĐỘNG
             BigDecimal basePrice = pricePerKm.multiply(BigDecimal.valueOf(distanceKm));
             if (isTripOnHoliday) {
                 basePrice = basePrice.multiply(HOLIDAY_SURCHARGE_RATE);
             }
+
             BigDecimal finalPrice = basePrice;
-            if ("INFANT".equals(passengerType)) finalPrice = BigDecimal.ZERO;
-            else if ("CHILD".equals(passengerType)) finalPrice = finalPrice.multiply(BigDecimal.valueOf(0.5));
-            else if ("SENIOR".equals(passengerType)) finalPrice = finalPrice.multiply(BigDecimal.valueOf(0.75));
+            String pType = passenger.getPassengerType();
+            if ("INFANT".equals(pType)) finalPrice = BigDecimal.ZERO;
+            else if ("CHILD".equals(pType)) finalPrice = finalPrice.multiply(BigDecimal.valueOf(0.5));
+            else if ("SENIOR".equals(pType)) finalPrice = finalPrice.multiply(BigDecimal.valueOf(0.75));
 
             booking.setPrice(finalPrice.setScale(0, RoundingMode.HALF_UP));
 
@@ -135,7 +153,6 @@ public class BookingServiceImpl implements BookingService {
             createdBookings.add(booking);
             calculatedTotalPrice = calculatedTotalPrice.add(booking.getPrice());
 
-            // 4. CẬP NHẬT TRẠNG THÁI GHẾ
             seat.setStatus(SeatStatus.BOOKED);
             seatRepository.save(seat);
         }
@@ -145,8 +162,8 @@ public class BookingServiceImpl implements BookingService {
         savedOrder.setBookings(createdBookings);
         return orderRepository.save(savedOrder);
     }
-    // ===================================
 
+    // (Các hàm list, find, delete... giữ nguyên)
     @Override
     public List<Booking> findAllBookings() { return bookingRepository.findAll(); }
     @Override
@@ -154,16 +171,13 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public Optional<Booking> findById(Long bookingId) { return bookingRepository.findById(bookingId); }
 
-    // SỬA HÀM NÀY (ĐỂ GIẢI PHÓNG GHẾ)
     @Transactional
-    public void internalCancelBooking(Booking booking) {
-        // GIẢI PHÓNG GHẾ
+   public void internalCancelBooking(Booking booking) {
         Seat seat = booking.getSeat();
         if (seat != null) {
             seat.setStatus(SeatStatus.AVAILABLE);
             seatRepository.save(seat);
         }
-
         List<Ticket> tickets = ticketRepository.findByBooking(booking);
         ticketRepository.deleteAll(tickets);
         Order order = booking.getOrder();
@@ -193,7 +207,6 @@ public class BookingServiceImpl implements BookingService {
         internalCancelBooking(booking);
     }
 
-    // SỬA HÀM NÀY (ĐỂ DỌN DẸP GHẾ)
     @Override
     @Transactional
     public void autoCancelExpiredBookingsForTrip(Long tripId) {
@@ -208,13 +221,18 @@ public class BookingServiceImpl implements BookingService {
                         order.setTotalPrice(order.getTotalPrice().subtract(booking.getPrice()));
                         orderRepository.save(order);
                     }
-                    internalCancelBooking(booking); // (Hàm này đã bao gồm giải phóng ghế)
+                    Seat seat = booking.getSeat();
+                    if (seat != null) {
+                        seat.setStatus(SeatStatus.AVAILABLE);
+                        seatRepository.save(seat);
+                    }
+                    internalCancelBooking(booking);
                     cancelCount++;
                 }
             }
         }
         if(cancelCount > 0) {
-            System.out.println("SCHEDULER: Đã tự động hủy " + cancelCount + " vé quá hạn cho chuyến " + tripId);
+            System.out.println("SCHEDULER: Đã tự động hủy " + cancelCount + " vé quá hạn (logic Bản đồ ghế).");
         }
     }
 }
