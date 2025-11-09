@@ -34,6 +34,12 @@ public class Booking extends BaseEntity{
     @JoinColumn(name = "seat_id")
     private Seat seat;
 
+    // ===== THÊM QUAN HỆ NÀY =====
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id") // Tên cột khóa ngoại trong bảng bookings
+    private Order order;
+    // =============================
+
     @Column(nullable = false, length = 100)
     private String passengerName;
 

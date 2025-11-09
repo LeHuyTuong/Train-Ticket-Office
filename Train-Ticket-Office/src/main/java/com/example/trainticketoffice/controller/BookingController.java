@@ -3,6 +3,7 @@ package com.example.trainticketoffice.controller;
 import com.example.trainticketoffice.common.BookingStatus;
 import com.example.trainticketoffice.model.*;
 import com.example.trainticketoffice.repository.BookingRepository;
+import com.example.trainticketoffice.repository.OrderRepository;
 import com.example.trainticketoffice.repository.TripRepository;
 import com.example.trainticketoffice.service.BookingService;
 import com.example.trainticketoffice.service.SeatService;
@@ -28,7 +29,9 @@ public class BookingController {
     private final TripRepository tripRepository;
     private final SeatService seatService;
     private final BookingRepository bookingRepository;
+    private final OrderRepository orderRepository;
 
+    // ===== SỬA HÀM NÀY =====
     @GetMapping("/new")
     public String showCreateForm(@RequestParam("tripId") Long tripId, Model model,
                                  HttpSession session) {
@@ -43,39 +46,55 @@ public class BookingController {
             return "redirect:/";
         }
 
+        // 1. Chạy logic dọn dẹp 15 phút (ĐÃ CÓ)
         bookingService.autoCancelExpiredBookingsForTrip(tripId);
 
         Trip selectedTrip = tripOpt.get();
         Train train = selectedTrip.getTrain();
-
         List<Carriage> carriages = train.getCarriages();
-
         List<Seat> allSeatsOnTrain = carriages.stream()
                 .flatMap(carriage -> carriage.getSeats().stream())
                 .collect(Collectors.toList());
 
-        List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
-                        tripId,
-                        List.of(BookingStatus.BOOKED, BookingStatus.PAID)
-                )
-                .stream()
+        // 2. Lấy TẤT CẢ booking (chờ, đã trả, hoàn thành)
+        List<Booking> allBookingsForTrip = bookingRepository.findAllByTrip_TripIdAndStatusIn(
+                tripId,
+                List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
+        );
+
+        // 3. Lọc ra 2 danh sách ID riêng biệt
+        // (Ghế đã thanh toán hoặc hoàn thành -> Màu Xám)
+        List<Long> paidSeatIds = allBookingsForTrip.stream()
+                .filter(b -> b.getStatus() == BookingStatus.PAID || b.getStatus() == BookingStatus.COMPLETED)
+                .map(booking -> booking.getSeat().getSeatId())
+                .collect(Collectors.toList());
+
+        // (Ghế đang chờ thanh toán -> Màu Vàng)
+        List<Long> pendingSeatIds = allBookingsForTrip.stream()
+                .filter(b -> b.getStatus() == BookingStatus.BOOKED)
                 .map(booking -> booking.getSeat().getSeatId())
                 .collect(Collectors.toList());
 
         model.addAttribute("selectedTrip", selectedTrip);
         model.addAttribute("carriages", carriages);
         model.addAttribute("allSeats", allSeatsOnTrain);
-        model.addAttribute("bookedSeatIds", bookedSeatIds);
+
+        // 4. Gửi 2 danh sách mới ra view
+        model.addAttribute("paidSeatIds", paidSeatIds);
+        model.addAttribute("pendingSeatIds", pendingSeatIds);
+
         model.addAttribute("currentUser", currentUser);
 
         return "ticket/form";
     }
+    // ========================
 
     @PostMapping
     public String createBooking(HttpSession session,
                                 @RequestParam("tripId") Long tripId,
                                 @RequestParam("seatIds") List<Long> seatIds,
                                 @RequestParam("passengerName") String passengerName,
+                                @RequestParam("passengerType") String passengerType,
                                 @RequestParam(value = "phone", required = false) String phone,
                                 @RequestParam(value = "email", required = false) String email,
                                 RedirectAttributes redirectAttributes) {
@@ -91,24 +110,18 @@ public class BookingController {
         }
 
         try {
-            List<Booking> createdBookings = new ArrayList<>();
-            for(Long seatId : seatIds) {
-                Booking booking = bookingService.createBooking(
-                        currentUser.getId(),
-                        tripId,
-                        seatId,
-                        passengerName,
-                        phone,
-                        email
-                );
-                createdBookings.add(booking);
-            }
+            // Gọi hàm createOrder (7 tham số)
+            Order createdOrder = bookingService.createOrder(
+                    currentUser.getId(),
+                    tripId,
+                    seatIds,
+                    passengerName,
+                    passengerType,
+                    phone,
+                    email
+            );
 
-            List<Long> newBookingIds = createdBookings.stream()
-                    .map(Booking::getBookingId)
-                    .collect(Collectors.toList());
-            redirectAttributes.addFlashAttribute("newBookingIds", newBookingIds);
-
+            redirectAttributes.addFlashAttribute("newOrderId", createdOrder.getOrderId());
             return "redirect:/bookings/confirm";
 
         } catch (IllegalArgumentException | IllegalStateException ex) {
@@ -119,27 +132,25 @@ public class BookingController {
 
     @GetMapping("/confirm")
     public String showConfirmPage(Model model, HttpSession session,
-                                  @ModelAttribute("newBookingIds") List<Long> newBookingIds) {
+                                  @ModelAttribute("newOrderId") Long newOrderId) {
 
         User currentUser = (User) session.getAttribute("userLogin");
         if (currentUser == null) {
             return "redirect:/login";
         }
 
-        if (newBookingIds == null || newBookingIds.isEmpty()) {
+        if (newOrderId == null || newOrderId == 0) {
             return "redirect:/bookings";
         }
 
-        List<Booking> newBookings = bookingRepository.findAllById(newBookingIds);
+        Order newOrder = orderRepository.findById(newOrderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
 
-        BigDecimal totalPrice = newBookings.stream()
-                .map(Booking::getPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        model.addAttribute("order", newOrder);
+        model.addAttribute("bookings", newOrder.getBookings());
+        model.addAttribute("totalPrice", newOrder.getTotalPrice());
 
-        model.addAttribute("bookings", newBookings);
-        model.addAttribute("totalPrice", totalPrice);
-
-        return "payment/confirm-payment"; // <-- Trang HTML MỚI
+        return "payment/confirm-payment";
     }
 
     @GetMapping

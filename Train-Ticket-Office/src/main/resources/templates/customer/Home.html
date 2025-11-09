@@ -117,6 +117,11 @@
         .no-results i {
             margin-right: 6px;
         }
+
+        /* THÊM: CSS cho Khứ hồi */
+        #return-date-group {
+            display: none; /* Ẩn mặc định */
+        }
     </style>
 </head>
 
@@ -131,6 +136,9 @@
 
     <div class="search-form-container">
         <h2 class="page-title"><i class="bi bi-search"></i> Tìm Kiếm Chuyến Tàu</h2>
+
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
 
         <form th:action="@{/trips/search}" method="GET">
             <div class="row g-3">
@@ -154,10 +162,25 @@
                     </select>
                 </div>
 
-                <div class="col-md-12">
-                    <label class="form-label">Ngày Khởi Hành (Tùy chọn)</label>
-                    <input type="date" name="departureDate" class="form-select">
+                <div class="col-md-6">
+                    <label class="form-label">Ngày Khởi Hành</label>
+                    <input type="date" name="departureDate" id="departureDate" class="form-select" required>
                 </div>
+
+                <div class="col-md-6" id="return-date-group">
+                    <label class="form-label">Ngày Về</label>
+                    <input type="date" name="returnDate" id="returnDate" class="form-select">
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="isRoundTrip" value="true" id="roundTripCheck">
+                        <label class="form-check-label" for="roundTripCheck">
+                            Khứ hồi
+                        </label>
+                    </div>
+                </div>
+
             </div>
 
             <div class="mt-4 text-center">
@@ -167,7 +190,6 @@
             </div>
         </form>
 
-        <!-- ✅ Thong bao loi -->
         <div th:if="${not #lists.isEmpty(param.startStationId)
                      and not #lists.isEmpty(param.endStationId)
                      and #lists.isEmpty(trips)}"
@@ -175,6 +197,37 @@
             <i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy chuyến tàu phù hợp.
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roundTripCheck = document.getElementById('roundTripCheck');
+            const returnDateGroup = document.getElementById('return-date-group');
+            const returnDateInput = document.getElementById('returnDate');
+            const departureDateInput = document.getElementById('departureDate');
+
+            roundTripCheck.addEventListener('change', function() {
+                if (this.checked) {
+                    returnDateGroup.style.display = 'block';
+                    returnDateInput.required = true;
+                } else {
+                    returnDateGroup.style.display = 'none';
+                    returnDateInput.required = false;
+                    returnDateInput.value = '';
+                }
+            });
+
+            // Ngăn chọn ngày về trước ngày đi
+            departureDateInput.addEventListener('change', function() {
+                if (departureDateInput.value) {
+                    returnDateInput.min = departureDateInput.value;
+                }
+            });
+
+            // Set ngày đi mặc định là hôm nay
+            const today = new Date().toISOString().split('T')[0];
+            departureDateInput.min = today;
+        });
+    </script>
 </div>
 </body>
 </html>

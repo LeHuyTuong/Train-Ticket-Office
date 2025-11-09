@@ -4,8 +4,39 @@
       layout:decorate="~{fragments/_customer_layout}">
 <head>
     <title>Chọn Ghế & Toa</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
     <style>
         body { font-family: 'Montserrat', sans-serif; background: #f0f4f8; padding: 20px; }
+
+        .trip-info-box {
+            background: linear-gradient(135deg, #004a99, #003366);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+        }
+        .trip-info-box h4 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .trip-route {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .trip-time {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
 
         .page-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; color: #004a99; }
 
@@ -46,12 +77,33 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.25);
         }
 
-        .seat-item input[type="checkbox"]:disabled + .seat-label {
+        /* ===== CSS SỬA: GHẾ ĐÃ THANH TOÁN (MÀU XÁM) ===== */
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-paid {
             background: #e0e0e0;
             border-color: #aaa;
             cursor: not-allowed;
+            opacity: 0.7;
         }
-        .seat-item input[type="checkbox"]:disabled + .seat-label .seat-number { color: #999; text-decoration: line-through; }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-paid .seat-number {
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        /* ===== CSS MỚI: GHẾ CHỜ THANH TOÁN (MÀU VÀNG) ===== */
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-pending {
+            background: #fff3cd; /* Màu vàng nhạt */
+            border-color: #ffeeba;
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-pending .seat-number {
+            color: #856404; /* Màu vàng đậm */
+            text-decoration: line-through;
+        }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-pending .seat-price {
+            color: #856404;
+        }
+        /* ================================================= */
 
         #total-price { font-size: 1.3rem; font-weight: 700; color: #d9534f; }
 
@@ -60,6 +112,20 @@
 </head>
 <body>
 <div layout:fragment="content">
+
+    <div class="trip-info-box" th:if="${selectedTrip != null}" th:object="${selectedTrip}">
+        <h4 th:text="|*{train.code} - *{train.name}|">SE1 - Tàu Thống Nhất</h4>
+        <div class="trip-route">
+            <span th:text="*{departureStation}">Ga Hà Nội</span>
+            <i class="bi bi-arrow-right-short"></i>
+            <span th:text="*{arrivalStation}">Ga Sài Gòn</span>
+        </div>
+        <div class="trip-time">
+            <span><strong>Khởi hành:</strong> <span th:text="${#temporals.format(selectedTrip.departureTime, 'dd/MM/yyyy HH:mm')}"></span></span>
+            <span><strong>Đến nơi:</strong> <span th:text="${#temporals.format(selectedTrip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span></span>
+        </div>
+    </div>
+
 
     <h2 class="page-title">Bước 1: Chọn Ghế & Toa</h2>
 
@@ -86,13 +152,19 @@
                      class="seat-grid">
                     <th:block th:each="seat : ${allSeats}" th:if="${seat.carriage.carriageId == carriage.carriageId}">
                         <div class="seat-item">
+
                             <input type="checkbox"
                                    name="seatIds"
                                    th:id="|seat-${seat.seatId}|"
                                    th:value="${seat.seatId}"
-                                   th:data-price="${seat.price}" th:disabled="${bookedSeatIds.contains(seat.seatId)}"
+                                   th:data-price="${seat.price}"
+                                   th:disabled="${paidSeatIds.contains(seat.seatId) or pendingSeatIds.contains(seat.seatId)}"
                                    class="seat-checkbox" />
-                            <label th:for="|seat-${seat.seatId}|" class="seat-label">
+
+                            <label th:for="|seat-${seat.seatId}|" class="seat-label"
+                                   th:classappend="${paidSeatIds.contains(seat.seatId)} ? 'seat-paid' :
+                                                   (${pendingSeatIds.contains(seat.seatId)} ? 'seat-pending' : '')">
+
                                 <span class="seat-number" th:text="${seat.seatNumber}"></span>
                                 <span class="seat-type" th:text="${seat.seatType}"></span>
                                 <span class="seat-price" th:text="${#numbers.formatDecimal(seat.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
@@ -110,6 +182,15 @@
         <div class="mb-3">
             <label for="passengerName" class="form-label fw-bold">Tên Hành Khách</label>
             <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="passengerType" class="form-label fw-bold">Loại Hành Khách (Giảm giá)</label>
+            <select id="passengerType" name="passengerType" class="form-select" required>
+                <option value="ADULT" selected>Người Lớn (100% giá)</option>
+                <option value="CHILD">Trẻ Em (Giảm 50%)</option>
+                <option value="SENIOR">Người Cao Tuổi (Giảm 25%)</option>
+            </select>
         </div>
 
         <div class="row">
@@ -136,13 +217,56 @@
             const carriageTabs = document.querySelectorAll('.carriage-tab');
             const seatGrids = document.querySelectorAll('.seat-grid');
 
+            const tripIdInput = document.querySelector('input[name="tripId"]');
+            if (!tripIdInput) {
+                console.error("Không tìm thấy tripId!");
+                return;
+            }
+
+            const storageKey = 'selectedSeats_TRIP_' + tripIdInput.value;
+
             function calculateTotal() {
                 let total = 0;
-                checkboxes.forEach(cb => { if(cb.checked) total += parseFloat(cb.dataset.price); });
+                checkboxes.forEach(cb => {
+                    if(cb.checked) {
+                        total += parseFloat(cb.dataset.price);
+                    }
+                });
                 totalElement.textContent = total.toLocaleString('vi-VN');
             }
 
-            checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
+            function saveSelectedSeats() {
+                const selectedIds = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        selectedIds.push(cb.value);
+                    }
+                });
+                sessionStorage.setItem(storageKey, JSON.stringify(selectedIds));
+            }
+
+            function loadSelectedSeats() {
+                const savedData = sessionStorage.getItem(storageKey);
+                if (savedData) {
+                    let savedIds = [];
+                    try {
+                        savedIds = JSON.parse(savedData);
+                    } catch (e) {
+                        console.warn("Lỗi đọc sessionStorage, đang xóa key cũ.");
+                        sessionStorage.removeItem(storageKey);
+                        return;
+                    }
+
+                    if (savedIds && savedIds.length > 0) {
+                        savedIds.forEach(id => {
+                            const checkbox = document.querySelector('.seat-checkbox[value="' + id + '"]');
+                            if (checkbox && !checkbox.disabled) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                }
+            }
 
             carriageTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
@@ -152,6 +276,16 @@
                     document.getElementById(this.dataset.target).classList.add('active');
                 });
             });
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    calculateTotal();
+                    saveSelectedSeats();
+                });
+            });
+
+            loadSelectedSeats();
+            calculateTotal();
         });
     </script>
 

@@ -6,7 +6,7 @@ import java.util.Map;
 
 public interface PaymentService {
 
-    String createPaymentRedirectUrl(Long bookingId,
+    String createPaymentRedirectUrl(Long orderId, // SỬA: orderId
                                     String bankCode,
                                     String orderInfo,
                                     String orderType,

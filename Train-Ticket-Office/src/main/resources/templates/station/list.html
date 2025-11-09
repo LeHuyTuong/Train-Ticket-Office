@@ -93,6 +93,26 @@
             font-weight: 600;
         }
 
+        /* CSS CHO TÌM KIẾM */
+        .search-form {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* CSS CHO PHÂN TRANG */
+        .pagination {
+            justify-content: center;
+        }
+        .page-item.active .page-link {
+            background-color: #004a99;
+            border-color: #004a99;
+        }
+        .page-link {
+            color: #004a99;
+        }
+
         @media (max-width: 768px) {
             .container-card { padding: 20px 15px; }
             .page-title { font-size: 26px; }
@@ -113,6 +133,14 @@
             </a>
         </div>
 
+        <form th:action="@{/stations}" method="get" class="search-form">
+            <div class="input-group">
+                <input type="text" name="keyword" th:value="${keyword}" class="form-control"
+                       placeholder="Tìm theo Tên Ga hoặc Mã Ga...">
+                <button type="submit" class="btn btn-primary">Tìm</button>
+                <a th:href="@{/stations}" class="btn btn-secondary">Xóa</a>
+            </div>
+        </form>
         <div class="table-responsive">
             <table class="table table-striped table-hover">
                 <thead>
@@ -150,6 +178,30 @@
             </table>
         </div>
 
+        <nav aria-label="Page navigation" th:if="${totalPages > 1}">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/stations(page=1, keyword=${keyword})}">Đầu</a>
+                </li>
+
+                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/stations(page=${currentPage - 1}, keyword=${keyword})}">Trước</a>
+                </li>
+
+                <th:block th:if="${totalPages <= 5}">
+                    <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/stations(page=${i}, keyword=${keyword})}" th:text="${i}"></a>
+                    </li>
+                </th:block>
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/stations(page=${currentPage + 1}, keyword=${keyword})}">Sau</a>
+                </li>
+
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/stations(page=${totalPages}, keyword=${keyword})}">Cuối</a>
+                </li>
+            </ul>
+        </nav>
         <a th:href="@{/admin/dashboard}" class="btn btn-secondary">⬅ Quay Lại Dashboard</a>
     </div>
 </div>

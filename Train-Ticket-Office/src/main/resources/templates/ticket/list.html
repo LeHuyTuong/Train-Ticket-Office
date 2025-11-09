@@ -164,10 +164,10 @@
                             Hủy
                         </a>
 
-                        <a th:if="${booking.status.name() == 'BOOKED'}"
-                           th:href="@{/payments/bookings/{id}(id=${booking.bookingId})}"
+                        <a th:if="${booking.status.name() == 'BOOKED' and booking.order != null}"
+                           th:href="@{/payments/orders/{id}(id=${booking.order.orderId})}"
                            class="btn btn-success btn-sm">
-                            Thanh Toán
+                            Thanh Toán Đơn Hàng
                         </a>
                     </td>
                 </tr>

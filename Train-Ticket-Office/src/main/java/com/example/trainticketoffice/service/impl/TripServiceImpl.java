@@ -10,6 +10,9 @@ import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.TripService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // <-- THÊM
+import org.springframework.data.domain.PageRequest; // <-- THÊM
+import org.springframework.data.domain.Pageable; // <-- THÊM
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,6 +22,9 @@ import java.util.Optional;
 
 @Service
 public class TripServiceImpl implements TripService {
+
+    // ===== SỐ LƯỢNG CHUYẾN TRÊN MỖI TRANG =====
+    public static final int TRIPS_PER_PAGE = 5;
 
     @Autowired
     private TripRepository tripRepository;
@@ -38,6 +44,21 @@ public class TripServiceImpl implements TripService {
         return tripRepository.findAll();
     }
 
+    // ===== IMPLEMENT HÀM PHÂN TRANG MỚI =====
+    @Override
+    public Page<Trip> listAllAdmin(int pageNum, Integer stationId) {
+        Pageable pageable = PageRequest.of(pageNum - 1, TRIPS_PER_PAGE);
+
+        if (stationId != null) {
+            // Nếu có lọc theo Ga, gọi hàm tìm kiếm
+            return tripRepository.findByRoute_StartStation_IdOrRoute_EndStation_Id(stationId, stationId, pageable);
+        }
+
+        // Mặc định, trả về tất cả (đã phân trang)
+        return tripRepository.findAll(pageable);
+    }
+    // ======================================
+
     @Override
     public Optional<Trip> getTripById(Long id) {
         return tripRepository.findById(id);
@@ -46,6 +67,7 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public Trip saveTrip(Trip trip) {
+        // (Code hàm này giữ nguyên)
         if (trip.getTripId() == null) {
             Train train = trainRepository.findById(trip.getTrain().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid Train ID"));
@@ -68,6 +90,7 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public void deleteTrip(Long id) {
+        // (Code hàm này giữ nguyên)
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Chuyến (Trip) ID: " + id));
 
@@ -83,8 +106,11 @@ public class TripServiceImpl implements TripService {
             List<Ticket> tickets = ticketRepository.findByBooking(booking);
             ticketRepository.deleteAll(tickets);
 
-            List<Payment> payments = paymentRepository.findByBooking(booking);
-            paymentRepository.deleteAll(payments);
+            // Sửa logic (nếu dùng Order)
+            if(booking.getOrder() != null) {
+                List<Payment> payments = paymentRepository.findByOrder(booking.getOrder());
+                paymentRepository.deleteAll(payments);
+            }
         }
 
         bookingRepository.deleteAll(bookings);
@@ -98,6 +124,7 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public List<Trip> findTripsByRouteAndDate(Route route, LocalDate departureDate) {
+        // (Code hàm này giữ nguyên)
         LocalDateTime startTime = departureDate.atStartOfDay();
         LocalDateTime endTime = departureDate.atTime(23, 59, 59);
         return tripRepository.findAllByRouteAndDepartureTimeBetween(route, startTime, endTime);
@@ -106,6 +133,7 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public void updateTripStatus(Long tripId, TripStatus newStatus) {
+        // (Code hàm này giữ nguyên)
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Chuyến (Trip) ID: " + tripId));
 

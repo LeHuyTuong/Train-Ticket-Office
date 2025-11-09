@@ -2,7 +2,6 @@ package com.example.trainticketoffice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal; // <-- BỎ IMPORT NÀY
 
 @Data
 @AllArgsConstructor
@@ -17,7 +16,7 @@ public class Route extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "code", unique = true, nullable = false, length = 20)
+    @Column(name = "code", unique = true, nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)

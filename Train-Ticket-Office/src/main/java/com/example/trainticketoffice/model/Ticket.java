@@ -4,7 +4,6 @@ import com.example.trainticketoffice.common.TicketStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -13,11 +12,12 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Ticket extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "NVARCHAR(50)")
     private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,8 +40,13 @@ public class Ticket extends BaseEntity {
     @JoinColumn(name = "to_station_id", nullable = false)
     private Station toStation;
 
+    @Column(columnDefinition = "NVARCHAR(100)")
     private String passengerName;
+
+    @Column(columnDefinition = "NVARCHAR(20)")
     private String passengerPhone;
+
+    @Column(columnDefinition = "NVARCHAR(20)")
     private String passengerIdCard;
 
     private BigDecimal totalPrice;
@@ -49,7 +54,7 @@ public class Ticket extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketStatus status;
-    private LocalDateTime bookedAt;
 
-    private LocalDateTime checkedInAt;
+    private LocalDateTime bookedAt;
+    private LocalDateTime   checkedInAt;
 }
