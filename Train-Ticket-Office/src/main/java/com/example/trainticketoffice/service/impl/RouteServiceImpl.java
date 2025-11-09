@@ -85,4 +85,9 @@ public class RouteServiceImpl implements RouteService {
     public Optional<Route> findById(Integer id) {
         return routeRepository.findById(id);
     }
+
+    @Override
+    public List<Route> findAllAndFetchStations() {
+        return routeRepository.findAllAndFetchStations();
+    }
 }

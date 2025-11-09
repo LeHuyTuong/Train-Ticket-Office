@@ -19,4 +19,7 @@ public interface RouteService {
 
     // THÊM HÀM NÀY
     Optional<Route> findById(Integer id);
+
+    List<Route> findAllAndFetchStations();
+
 }
