@@ -10,4 +10,9 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     // THÊM: Hàm tìm đơn hàng theo User
     List<Order> findByUser_Id(Integer userId);
+
+    /**
+     * Tìm tất cả các đơn hàng thuộc cùng một nhóm khứ hồi.
+     */
+    List<Order> findByRoundTripGroupId(String roundTripGroupId);
 }

@@ -66,8 +66,9 @@
     <h2 class="page-title">Bước 2: Nhập Thông Tin Hành Khách</h2>
 
     <form th:action="@{/bookings/create-order}" th:object="${bookingRequest}" method="POST">
-        <input type="hidden" th:field="*{tripId}" />
 
+        <input type="hidden" th:field="*{tripId}" />
+        <input type="hidden" th:field="*{context}" />
         <div th:each="passenger, stat : *{passengers}" class="passenger-card">
 
             <div class="passenger-header">

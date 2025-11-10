@@ -180,14 +180,22 @@ public class DataInitializer implements CommandLineRunner {
         train.setStatus(TrainStatus.AVAILABLE);
         return trainService.saveTrain(train);
     }
-
-    // (Hàm tạo Tàu, Toa, Ghế)
+    // (Hàm tạo Tàu, Toa, Ghế) - ĐÃ SỬA: Tạo 6 tàu
     private void createTrainsAndSeats() {
-        System.out.println("Creating Trains, Carriages, and Seats (Reduced Quantity)...");
-        trainSE1 = createTrain("SE1", "Thống Nhất (HN-SG)");
-        trainSE3 = createTrain("SE3", "Thống Nhất (HN-SG)");
-        List<Train> allTrains = List.of(trainSE1, trainSE3); // Chỉ tạo 2 tàu mẫu
+        System.out.println("Creating Trains, Carriages, and Seats (6 Trains)...");
 
+        // 1. Khởi tạo tất cả 6 tàu
+        trainSE1 = createTrain("SE1", "Thống Nhất (HN-SG)");
+        trainSE2 = createTrain("SE2", "Thống Nhất (SG-HN)"); // Tàu về
+        trainSE3 = createTrain("SE3", "Thống Nhất (HN-SG)");
+        trainSE4 = createTrain("SE4", "Thống Nhất (SG-HN)"); // Tàu về
+        trainSE5 = createTrain("SE5", "Tàu nhanh (HN-SG)");
+        trainSE6 = createTrain("SE6", "Tàu nhanh (SG-HN)"); // Tàu về
+
+        // 2. Đưa tất cả 6 tàu vào danh sách
+        List<Train> allTrains = List.of(trainSE1, trainSE2, trainSE3, trainSE4, trainSE5, trainSE6);
+
+        // 3. Vòng lặp này sẽ TỰ ĐỘNG tạo toa/ghế cho cả 6 tàu
         for (Train train : allTrains) {
             // 1 Toa VIP
             Carriage carriage = new Carriage();
@@ -204,6 +212,8 @@ public class DataInitializer implements CommandLineRunner {
                 seat.setStatus(SeatStatus.AVAILABLE);
                 seat.setIsActive(true);
                 seat = seatService.saveSeat(seat);
+
+                // Gán biến cho các ghế mẫu (dùng cho booking)
                 if (train.getCode().equals("SE1") && j == 1) se1_vip_seat_A1 = seat;
                 if (train.getCode().equals("SE3") && j == 1) se3_vip_seat_A1 = seat;
             }
@@ -225,11 +235,16 @@ public class DataInitializer implements CommandLineRunner {
                     seat.setStatus(SeatStatus.AVAILABLE);
                     seat.setIsActive(true);
                     seat = seatService.saveSeat(seat);
+
+                    // Gán biến cho ghế mẫu (dùng cho booking)
                     if (train.getCode().equals("SE1") && i == 1 && j == 1) se1_normal_seat_B1 = seat;
                 }
             }
         }
+
+        System.out.println("Total trains created: " + allTrains.size());
     }
+
 
     private Trip createTrip(Train train, Route route, LocalDateTime departure, LocalDateTime arrival, TripStatus status) {
         Trip trip = new Trip();
@@ -243,20 +258,66 @@ public class DataInitializer implements CommandLineRunner {
         return tripService.saveTrip(trip);
     }
 
-    // (Hàm tạo 2 chuyến mẫu)
+    // (Hàm tạo chuyến) - ĐÃ SỬA: Dùng 6 tàu (3 đi, 3 về)
     private void createTrips(LocalDate today) {
-        System.out.println("Creating sample Trips (Schedule)...");
-        tripSE1 = createTrip(trainSE1, routeHnSg,
-                today.plusDays(7).atTime(19, 30),
-                today.plusDays(9).atTime(4, 30),
-                TripStatus.UPCOMING);
-        tripSE3 = createTrip(trainSE3, routeHnSg,
-                today.plusDays(8).atTime(22, 0),
-                today.plusDays(10).atTime(7, 0),
-                TripStatus.UPCOMING);
+        System.out.println("Creating bulk Trips (Schedule using 6 trains)...");
+
+        // Cấu hình: 100 ngày, mỗi ngày 6 chuyến (3 đi, 3 về) = 600 chuyến
+        int DAYS_TO_GENERATE = 100;
+
+        for (int i = 1; i <= DAYS_TO_GENERATE; i++) {
+            // Lấy ngày khởi hành cho vòng lặp này
+            LocalDate departureDate = today.plusDays(i);
+
+            // --- TẠO CHUYẾN ĐI (HN -> SG) ---
+            // (Dùng tàu SE1, SE3, SE5 cho tuyến routeHnSg)
+
+            // Chuyến 1: Tàu SE1 (HN-SG) - 19:30
+            LocalDateTime depTimeSE1 = departureDate.atTime(19, 30);
+            LocalDateTime arrTimeSE1 = departureDate.plusDays(2).atTime(4, 30);
+            Trip t_SE1_HNSG = createTrip(trainSE1, routeHnSg, depTimeSE1, arrTimeSE1, TripStatus.UPCOMING);
+
+            // Chuyến 2: Tàu SE3 (HN-SG) - 22:00
+            LocalDateTime depTimeSE3 = departureDate.atTime(22, 0);
+            LocalDateTime arrTimeSE3 = departureDate.plusDays(2).atTime(7, 0);
+            Trip t_SE3_HNSG = createTrip(trainSE3, routeHnSg, depTimeSE3, arrTimeSE3, TripStatus.UPCOMING);
+
+            // Chuyến 3: Tàu SE5 (HN-SG) - 09:00 (Tàu nhanh)
+            LocalDateTime depTimeSE5 = departureDate.atTime(9, 0);
+            LocalDateTime arrTimeSE5 = departureDate.plusDays(1).atTime(18, 0); // Giả sử tàu này đi nhanh hơn
+            createTrip(trainSE5, routeHnSg, depTimeSE5, arrTimeSE5, TripStatus.UPCOMING);
+
+
+            // --- TẠO CHUYẾN VỀ (KHỨ HỒI) (SG -> HN) ---
+            // (Dùng tàu SE2, SE4, SE6 cho tuyến routeSgHn)
+
+            // Chuyến 4: Tàu SE2 (SG-HN) - 19:30
+            LocalDateTime depTimeSE2_Return = departureDate.atTime(19, 30);
+            LocalDateTime arrTimeSE2_Return = departureDate.plusDays(2).atTime(4, 30);
+            createTrip(trainSE2, routeSgHn, depTimeSE2_Return, arrTimeSE2_Return, TripStatus.UPCOMING);
+
+            // Chuyến 5: Tàu SE4 (SG-HN) - 22:00
+            LocalDateTime depTimeSE4_Return = departureDate.atTime(22, 0);
+            LocalDateTime arrTimeSE4_Return = departureDate.plusDays(2).atTime(7, 0);
+            createTrip(trainSE4, routeSgHn, depTimeSE4_Return, arrTimeSE4_Return, TripStatus.UPCOMING);
+
+            // Chuyến 6: Tàu SE6 (SG-HN) - 09:00 (Tàu nhanh)
+            LocalDateTime depTimeSE6_Return = departureDate.atTime(9, 0);
+            LocalDateTime arrTimeSE6_Return = departureDate.plusDays(1).atTime(18, 0);
+            createTrip(trainSE6, routeSgHn, depTimeSE6_Return, arrTimeSE6_Return, TripStatus.UPCOMING);
+
+
+            // --- QUAN TRỌNG: GÁN 2 CHUYẾN MẪU ĐẦU TIÊN ---
+            // (Dùng cho createBookingsAndTickets())
+            if (i == 1) {
+                System.out.println("Assigning first trips (day " + i + ") for sample bookings...");
+                this.tripSE1 = t_SE1_HNSG; // Gán chuyến SE1 (HN-SG)
+                this.tripSE3 = t_SE3_HNSG; // Gán chuyến SE3 (HN-SG)
+            }
+        }
+
+        System.out.println("Total trips created: " + (DAYS_TO_GENERATE * 6));
     }
-
-
     // ===== SỬA HOÀN TOÀN HÀM NÀY (ĐỂ DÙNG LOGIC BOOKINGREQUEST) =====
     private void createBookingsAndTickets() {
         System.out.println("Creating sample Orders, Bookings, Tickets (Passenger Form Logic)...");

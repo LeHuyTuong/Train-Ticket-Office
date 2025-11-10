@@ -78,8 +78,9 @@
     <h2 class="page-title">Bước 1: Chọn Ghế & Toa</h2>
 
     <form th:action="@{/bookings/passenger-details}" method="GET">
-        <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
 
+        <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
+        <input type="hidden" name="context" th:value="${context}" />
         <div class="mb-3">
             <label class="form-label fw-bold">1. Chọn Toa</label>
             <div class="carriage-nav" id="carriage-tabs">
@@ -132,7 +133,6 @@
             <a th:href="@{/}" class="btn btn-secondary btn-lg">Hủy (Về Trang chủ)</a>
         </div>
     </form>
-
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
             // (Không cần IS_HOLIDAY nữa, vì giá đã bao gồm phụ thu)
