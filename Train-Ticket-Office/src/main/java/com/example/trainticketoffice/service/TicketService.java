@@ -1,14 +1,23 @@
 package com.example.trainticketoffice.service;
 
-import com.example.trainticketoffice.model.Ticket; // <-- Thêm import
+import com.example.trainticketoffice.model.Booking; // THÊM
+import com.example.trainticketoffice.model.Ticket;
 
-import java.util.List; // <-- Thêm import
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public interface TicketService {
 
+    // (Hàm cũ, bị lỗi thời)
     String createTicketForBooking(Long bookingId, Map<String, Object> requestData);
+
+    // ===== HÀM MỚI (DÙNG CHO LOGIC BẢN ĐỒ GHẾ) =====
+    /**
+     * Tạo 1 vé (Ticket) dựa trên 1 Booking (đặt vé) đã có.
+     */
+    Ticket createTicketForBooking(Booking booking);
+    // ============================================
 
     Optional<Long> getTicketIdByCode(String code);
 
@@ -16,14 +25,7 @@ public interface TicketService {
 
     boolean cancelTicket(Long ticketId);
 
-    // ===== HÀM MỚI (BẮT BUỘC) =====
-    /**
-     * Lấy tất cả vé (cho trang Admin)
-     */
     List<Ticket> findAll();
 
-    /**
-     * Tìm 1 vé bằng ID (cho trang chi tiết Admin)
-     */
     Optional<Ticket> findById(Long id);
 }

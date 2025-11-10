@@ -4,61 +4,95 @@
       layout:decorate="~{fragments/_customer_layout}">
 <head>
     <title>Chọn Ghế & Toa</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
     <style>
-        .carriage-nav { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
-        .carriage-tab { padding: 8px 12px; border: 1px solid #ccc; border-bottom: none; border-radius: 5px 5px 0 0; cursor: pointer; background-color: #f5f5f5; }
-        .carriage-tab:hover { background-color: #eee; }
-        .carriage-tab.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: bold; }
-        .seat-map-container { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .seat-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        /* (CSS giữ nguyên) */
+        body { font-family: 'Montserrat', sans-serif; background: #f0f4f8; padding: 20px; }
+        .trip-info-box {
+            background: linear-gradient(135deg, #004a99, #003366);
+            color: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 25px;
+        }
+        .trip-info-box h4 { font-weight: 700; font-size: 1.5rem; margin-bottom: 10px; }
+        .trip-route { font-size: 1.2rem; font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .trip-time { display: flex; flex-wrap: wrap; gap: 20px; font-size: 0.95rem; opacity: 0.9; }
+        .page-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; color: #004a99; }
+        .carriage-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .carriage-tab { padding: 10px 15px; border-radius: 8px 8px 0 0; cursor: pointer; background-color: #e0e0e0; transition: all 0.2s; font-weight: 600; }
+        .carriage-tab.active { background: linear-gradient(135deg, #009ffd, #2a2a72); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .seat-map-container { padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); }
+        .seat-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
         .seat-grid.active { display: grid; }
         .seat-item { position: relative; }
-        .seat-item input[type="checkbox"] { opacity: 0; position: fixed; width: 0; }
-        .seat-label { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80px; border: 2px solid var(--primary-color); border-radius: 5px; cursor: pointer; transition: all 0.2s ease; background-color: #ffffff; }
-        .seat-label .seat-number { font-weight: bold; font-size: 1.1rem; color: var(--primary-color); }
-        .seat-label .seat-type { font-size: 0.7rem; text-transform: uppercase; color: #777; }
-        .seat-label .seat-price { font-size: 0.8rem; font-weight: bold; color: #d9534f; }
-        .seat-item input[type="checkbox"]:checked + .seat-label { background-color: var(--secondary-color); border-color: #003366; transform: scale(1.05); }
-        .seat-item input[type="checkbox"]:disabled + .seat-label { background-color: #e0e0e0; border-color: #aaa; cursor: not-allowed; }
-        .seat-item input[type="checkbox"]:disabled + .seat-label .seat-number { color: #999; text-decoration: line-through; }
+        .seat-item input[type="checkbox"] { display: none; }
+        .seat-label {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 90px; border-radius: 10px; border: 2px solid #004a99;
+            cursor: pointer; background: #fff; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .seat-label:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+        .seat-number { font-weight: bold; font-size: 1.2rem; color: #004a99; }
+        .seat-type { font-size: 0.75rem; text-transform: uppercase; color: #555; }
+        .seat-price { font-size: 0.85rem; font-weight: 600; color: #d9534f; }
+        .seat-item input[type="checkbox"]:checked + .seat-label {
+            background: linear-gradient(135deg, #00c6ff, #0072ff); color: white; border-color: #004a99;
+            transform: scale(1.08); box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+        }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-paid {
+            background: #e0e0e0; border-color: #aaa; cursor: not-allowed; opacity: 0.7;
+        }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-paid .seat-number { color: #999; text-decoration: line-through; }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-pending {
+            background: #fff3cd; border-color: #ffeeba; cursor: not-allowed; opacity: 0.9;
+        }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-pending .seat-number { color: #856404; text-decoration: line-through; }
+        .seat-item input[type="checkbox"]:disabled + .seat-label.seat-pending .seat-price { color: #856404; }
+        #total-price { font-size: 1.3rem; font-weight: 700; color: #d9534f; }
+        @media(max-width: 600px) { .seat-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); } }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
 
-    <form th:action="@{/bookings}" method="POST">
-        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
-
-        <h2 class="page-title">Bước 1: Chọn Ghế</h2>
-        <div class="mb-4 p-3 bg-light border rounded">
-            <h4>Thông Tin Chuyến Tàu</h4>
-            <p>
-                <strong>Tuyến:</strong>
-                <span th:text="${selectedTrip.route.startStation.name}">Ga Đi</span> →
-                <span th:text="${selectedTrip.route.endStation.name}">Ga Đến</span>
-                (<span th:text="${selectedTrip.train.code}"></span>)
-            </p>
-            <p>
-                <strong>Đi:</strong> <span th:text="${#temporals.format(selectedTrip.departureTime, 'dd/MM/yyyy HH:mm')}"></span>
-                <strong>Đến:</strong> <span th:text="${#temporals.format(selectedTrip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span>
-            </p>
+    <div class="trip-info-box" th:if="${selectedTrip != null}" th:object="${selectedTrip}">
+        <h4 th:text="|*{train.code} - *{train.name}|">SE1 - Tàu Thống Nhất</h4>
+        <div class="trip-route">
+            <span th:text="*{departureStation}">Ga Hà Nội</span>
+            <i class="bi bi-arrow-right-short"></i>
+            <span th:text="*{arrivalStation}">Ga Sài Gòn</span>
         </div>
+        <div class="trip-time">
+            <span><strong>Khởi hành:</strong> <span th:text="${#temporals.format(selectedTrip.departureTime, 'dd/MM/yyyy HH:mm')}"></span></span>
+            <span><strong>Đến nơi:</strong> <span th:text="${#temporals.format(selectedTrip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span></span>
+        </div>
+    </div>
+
+    <div th:if="${isHoliday}" class="alert alert-warning" role="alert">
+        <i class="bi bi-calendar-event-fill"></i>
+        <strong>Lưu ý:</strong> Chuyến tàu này khởi hành vào ngày lễ,
+        giá vé sẽ bao gồm <strong th:text="|phụ thu (${(surchargeRate - 1) * 100}%)|"></strong>.
+        Giá hiển thị trên ghế đã bao gồm phụ thu.
+    </div>
+
+    <h2 class="page-title">Bước 1: Chọn Ghế & Toa</h2>
+
+    <form th:action="@{/bookings/passenger-details}" method="GET">
+        <input type="hidden" name="tripId" th:value="${selectedTrip.tripId}" />
 
         <div class="mb-3">
             <label class="form-label fw-bold">1. Chọn Toa</label>
             <div class="carriage-nav" id="carriage-tabs">
                 <div th:each="carriage, iter : ${carriages}"
-                     th:text="|${carriage.name} (${carriage.type})|"
+                     th:text="|${carriage.name} (${carriage.seatType != null ? carriage.seatType.name : 'N/A'})|"
                      th:data-target="|carriage-grid-${carriage.carriageId}|"
                      th:classappend="${iter.index == 0 ? 'active' : ''}"
-                     class="carriage-tab">
-                </div>
+                     class="carriage-tab"></div>
             </div>
         </div>
 
         <div class="mb-3">
-            <label class="form-label fw-bold">2. Chọn Ghế (Có thể chọn nhiều)</label>
+            <label class="form-label fw-bold">2. Chọn Ghế (Giá hiển thị là giá GỐC, chưa giảm trừ)</label>
             <div class="seat-map-container">
                 <div th:each="carriage, iter : ${carriages}"
                      th:id="|carriage-grid-${carriage.carriageId}|"
@@ -67,19 +101,22 @@
 
                     <th:block th:each="seat : ${allSeats}" th:if="${seat.carriage.carriageId == carriage.carriageId}">
                         <div class="seat-item">
-                            <th:block>
-                                <input type="checkbox"
-                                       name="seatIds"
-                                       th:id="|seat-${seat.seatId}|"
-                                       th:value="${seat.seatId}"
-                                       th:data-price="${seat.price}" th:disabled="${bookedSeatIds.contains(seat.seatId)}"
-                                       class="seat-checkbox" />
-                                <label th:for="|seat-${seat.seatId}|" class="seat-label">
-                                    <span class="seat-number" th:text="${seat.seatNumber}"></span>
-                                    <span class="seat-type" th:text="${seat.seatType}"></span>
-                                    <span class="seat-price" th:text="${#numbers.formatDecimal(seat.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
-                                </label>
-                            </th:block>
+                            <input type="checkbox"
+                                   name="seatIds"
+                                   th:id="|seat-${seat.seatId}|"
+                                   th:value="${seat.seatId}"
+                                   th:data-price="${seatPrices[seat.seatId]}"
+                                   th:disabled="${paidSeatIds.contains(seat.seatId) or pendingSeatIds.contains(seat.seatId)}"
+                                   class="seat-checkbox" />
+
+                            <label th:for="|seat-${seat.seatId}|" class="seat-label"
+                                   th:classappend="${paidSeatIds.contains(seat.seatId)} ? 'seat-paid' :
+                                                   (${pendingSeatIds.contains(seat.seatId)} ? 'seat-pending' : '')">
+
+                                <span class="seat-number" th:text="${seat.seatNumber}"></span>
+                                <span class="seat-type" th:text="${seat.carriage.seatType != null ? seat.carriage.seatType.name : 'N/A'}"></span>
+                                <span class="seat-price" th:text="${#numbers.formatDecimal(seatPrices[seat.seatId], 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                            </label>
                         </div>
                     </th:block>
                 </div>
@@ -87,62 +124,102 @@
         </div>
 
         <div class="mb-3">
-            <h3 class="mt-3">Tổng Tiền:
-                <span id="total-price" class="text-danger fw-bold">0</span> VNĐ
-            </h3>
-        </div>
-
-        <div class="mb-3">
-            <label for="passengerName" class="form-label fw-bold">3. Tên Hành Khách (cho tất cả vé)</label>
-            <input type="text" id="passengerName" name="passengerName" class="form-control" th:value="${currentUser.fullName}" required>
-        </div>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="phone" class="form-label fw-bold">Số Điện Thoại</label>
-                <input type="tel" id="phone" name="phone" class="form-control" th:value="${currentUser.phone}" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="email" class="form-label fw-bold">Email</label>
-                <input type="email" id="email" name="email" class="form-control" th:value="${currentUser.email}" required>
-            </div>
+            <h3 class="mt-3">Tổng Tiền (Tạm tính): <span id="total-price">0</span> VNĐ</h3>
         </div>
 
         <div class="mt-4">
-            <button type="submit" class="btn btn-success btn-lg">Đến Bước 2: Xác Nhận</button>
+            <button type="submit" class="btn btn-success btn-lg">Tiếp Tục: Nhập Thông Tin</button>
             <a th:href="@{/}" class="btn btn-secondary btn-lg">Hủy (Về Trang chủ)</a>
         </div>
     </form>
 
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
+            // (Không cần IS_HOLIDAY nữa, vì giá đã bao gồm phụ thu)
+
             const checkboxes = document.querySelectorAll('.seat-checkbox');
             const totalElement = document.getElementById('total-price');
             const carriageTabs = document.querySelectorAll('.carriage-tab');
             const seatGrids = document.querySelectorAll('.seat-grid');
+            // (Xóa passengerTypeSelect)
 
+            const tripIdInput = document.querySelector('input[name="tripId"]');
+            if (!tripIdInput) {
+                console.error("Không tìm thấy tripId!");
+                return;
+            }
+
+            const storageKey = 'selectedSeats_TRIP_' + tripIdInput.value;
+
+            // SỬA HÀM TÍNH TỔNG (Chỉ cộng giá gốc)
             function calculateTotal() {
-                let currentTotal = 0;
-                checkboxes.forEach(box => {
-                    if (box.checked) {
-                        currentTotal += parseFloat(box.dataset.price);
+                let total = 0;
+
+                // 1. Tính tổng giá gốc (đã bao gồm phụ thu lễ)
+                checkboxes.forEach(cb => {
+                    if(cb.checked) {
+                        let basePrice = parseFloat(cb.dataset.price);
+                        total += basePrice;
                     }
                 });
-                totalElement.textContent = currentTotal.toLocaleString('vi-VN');
+
+                // 2. Làm tròn (nếu cần, nhưng giá đã tròn sẵn)
+                totalElement.textContent = total.toLocaleString('vi-VN');
             }
-            checkboxes.forEach(box => box.addEventListener('change', calculateTotal));
+
+            function saveSelectedSeats() {
+                const selectedIds = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        selectedIds.push(cb.value);
+                    }
+                });
+                sessionStorage.setItem(storageKey, JSON.stringify(selectedIds));
+            }
+
+            function loadSelectedSeats() {
+                const savedData = sessionStorage.getItem(storageKey);
+                if (savedData) {
+                    let savedIds = [];
+                    try {
+                        savedIds = JSON.parse(savedData);
+                    } catch (e) {
+                        sessionStorage.removeItem(storageKey);
+                        return;
+                    }
+                    if (savedIds && savedIds.length > 0) {
+                        savedIds.forEach(id => {
+                            const checkbox = document.querySelector('.seat-checkbox[value="' + id + '"]');
+                            if (checkbox && !checkbox.disabled) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                }
+            }
 
             carriageTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     carriageTabs.forEach(t => t.classList.remove('active'));
                     seatGrids.forEach(g => g.classList.remove('active'));
                     this.classList.add('active');
-                    const targetGridId = this.dataset.target;
-                    document.getElementById(targetGridId).classList.add('active');
+                    document.getElementById(this.dataset.target).classList.add('active');
                 });
             });
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    calculateTotal();
+                    saveSelectedSeats();
+                });
+            });
+
+            // (Xóa sự kiện change của passengerTypeSelect)
+
+            loadSelectedSeats();
+            calculateTotal();
         });
     </script>
-
 </div>
 </body>
 </html>

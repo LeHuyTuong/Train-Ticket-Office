@@ -1,42 +1,124 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/_admin_layout}">
 <head>
-    <title th:text="*{id} != null ? 'Edit Train' : 'Add New Train'">Train Form</title>
+    <title th:text="${train.id == null ? 'Thêm Tàu Mới' : 'Cập Nhật Tàu'}">Form Tàu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: url('/images/train01.jpg') center/cover no-repeat fixed;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .form-container {
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 40px;
+            margin-top: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        .page-title {
+            font-weight: 700;
+            font-size: 28px;
+            color: #004a99;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        label {
+            font-weight: 600;
+            color: #333;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #cfd9e0;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #004a99;
+            box-shadow: 0 0 8px rgba(0,74,153,0.2);
+            outline: none;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s ease;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #009ffd, #2a2a72);
+            color: #fff;
+        }
+        .btn-success:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .invalid-feedback {
+            font-weight: 600;
+            color: #dc3545;
+            background: rgba(255,255,255,0.8);
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
-    <h2 class="page-title" th:text="*{id} != null ? 'Edit Train' : 'Add New Train'">Train Form</h2>
+    <div class="form-container">
+        <h2 class="page-title" th:text="${train.id == null ? 'Thêm Tàu Mới' : 'Cập Nhật Tàu'}">Form Tàu</h2>
 
-    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <form th:action="@{/trains/save}" th:object="${train}" method="post" class="col-md-8">
-        <input type="hidden" th:field="*{id}">
+        <form th:action="@{/trains/save}" th:object="${train}" method="POST">
+            <input type="hidden" th:field="*{id}" />
 
-        <div class="mb-3">
-            <label class="form-label">Train Code</label>
-            <input type="text" th:field="*{code}" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Train Name</label>
-            <input type="text" th:field="*{name}" class="form-control" required>
-        </div>
+            <div class="mb-3">
+                <label for="code">Mã Tàu (Code)</label>
+                <input type="text" th:field="*{code}" id="code" class="form-control"
+                       th:classappend="${#fields.hasErrors('code')} ? 'is-invalid' : ''" required>
+                <div th:if="${#fields.hasErrors('code')}" th:errors="*{code}" class="invalid-feedback"></div>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Status</label>
-            <select th:field="*{status}" class="form-select" required>
-                <option th:each="s : ${allTrainStatus}"
-                        th:value="${s}"
-                        th:text="${s.description}"></option>
-            </select>
-        </div>
+            <div class="mb-3">
+                <label for="name">Tên Tàu</label>
+                <input type="text" th:field="*{name}" id="name" class="form-control"
+                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''" required>
+                <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="invalid-feedback"></div>
+            </div>
 
-        <div class="mb-3">
-            <button type="submit" class="btn btn-success">Save Train</button>
-            <a th:href="@{/trains}" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <div class="mb-3">
+                <label for="status">Trạng Thái</label>
+                <select th:field="*{status}" id="status" class="form-select">
+                    <option th:each="s : ${allTrainStatus}"
+                            th:value="${s}"
+                            th:text="${s.description}"></option>
+                </select>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-center gap-3">
+                <button type="submit" class="btn btn-success px-4">Lưu Tàu</button>
+                <a th:href="@{/trains}" class="btn btn-secondary px-4">Quay về danh sách</a>
+            </div>
+        </form>
+    </div>
 </div>
 </body>
 </html>

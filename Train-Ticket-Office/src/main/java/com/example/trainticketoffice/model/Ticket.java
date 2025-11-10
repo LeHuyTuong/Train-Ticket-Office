@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate; // THÊM
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,7 +18,7 @@ public class Ticket extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "nvarchar(255)")
     private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,9 +41,17 @@ public class Ticket extends BaseEntity {
     @JoinColumn(name = "to_station_id", nullable = false)
     private Station toStation;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String passengerName;
+    @Column(columnDefinition = "nvarchar(50)")
     private String passengerPhone;
-    private String passengerIdCard;
+    @Column(columnDefinition = "nvarchar(50)")
+    private String passengerIdCard; // (Đã có)
+
+    // ===== THÊM TRƯỜNG NÀY =====
+    @Column(name = "date_of_birth")
+    private LocalDate dob; // Ngày sinh
+    // ==========================
 
     private BigDecimal totalPrice;
 

@@ -10,6 +10,9 @@ import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.TripService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,6 +22,8 @@ import java.util.Optional;
 
 @Service
 public class TripServiceImpl implements TripService {
+
+    public static final int TRIPS_PER_PAGE = 5;
 
     @Autowired
     private TripRepository tripRepository;
@@ -39,6 +44,16 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public Page<Trip> listAllAdmin(int pageNum, Integer stationId) {
+        Pageable pageable = PageRequest.of(pageNum - 1, TRIPS_PER_PAGE);
+
+        if (stationId != null) {
+            return tripRepository.findByRoute_StartStation_IdOrRoute_EndStation_Id(stationId, stationId, pageable);
+        }
+        return tripRepository.findAll(pageable);
+    }
+
+    @Override
     public Optional<Trip> getTripById(Long id) {
         return tripRepository.findById(id);
     }
@@ -46,16 +61,19 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public Trip saveTrip(Trip trip) {
+        // ===== SỬA LOGIC KIỂM TRA TÀU =====
         if (trip.getTripId() == null) {
             Train train = trainRepository.findById(trip.getTrain().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid Train ID"));
 
-            if (train.getStatus() != TrainStatus.AVAILABLE) {
-                throw new IllegalStateException("Tàu " + train.getCode() + " không rảnh (đang chạy hoặc bảo trì).");
+            // CHỈ KIỂM TRA BẢO TRÌ
+            if (train.getStatus() == TrainStatus.MAINTENANCE) {
+                throw new IllegalStateException("Tàu " + train.getCode() + " đang bảo trì.");
             }
 
-            train.setStatus(TrainStatus.ON_TRIP);
-            trainRepository.save(train);
+            // KHÔNG ĐẶT ON_TRIP NỮA. Tàu vẫn AVAILABLE cho đến khi chạy.
+            // train.setStatus(TrainStatus.ON_TRIP);
+            // trainRepository.save(train);
         }
 
         if(trip.getStatus() == null) {
@@ -64,6 +82,7 @@ public class TripServiceImpl implements TripService {
 
         return tripRepository.save(trip);
     }
+    // ===================================
 
     @Override
     @Transactional
@@ -83,8 +102,10 @@ public class TripServiceImpl implements TripService {
             List<Ticket> tickets = ticketRepository.findByBooking(booking);
             ticketRepository.deleteAll(tickets);
 
-            List<Payment> payments = paymentRepository.findByBooking(booking);
-            paymentRepository.deleteAll(payments);
+            if(booking.getOrder() != null) {
+                List<Payment> payments = paymentRepository.findByOrder(booking.getOrder());
+                paymentRepository.deleteAll(payments);
+            }
         }
 
         bookingRepository.deleteAll(bookings);
@@ -119,7 +140,7 @@ public class TripServiceImpl implements TripService {
             case COMPLETED:
                 trip.setStatus(TripStatus.COMPLETED);
                 if (train != null) {
-                    train.setStatus(TrainStatus.AVAILABLE);
+                    train.setStatus(TrainStatus.AVAILABLE); // Tàu rảnh
                     trainRepository.save(train);
                 }
                 for (Booking booking : bookings) {
@@ -138,7 +159,7 @@ public class TripServiceImpl implements TripService {
             case CANCELLED:
                 trip.setStatus(TripStatus.CANCELLED);
                 if (train != null) {
-                    train.setStatus(TrainStatus.AVAILABLE);
+                    train.setStatus(TrainStatus.AVAILABLE); // Tàu rảnh
                     trainRepository.save(train);
                 }
                 for (Booking booking : bookings) {
@@ -150,7 +171,7 @@ public class TripServiceImpl implements TripService {
                         ticketRepository.save(ticket);
                     }
                     Seat seat = booking.getSeat();
-                    seat.setStatus(SeatStatus.AVAILABLE);
+                    seat.setStatus(SeatStatus.AVAILABLE); // Trả ghế
                     seatRepository.save(seat);
                 }
                 break;
@@ -162,18 +183,18 @@ public class TripServiceImpl implements TripService {
             case IN_PROGRESS:
                 trip.setStatus(TripStatus.IN_PROGRESS);
                 if (train != null && train.getStatus() != TrainStatus.ON_TRIP) {
-                    train.setStatus(TrainStatus.ON_TRIP);
+                    train.setStatus(TrainStatus.ON_TRIP); // Tàu bận
                     trainRepository.save(train);
                 }
                 break;
 
+            // ===== SỬA LOGIC NÀY =====
             case UPCOMING:
                 trip.setStatus(TripStatus.UPCOMING);
-                if (train != null && train.getStatus() != TrainStatus.ON_TRIP) {
-                    train.setStatus(TrainStatus.ON_TRIP);
-                    trainRepository.save(train);
-                }
+                // KHÔNG set Tàu thành ON_TRIP khi chuyến đi SẮP DIỄN RA
+                // (Tàu vẫn AVAILABLE)
                 break;
+            // =========================
         }
 
         tripRepository.save(trip);

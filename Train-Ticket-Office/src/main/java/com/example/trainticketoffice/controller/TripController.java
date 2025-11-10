@@ -12,6 +12,7 @@ import com.example.trainticketoffice.service.TripService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,7 +21,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode; // THÊM
 import java.time.LocalDate;
+import java.time.Month; // THÊM
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +45,22 @@ public class TripController {
     @Autowired
     private BookingRepository bookingRepository;
 
+    // ===== THÊM HÀM KIỂM TRA LỄ VÀ PHỤ THU =====
+    private static final BigDecimal HOLIDAY_SURCHARGE_RATE = new BigDecimal("1.20");
+
+    private boolean isHoliday(LocalDate date) {
+        if (date.getMonth() == Month.JANUARY && date.getDayOfMonth() == 1) return true;
+        if (date.getMonth() == Month.APRIL && date.getDayOfMonth() == 30) return true;
+        if (date.getMonth() == Month.MAY && date.getDayOfMonth() == 1) return true;
+        if (date.getMonth() == Month.SEPTEMBER && date.getDayOfMonth() == 2) return true;
+        return false;
+    }
+    // ==========================================
+
+    // ===== VIẾT LẠI HOÀN TOÀN HÀM NÀY (LOGIC BẢN ĐỒ GHẾ) =====
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
-                                      // SỬA: Thêm (required = false)
                                       @RequestParam(value = "departureDate", required = false)
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
                                       Model model) {
@@ -60,6 +75,10 @@ public class TripController {
             return "customer/Home";
         }
 
+        Station startStation = startStationOpt.get();
+        Station endStation = endStationOpt.get();
+
+        // 1. Lấy danh sách chuyến đi
         List<Trip> availableTrips;
         if (departureDate != null) {
             availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
@@ -67,31 +86,56 @@ public class TripController {
             availableTrips = tripService.findTripsByRoute(routeOpt.get(0));
         }
 
+        // 2. Lấy KM
+        if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) {
+            model.addAttribute("errorMessage", "Lỗi cấu hình: Ga chưa có thông tin KM.");
+            return "customer/Home";
+        }
+        int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
+        if (distanceKm == 0) distanceKm = 20;
+
+        // Map để lưu trữ thông tin cho View
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
 
         for (Trip trip : availableTrips) {
+            // 3. Kiểm tra Lễ
+            boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
+            BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
+
+            // 4. Lấy các Seat ID đã bị đặt
             List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
                             trip.getTripId(),
-                            List.of(BookingStatus.BOOKED, BookingStatus.PAID)
-                    )
-                    .stream()
-                    .map(booking -> booking.getSeat().getSeatId())
+                            List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
+                    ).stream()
+                    .map(booking -> booking.getSeat().getSeatId()) // SỬA: Quay lại getSeat()
                     .collect(Collectors.toList());
 
             long vipCount = 0;
             long normalCount = 0;
-            BigDecimal minPrice = null;
+            BigDecimal minPriceInTrip = null;
 
+            // 5. Lặp qua các Toa -> Ghế để đếm và tính giá
             Train train = trip.getTrain();
             for (Carriage carriage : train.getCarriages()) {
-                for (Seat seat : carriage.getSeats()) {
+                SeatType seatType = carriage.getSeatType();
+                if (seatType == null || seatType.getPricePerKm() == null) continue; // Bỏ qua toa lỗi
+
+                // Tính giá cho loại toa này
+                BigDecimal basePrice = seatType.getPricePerKm().multiply(BigDecimal.valueOf(distanceKm));
+                BigDecimal priceWithSurcharge = basePrice.multiply(currentSurchargeRate);
+                BigDecimal finalPrice = priceWithSurcharge.setScale(0, RoundingMode.HALF_UP);
+
+                if (minPriceInTrip == null || finalPrice.compareTo(minPriceInTrip) < 0) {
+                    minPriceInTrip = finalPrice;
+                }
+
+                // Đếm số ghế trống
+                for (Seat seat : carriage.getSeats()) { // Lặp qua các ghế thật
                     if (!bookedSeatIds.contains(seat.getSeatId())) {
-                        if (minPrice == null || seat.getPrice().compareTo(minPrice) < 0) {
-                            minPrice = seat.getPrice();
-                        }
-                        if ("VIP".equalsIgnoreCase(seat.getSeatType())) {
+                        // Giả sử tên loại ghế "VIP" để phân loại
+                        if (seatType.getName().toLowerCase().contains("vip")) {
                             vipCount++;
                         } else {
                             normalCount++;
@@ -100,24 +144,22 @@ public class TripController {
                 }
             }
 
-            if (minPrice == null) minPrice = BigDecimal.ZERO;
-
-            tripMinPrices.put(trip.getTripId(), minPrice);
             availableVipCounts.put(trip.getTripId(), vipCount);
             availableNormalCounts.put(trip.getTripId(), normalCount);
+            tripMinPrices.put(trip.getTripId(), minPriceInTrip != null ? minPriceInTrip : BigDecimal.ZERO);
         }
 
         model.addAttribute("availableTrips", availableTrips);
-        model.addAttribute("availableVipCounts", availableVipCounts);
-        model.addAttribute("availableNormalCounts", availableNormalCounts);
+        model.addAttribute("availableVipCounts", availableVipCounts); // Gửi VIP
+        model.addAttribute("availableNormalCounts", availableNormalCounts); // Gửi Normal
         model.addAttribute("tripMinPrices", tripMinPrices);
-
-        model.addAttribute("startStation", startStationOpt.get());
-        model.addAttribute("endStation", endStationOpt.get());
+        model.addAttribute("startStation", startStation);
+        model.addAttribute("endStation", endStation);
 
         return "trip/trip-results";
     }
 
+    // ===== VIẾT LẠI HOÀN TOÀN HÀM NÀY (Logic Bản đồ ghế) =====
     @GetMapping("/all")
     public String showAllTrips(Model model) {
 
@@ -130,26 +172,43 @@ public class TripController {
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
 
         for (Trip trip : allTrips) {
+            Station startStation = trip.getRoute().getStartStation();
+            Station endStation = trip.getRoute().getEndStation();
+            if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) continue;
+
+            int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
+            if (distanceKm == 0) distanceKm = 20;
+
+            boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
+            BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
+
             List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
                             trip.getTripId(),
-                            List.of(BookingStatus.BOOKED, BookingStatus.PAID)
-                    )
-                    .stream()
-                    .map(booking -> booking.getSeat().getSeatId())
+                            List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
+                    ).stream()
+                    .map(booking -> booking.getSeat().getSeatId()) // SỬA
                     .collect(Collectors.toList());
 
             long vipCount = 0;
             long normalCount = 0;
-            BigDecimal minPrice = null;
+            BigDecimal minPriceInTrip = null;
 
             Train train = trip.getTrain();
             for (Carriage carriage : train.getCarriages()) {
-                for (Seat seat : carriage.getSeats()) {
+                SeatType seatType = carriage.getSeatType();
+                if (seatType == null || seatType.getPricePerKm() == null) continue;
+
+                BigDecimal basePrice = seatType.getPricePerKm().multiply(BigDecimal.valueOf(distanceKm));
+                BigDecimal priceWithSurcharge = basePrice.multiply(currentSurchargeRate);
+                BigDecimal finalPrice = priceWithSurcharge.setScale(0, RoundingMode.HALF_UP);
+
+                if (minPriceInTrip == null || finalPrice.compareTo(minPriceInTrip) < 0) {
+                    minPriceInTrip = finalPrice;
+                }
+
+                for (Seat seat : carriage.getSeats()) { // SỬA
                     if (!bookedSeatIds.contains(seat.getSeatId())) {
-                        if (minPrice == null || seat.getPrice().compareTo(minPrice) < 0) {
-                            minPrice = seat.getPrice();
-                        }
-                        if ("VIP".equalsIgnoreCase(seat.getSeatType())) {
+                        if (seatType.getName().toLowerCase().contains("vip")) {
                             vipCount++;
                         } else {
                             normalCount++;
@@ -158,35 +217,42 @@ public class TripController {
                 }
             }
 
-            if (minPrice == null) minPrice = BigDecimal.ZERO;
-
-            tripMinPrices.put(trip.getTripId(), minPrice);
             availableVipCounts.put(trip.getTripId(), vipCount);
             availableNormalCounts.put(trip.getTripId(), normalCount);
+            tripMinPrices.put(trip.getTripId(), minPriceInTrip != null ? minPriceInTrip : BigDecimal.ZERO);
         }
 
         model.addAttribute("availableTrips", allTrips);
-        model.addAttribute("availableVipCounts", availableVipCounts);
-        model.addAttribute("availableNormalCounts", availableNormalCounts);
+        model.addAttribute("availableVipCounts", availableVipCounts); // Gửi VIP
+        model.addAttribute("availableNormalCounts", availableNormalCounts); // Gửi Normal
         model.addAttribute("tripMinPrices", tripMinPrices);
 
         return "trip/all-trips";
     }
+    // ======================================================
 
-    // ===== SỬA HÀM NÀY (Thêm allTripStatus) =====
     @GetMapping
-    public String listTrips(Model model) {
-        model.addAttribute("trips", tripService.getAllTrips());
-        model.addAttribute("allTripStatus", TripStatus.values()); // <-- Gửi status ra list
+    public String listTrips(Model model,
+                            @RequestParam(value = "page", defaultValue = "1") int page,
+                            @RequestParam(value = "stationId", required = false) Integer stationId) {
+
+        Page<Trip> tripPage = tripService.listAllAdmin(page, stationId);
+        List<Trip> trips = tripPage.getContent();
+        model.addAttribute("trips", trips);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalItems", tripPage.getTotalElements());
+        model.addAttribute("totalPages", tripPage.getTotalPages());
+        model.addAttribute("selectedStationId", stationId);
+        model.addAttribute("allTripStatus", TripStatus.values());
+        model.addAttribute("allStations", stationService.getAllStations());
+
         return "trip/list";
     }
-    // =============================================
 
     private void addCommonAttributes(Model model) {
         List<Train> availableTrains = trainService.getAllTrains().stream()
                 .filter(train -> train.getStatus() == TrainStatus.AVAILABLE)
                 .collect(Collectors.toList());
-
         model.addAttribute("allTrains", availableTrains);
         model.addAttribute("allRoutes", routeService.getAllRoutes());
     }
@@ -205,7 +271,7 @@ public class TripController {
             model.addAttribute("trip", trip.get());
             model.addAttribute("allTrains", trainService.getAllTrains());
             model.addAttribute("allRoutes", routeService.getAllRoutes());
-            return "trip/form"; // <-- THÊM RETURN
+            return "trip/form";
         }
         return "redirect:/trips";
     }
@@ -218,9 +284,7 @@ public class TripController {
             addCommonAttributes(model);
             return "trip/form";
         }
-
         Optional<Route> routeOpt = routeService.findById(trip.getRoute().getId());
-
         if (routeOpt.isPresent()) {
             Route route = routeOpt.get();
             trip.setDepartureStation(route.getStartStation().getName());
@@ -230,7 +294,6 @@ public class TripController {
             addCommonAttributes(model);
             return "trip/form";
         }
-
         try {
             tripService.saveTrip(trip);
             redirectAttributes.addFlashAttribute("successMessage", "Trip saved successfully!");
@@ -260,6 +323,8 @@ public class TripController {
     @PostMapping("/update-status/{id}")
     public String updateTripStatus(@PathVariable("id") Long id,
                                    @RequestParam("status") TripStatus newStatus,
+                                   @RequestParam(value = "page", defaultValue = "1") int page,
+                                   @RequestParam(value = "stationId", required = false) Integer stationId,
                                    RedirectAttributes redirectAttributes) {
         try {
             tripService.updateTripStatus(id, newStatus);
@@ -267,6 +332,11 @@ public class TripController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
-        return "redirect:/trips";
+
+        String redirectUrl = "/trips?page=" + page;
+        if (stationId != null) {
+            redirectUrl += "&stationId=" + stationId;
+        }
+        return "redirect:" + redirectUrl;
     }
 }

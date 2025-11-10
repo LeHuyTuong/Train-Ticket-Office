@@ -10,8 +10,8 @@
     <h2 class="page-title">Bước 2: Xác Nhận & Thanh Toán</h2>
 
     <div class="alert alert-success">
-        <h4 class="alert-heading">Giữ chỗ thành công!</h4>
-        <p>Các vé dưới đây đã được giữ chỗ (giữ trong 15 phút). Vui lòng hoàn tất thanh toán cho từng vé để xác nhận.</p>
+        <h4 class="alert-heading">Giữ chỗ thành công! (Mã Đơn Hàng: <span th:text="${order.orderId}"></span>)</h4>
+        <p>Các vé dưới đây đã được giữ chỗ (giữ trong 15 phút). Vui lòng hoàn tất thanh toán cho đơn hàng để xác nhận.</p>
     </div>
 
     <div class="card shadow-sm mb-4">
@@ -29,49 +29,47 @@
         </div>
     </div>
 
-    <h4 class="mb-3">Bước 3: Hoàn tất thanh toán (cho từng vé)</h4>
+    <h4 class="mb-3">Chi tiết vé trong đơn hàng</h4>
     <div th:if="${not #lists.isEmpty(bookings)}">
         <table class="table table-hover">
             <thead>
             <tr>
                 <th>Mã Đặt Vé</th>
                 <th>Chuyến Tàu</th>
-                <th>Ghế</th>
+                <th>Toa (Ghế)</th>
                 <th>Giá vé</th>
                 <th>Trạng thái</th>
-                <th>Hành động</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="booking : ${bookings}">
                 <td th:text="${booking.bookingId}"></td>
                 <td th:text="${booking.trip.train.code}"></td>
-                <td th:text="|${booking.seat.seatNumber} (${booking.seat.carriage.name})|"></td>
+
+                <td th:text="|${booking.seat.carriage.name} (${booking.seat.seatNumber})|"></td>
+
                 <td th:text="${#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
                 <td>
                     <span th:if="${booking.status.name() == 'BOOKED'}" class="badge bg-warning text-dark">Chờ thanh toán</span>
                     <span th:if="${booking.status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
-                </td>
-                <td>
-                    <a th:if="${booking.status.name() == 'BOOKED'}"
-                       th:href="@{/payments/bookings/{id}(id=${booking.bookingId})}"
-                       class="btn btn-sm btn-success">
-                        Thanh toán VNPay
-                    </a>
-
-                    <a th:if="${booking.status.name() == 'BOOKED'}"
-                       th:href="@{/bookings/delete/{id}(id=${booking.bookingId})}"
-                       class="btn btn-sm btn-danger"
-                       onclick="return confirm('Bạn có chắc muốn hủy vé này? Ghế sẽ được giải phóng.')">
-                        Hủy
-                    </a>
                 </td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <a th:href="@{/bookings}" class="btn btn-primary mt-3">Đến "Vé Của Tôi" (Xem tất cả)</a>
+    <div class="mt-4">
+        <h4 class="mb-3">Bước 3: Hoàn tất thanh toán (cho cả đơn hàng)</h4>
+
+        <a th:if="${order.status.name() == 'PENDING'}"
+           th:href="@{/payments/orders/{id}(id=${order.orderId})}"
+           class="btn btn-success btn-lg">
+            Thanh toán toàn bộ đơn hàng (VNPay)
+        </a>
+
+        <a th:href="@{/bookings}" class="btn btn-primary mt-3">Đến "Vé Của Tôi" (Xem tất cả)</a>
+    </div>
+
 </div>
 </body>
 </html>

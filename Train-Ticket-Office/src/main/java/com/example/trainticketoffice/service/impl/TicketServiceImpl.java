@@ -45,31 +45,16 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
-    public String createTicketForBooking(Long bookingId, Map<String, Object> requestData) {
-        // (Hàm này có vẻ là logic cũ, bạn nên xem xét xóa nó
-        // và thay bằng một hàm service tạo Ticket trực tiếp từ Booking)
+    public Ticket createTicketForBooking(Booking booking) {
         try {
-            Long seatId = ((Number) requestData.get("seatId")).longValue();
-            String passengerName = (String) requestData.get("passengerName");
-            String passengerPhone = (String) requestData.get("passengerPhone");
-            String passengerIdCard = (String) requestData.get("passengerIdCard");
-
-            Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
-            if (bookingOpt.isEmpty()) { return null; }
-            Booking booking = bookingOpt.get(); // <-- Booking đã chứa giá
-
-            Optional<Seat> seatOpt = seatRepository.findById(seatId);
-            if (seatOpt.isEmpty()) { return null; }
-            Seat seat = seatOpt.get();
-
             Trip trip = booking.getTrip();
+            Seat seat = booking.getSeat();
 
-
-            Optional<Station> fromStationOpt = stationRepository.findByName(trip.getDepartureStation());
-            Optional<Station> toStationOpt = stationRepository.findByName(trip.getArrivalStation());
+            Optional<Station> fromStationOpt = stationRepository.findById(trip.getRoute().getStartStation().getId());
+            Optional<Station> toStationOpt = stationRepository.findById(trip.getRoute().getEndStation().getId());
 
             if (fromStationOpt.isEmpty() || toStationOpt.isEmpty()) {
-                return null;
+                throw new IllegalStateException("Không tìm thấy ga đi hoặc ga đến.");
             }
 
             Ticket ticket = new Ticket();
@@ -81,28 +66,35 @@ public class TicketServiceImpl implements TicketService {
             ticket.setFromStation(fromStationOpt.get());
             ticket.setToStation(toStationOpt.get());
             ticket.setSeat(seat);
-            ticket.setPassengerName(passengerName);
-            ticket.setPassengerPhone(passengerPhone);
-            ticket.setPassengerIdCard(passengerIdCard);
 
-            // ===== SỬA LỖI Ở ĐÂY =====
-            // 1. Xóa dòng lỗi 'setDistanceKm' vì trường này không còn
-            // ticket.setDistanceKm(BigDecimal.valueOf(200.0)); // <-- XÓA DÒNG NÀY
+            ticket.setPassengerName(booking.getPassengerName());
+            ticket.setPassengerPhone(booking.getPhone());
 
-            // 2. Lấy giá chính xác từ Booking (đã được tính khi tạo)
-            ticket.setTotalPrice(booking.getPrice()); // <-- SỬA DÒNG NÀY
-            // =========================
+            // ===== THÊM SAO CHÉP 2 TRƯỜNG MỚI =====
+            ticket.setPassengerIdCard(booking.getPassengerIdCard());
+            ticket.setDob(booking.getDob());
+            // ===================================
 
+            ticket.setTotalPrice(booking.getPrice());
             ticket.setStatus(TicketStatus.ACTIVE);
             ticket.setBookedAt(LocalDateTime.now());
 
-            ticketRepository.save(ticket);
-            return ticketCode;
+            return ticketRepository.save(ticket);
 
         } catch (Exception e) {
-
+            e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    @Transactional
+    public String createTicketForBooking(Long bookingId, Map<String, Object> requestData) {
+        System.err.println("CẢNH BÁO: Hàm createTicketForBooking(Map) đã lỗi thời và không nên được gọi.");
+        Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
+        if (bookingOpt.isEmpty()) { return null; }
+        Ticket newTicket = this.createTicketForBooking(bookingOpt.get());
+        return newTicket != null ? newTicket.getCode() : null;
     }
 
     @Override
@@ -115,12 +107,9 @@ public class TicketServiceImpl implements TicketService {
     @Transactional
     public boolean checkInTicket(Long ticketId) {
         Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
-
-        if (ticketOpt.isEmpty()) { return false; } // 404
+        if (ticketOpt.isEmpty()) { return false; }
         Ticket ticket = ticketOpt.get();
-
-        if (ticket.getStatus() != TicketStatus.ACTIVE) { return false; } // 400
-
+        if (ticket.getStatus() != TicketStatus.ACTIVE) { return false; }
         ticket.setStatus(TicketStatus.CHECKED_IN);
         ticket.setCheckedInAt(LocalDateTime.now());
         ticketRepository.save(ticket);
@@ -131,15 +120,11 @@ public class TicketServiceImpl implements TicketService {
     @Transactional
     public boolean cancelTicket(Long ticketId) {
         Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
-
-        if (ticketOpt.isEmpty()) { return false; } // 404
+        if (ticketOpt.isEmpty()) { return false; }
         Ticket ticket = ticketOpt.get();
-
-
         if (ticket.getStatus() == TicketStatus.CANCELLED || ticket.getStatus() == TicketStatus.CHECKED_IN) {
-            return false; // 400 Bad Request
+            return false;
         }
-
         ticket.setStatus(TicketStatus.CANCELLED);
         ticketRepository.save(ticket);
         return true;

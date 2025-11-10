@@ -3,6 +3,7 @@ package com.example.trainticketoffice.repository;
 import com.example.trainticketoffice.model.Route;
 import com.example.trainticketoffice.model.Station;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,4 +23,7 @@ public interface RouteRepository extends JpaRepository<Route, Integer> {
     List<Route> startStationId(Integer startStation);
 
     List<Route> findByStartStationAndEndStation(Station startStation, Station endStation);
+
+    @Query("SELECT r FROM Route r JOIN FETCH r.startStation JOIN FETCH r.endStation")
+    List<Route> findAllAndFetchStations();
 }

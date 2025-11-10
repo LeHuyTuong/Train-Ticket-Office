@@ -4,6 +4,9 @@ import com.example.trainticketoffice.model.Station;
 import com.example.trainticketoffice.repository.StationRepository;
 import com.example.trainticketoffice.service.StationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,12 +15,25 @@ import java.util.Optional;
 @Service
 public class StationServiceImpl implements StationService {
 
+    public static final int STATIONS_PER_PAGE = 5;
+
     @Autowired
     private StationRepository stationRepository;
 
     @Override
     public List<Station> getAllStations() {
         return stationRepository.findAll();
+    }
+
+    @Override
+    public Page<Station> listAll(int pageNum, String keyword) {
+        Pageable pageable = PageRequest.of(pageNum - 1, STATIONS_PER_PAGE);
+
+        if (keyword != null && !keyword.isEmpty()) {
+            return stationRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(keyword, keyword, pageable);
+        }
+
+        return stationRepository.findAll(pageable);
     }
 
     @Override
@@ -47,9 +63,9 @@ public class StationServiceImpl implements StationService {
             existingStation.setCity(station.getCity());
             existingStation.setProvince(station.getProvince());
 
-            // ===== SỬA LỖI Ở ĐÂY (Xóa dòng) =====
-            // existingStation.setKmFromStart(station.getKmFromStart());
-            // ===================================
+            // ===== THÊM DÒNG NÀY =====
+            existingStation.setDistanceKm(station.getDistanceKm());
+            // ========================
 
             existingStation.setStatus(station.getStatus());
 
@@ -70,7 +86,6 @@ public class StationServiceImpl implements StationService {
 
     @Override
     public Optional<Station> findById(Integer id) {
-        // Repository đã có sẵn hàm này
         return stationRepository.findById(id);
     }
 }

@@ -4,79 +4,96 @@
       layout:decorate="~{fragments/_customer_layout}">
 <head>
     <title>Kết Quả Tìm Kiếm</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        /* (CSS giữ nguyên) */
+        body {
+            background: url('/images/train01.jpg') center/cover no-repeat fixed;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .content-container {
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 1000px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        .page-title {
+            font-weight: 700;
+            font-size: 28px;
+            color: #004a99;
+            margin-bottom: 20px;
+        }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        thead th { background: rgba(0,0,0,0.05); font-weight: 600; padding: 12px; text-align: left; }
+        tbody td { background: rgba(255,255,255,0.8); padding: 12px; vertical-align: middle; border-radius: 8px; }
+        tbody tr:hover td { background: rgba(255,255,255,0.95); }
+        .badge { font-weight: 600; padding: 0.4em 0.7em; border-radius: 0.5rem; }
+        .btn { padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: all 0.25s ease; }
+        .btn-primary { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { opacity: 0.9; transform: translateY(-2px); }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
+    <div class="content-container">
+        <h2 class="page-title">
+            Chuyến: <span th:text="${startStation.name}">Ga Đi</span>
+            → <span th:text="${endStation.name}">Ga Đến</span>
+        </h2>
 
-    <h2 class="page-title">
-        Chuyến: <span th:text="${startStation.name}">Ga Đi</span>
-        → <span th:text="${endStation.name}">Ga Đến</span>
-    </h2>
+        <div th:if="${#lists.isEmpty(availableTrips)}" class="alert alert-warning">
+            Không tìm thấy chuyến tàu nào phù hợp với tuyến đường của bạn.
+        </div>
 
-    <div th:if="${#lists.isEmpty(availableTrips)}" class="alert alert-warning" role="alert">
-        Không tìm thấy chuyến tàu nào phù hợp với tuyến đường của bạn.
+        <div th:if="${not #lists.isEmpty(availableTrips)}">
+            <h4 class="mb-3">Các chuyến tàu có sẵn:</h4>
+            <table>
+                <thead>
+                <tr>
+                    <th>Mã Tàu</th>
+                    <th>Giờ Đi</th>
+                    <th>Giờ Đến</th>
+                    <th>Ghế Trống</th>
+                    <th>Giá từ (VNĐ)</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="trip : ${availableTrips}">
+                    <td class="align-middle" data-label="Mã Tàu" th:text="${trip.train.code}">SE1</td>
+                    <td class="align-middle" data-label="Giờ Đi" th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td class="align-middle" data-label="Giờ Đến" th:text="${#temporals.format(trip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></td>
+
+                    <td class="align-middle" data-label="Ghế Trống">
+                        <span th:text="|VIP: ${availableVipCounts[trip.tripId]}|" class="badge bg-warning text-dark me-1"></span>
+                        <span th:text="|Thường: ${availableNormalCounts[trip.tripId]}|" class="badge bg-light text-dark"></span>
+                    </td>
+
+                    <td class="align-middle" data-label="Giá từ (VNĐ)" th:text="${#numbers.formatDecimal(tripMinPrices[trip.tripId], 0, 'COMMA', 0, 'POINT')}"></td>
+                    <td class="text-end" data-label="">
+
+                        <th:block th:with="totalAvailable=${availableVipCounts[trip.tripId] + availableNormalCounts[trip.tripId]}">
+                            <a th:href="@{/bookings/new(tripId=${trip.tripId})}" class="btn btn-primary" th:classappend="${totalAvailable == 0} ? 'disabled' : ''">
+                                <span th:if="${totalAvailable > 0}">Chọn Ghế & Đặt Vé</span>
+                                <span th:if="${totalAvailable == 0}">Hết Vé</span>
+                                <i class="bi bi-chevron-right" th:if="${totalAvailable > 0}"></i>
+                            </a>
+                        </th:block>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <a th:href="@{/}" class="btn btn-secondary mt-3">
+            <i class="bi bi-arrow-left"></i> Quay lại Tìm kiếm
+        </a>
     </div>
-
-    <div th:if="${not #lists.isEmpty(availableTrips)}">
-        <h4 class="mb-3">Các chuyến tàu có sẵn:</h4>
-
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th>Mã Tàu</th>
-                <th>Giờ Đi</th>
-                <th>Giờ Đến</th>
-                <th>Ghế Trống</th>
-                <th>Giá từ (VNĐ)</th> <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="trip : ${availableTrips}">
-
-                <td class="align-middle">
-                    <strong th:text="${trip.train.code}">SE1</strong>
-                </td>
-
-                <td class="align-middle">
-                    <span th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy HH:mm')}"></span>
-                </td>
-
-                <td class="align-middle">
-                    <span th:text="${#temporals.format(trip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span>
-                </td>
-
-                <td class="align-middle">
-                    <span th:text="|VIP: ${availableVipCounts[trip.tripId]}|"
-                          class="badge bg-warning text-dark me-1"></span>
-                    <span th:text="|Thường: ${availableNormalCounts[trip.tripId]}|"
-                          class="badge bg-light text-dark"></span>
-                </td>
-
-                <td class="align-middle">
-                    <strong th:text="${#numbers.formatDecimal(tripMinPrices[trip.tripId], 0, 'COMMA', 0, 'POINT')}"></strong>
-                </td>
-
-                <td class="text-end">
-                    <th:block th:with="totalAvailable=${availableVipCounts[trip.tripId] + availableNormalCounts[trip.tripId]}">
-                        <a th:href="@{/bookings/new(tripId=${trip.tripId})}"
-                           class="btn btn-primary"
-                           th:classappend="${totalAvailable == 0} ? 'disabled' : ''">
-
-                            <span th:if="${totalAvailable > 0}">Chọn Ghế & Đặt Vé</span>
-                            <span th:if="${totalAvailable == 0}">Hết Vé</span>
-                            <i class="bi bi-chevron-right" th:if="${totalAvailable > 0}"></i>
-                        </a>
-                    </th:block>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <a th:href="@{/}" class="btn btn-secondary mt-3">
-        <i class="bi bi-arrow-left"></i> Quay lại Tìm kiếm
-    </a>
-
 </div>
 </body>
 </html>

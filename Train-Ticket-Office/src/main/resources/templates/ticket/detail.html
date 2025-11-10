@@ -4,85 +4,102 @@
       layout:decorate="~{fragments/_customer_layout}">
 <head>
     <title>Chi Tiết Vé</title>
+    <style>
+        /* (CSS giữ nguyên) */
+        body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #e0f7ff, #dbe6f1); padding: 20px; }
+        .ticket-container { max-width: 800px; margin: auto; border-radius: 20px; background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); box-shadow: 0 15px 40px rgba(0,0,0,0.2); overflow: hidden; animation: fadeIn 0.7s ease; }
+        @keyframes fadeIn { from {opacity:0; transform: translateY(20px);} to {opacity:1; transform: translateY(0);} }
+        .ticket-header { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; padding: 25px; text-align: center; }
+        .ticket-header h3 { margin-bottom: 5px; font-size: 1.8rem; }
+        .ticket-header p { font-size: 0.95rem; opacity: 0.9; }
+        .ticket-body { padding: 25px; border-bottom: 2px dashed rgba(0,0,0,0.1); }
+        .trip-details h4 { font-size: 1.2rem; margin-bottom: 10px; color: #004a99; }
+        .trip-details p { font-size: 0.95rem; color: #333; }
+        .passenger-details .row { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
+        .passenger-details div { flex: 1 1 45%; }
+        .passenger-details strong { display: block; font-weight: 600; margin-bottom: 4px; color: #555; }
+        .passenger-details p { margin: 0; font-size: 1rem; font-weight: 500; }
+        .badge { font-weight: 600; padding: 6px 12px; border-radius: 12px; }
+        .bg-success { background-color: #28a745; color: white; }
+        .bg-warning { background-color: #ffc107; color: #212529; }
+        .bg-secondary { background-color: #6c757d; color: white; }
+        .bg-primary { background-color: #007bff; color: white; }
+        .ticket-footer { background: #f9f9f9; padding: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .ticket-footer .btn { border-radius: 12px; padding: 10px 20px; font-weight: 600; transition: all 0.25s ease; border: none; }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
-
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <div class="ticket-container" style="max-width: 800px; margin: auto;">
-
-        <div class="ticket-header" style="background-color: #004a99; color: white; padding: 20px; text-align: center;">
+    <div class="ticket-container">
+        <div class="ticket-header">
             <h3>Vé Tàu Hỏa Điện Tử</h3>
             <p>Train Ticket Office</p>
         </div>
 
-        <div class="ticket-body" style="padding: 25px; border-bottom: 2px dashed #ccc;">
-
-            <div th:object="${booking}">
-                <div class="trip-details" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                    <h4>
-                        <span th:text="*{trip.departureStation}">Ga Đi</span> →
-                        <span th:text="*{trip.arrivalStation}">Ga Đến</span>
-                    </h4>
-                    <p>
-                        <strong>Tàu:</strong> <span th:text="*{trip.train.code}">SE1</span> |
-                        <strong>Ngày Đi:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy HH:mm')}"></span>
-                    </p>
-                </div>
-
-                <div class="passenger-details" style="padding-top: 15px;">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong class="text-muted">Hành Khách</strong>
-                            <p class="fs-5" th:text="*{passengerName}">Nguyễn Văn A</p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong class="text-muted">Mã Đặt Vé</strong>
-                            <p class="fs-5" th:text="*{bookingId}">123</p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong class="text-muted">Ghế</strong>
-                            <p class="fs-5" th:text="|Ghế *{seat.seatNumber} (*{seat.carriage.name})|">A1 (Toa 1)</p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong class="text-muted">Loại Ghế</strong>
-                            <p class="fs-5" th:text="*{seat.seatType}">VIP</p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong class="text-muted">Trạng thái</strong>
-                            <p class="fs-5">
-                                <span th:if="*{status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
-                                <span th:if="*{status.name() == 'BOOKED'}" class="badge bg-warning text-dark">Chờ thanh toán</span>
-                                <span th:if="*{status.name() == 'CANCELLED'}" class="badge bg-secondary">Đã hủy</span>
-                                <span th:if="*{status.name() == 'COMPLETED'}" class="badge bg-primary">Đã hoàn thành</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <div class="ticket-body" th:object="${booking}">
+            <div class="trip-details">
+                <h4>
+                    <span th:text="*{trip.departureStation}">Ga Đi</span> →
+                    <span th:text="*{trip.arrivalStation}">Ga Đến</span>
+                </h4>
+                <p>
+                    <strong>Tàu:</strong> <span th:text="*{trip.train.code}">SE1</span> |
+                    <strong>Ngày Đi:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'dd/MM/yyyy HH:mm')}"></span>
+                </p>
             </div>
 
+            <div class="passenger-details">
+                <div>
+                    <strong>Hành Khách</strong>
+                    <p th:text="*{passengerName}">Nguyễn Văn A</p>
+                </div>
+                <div>
+                    <strong>Mã Đặt Vé</strong>
+                    <p th:text="*{bookingId}">123</p>
+                </div>
+
+                <div>
+                    <strong>Ghế</strong>
+                    <p th:text="|Ghế *{seat.seatNumber} (Toa *{seat.carriage.name})|">A1 (Toa 1)</p>
+                </div>
+                <div>
+                    <strong>Loại Ghế</strong>
+                    <p th:text="${booking.seat.carriage.seatType != null ? booking.seat.carriage.seatType.name : 'N/A'}">VIP</p>
+                </div>
+                <div>
+                    <strong>Trạng thái</strong>
+                    <p>
+                        <span th:if="*{status.name() == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
+                        <span th:if="*{status.name() == 'BOOKED'}" class="badge bg-warning text-dark">Chờ thanh toán</span>
+                        <span th:if="*{status.name() == 'CANCELLED'}" class="badge bg-secondary">Đã hủy</span>
+                        <span th:if="*{status.name() == 'COMPLETED'}" class="badge bg-primary">Hoàn thành</span>
+                    </p>
+                </div>
+                <div>
+                    <strong>Giá vé</strong>
+                    <p th:text="${#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></p>
+                </div>
+            </div>
         </div>
 
-        <div class="ticket-footer" style="background-color: #f9f9f9; padding: 20px; text-align: center;">
+        <div class="ticket-footer">
             <a th:href="@{/bookings}" class="btn btn-secondary">Quay lại danh sách</a>
-
             <a th:if="${booking.status.name() == 'BOOKED'}"
                th:href="@{/bookings/delete/{id}(id=${booking.bookingId})}"
                class="btn btn-danger"
-               onclick="return confirm('Bạn có chắc muốn hủy vé này? Ghế sẽ được giải phóng.')">
+               onclick="return confirm('Bạn có chắc muốn hủy vé này?')">
                 Hủy vé
             </a>
-
-            <a th:if="${booking.status.name() == 'BOOKED'}"
-               th:href="@{/payments/bookings/{id}(id=${booking.bookingId})}"
+            <a th:if="${booking.status.name() == 'BOOKED' and booking.order != null}"
+               th:href="@{/payments/orders/{id}(id=${booking.order.orderId})}"
                class="btn btn-success">
-                Thanh toán ngay
+                Thanh toán Đơn hàng
             </a>
         </div>
     </div>
-
 </div>
 </body>
 </html>

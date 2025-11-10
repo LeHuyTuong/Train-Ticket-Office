@@ -2,11 +2,9 @@ package com.example.trainticketoffice.model;
 
 import com.example.trainticketoffice.common.TrainStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,18 +24,28 @@ public class Train {
 
     @NotBlank(message = "Train code is mandatory")
     @Size(min = 2, max = 10, message = "Code must be between 2 and 10 characters")
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 10, columnDefinition = "nvarchar(10)") // SỬA
     private String code;
 
     @NotBlank(message = "Train name is mandatory")
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "nvarchar(255)") // SỬA
     private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TrainStatus status = TrainStatus.AVAILABLE;
 
-    @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @ToString.Exclude
     private List<Carriage> carriages = new ArrayList<>();
+
+    @Transient
+    public int getTotalCapacity() {
+        if (this.carriages == null) {
+            return 0;
+        }
+        return this.carriages.stream()
+                .mapToInt(Carriage::getCapacity)
+                .sum();
+    }
 }

@@ -4,48 +4,230 @@
       layout:decorate="~{fragments/_customer_layout}">
 <head>
     <title>Tìm Kiếm Chuyến Tàu</title>
+    <style>
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: #eef3f8;
+        }
+
+        .hero-slider {
+            width: 100%;
+            height: 480px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 22px 22px;
+        }
+
+        .hero-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            animation: fadeZoom 15s infinite;
+        }
+
+        .hero-slide:nth-child(1) { animation-delay: 0s; }
+        .hero-slide:nth-child(2) { animation-delay: 5s; }
+        .hero-slide:nth-child(3) { animation-delay: 10s; }
+
+        @keyframes fadeZoom {
+            0% { opacity: 0; transform: scale(1); }
+            10% { opacity: 1; transform: scale(1.04); }
+            33% { opacity: 1; transform: scale(1.08); }
+            43% { opacity: 0; transform: scale(1.1); }
+            100% { opacity: 0; }
+        }
+
+        .hero-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,40,90,0.4), rgba(0,0,0,0.6));
+            z-index: 1;
+        }
+
+        .hero-text-box {
+            position: absolute;
+            z-index: 2;
+            top: 50%;
+            width: 100%;
+            text-align: center;
+            transform: translateY(-50%);
+            color: #fff;
+        }
+
+        .search-form-container {
+            background: #fff;
+            padding: 32px;
+            border-radius: 14px;
+            max-width: 820px;
+            margin: 35px auto;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+
+        .page-title {
+            font-size: 26px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 25px;
+            color: #002a66;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #003e8a;
+        }
+
+        .form-select, input[type=date] {
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #cdd8e6;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: #0066ff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 22px;
+            font-size: 17px;
+            font-weight: 600;
+            transition: .25s;
+        }
+
+        .btn-primary:hover {
+            background: #0056d6;
+            transform: translateY(-2px);
+        }
+
+        /* Thong bao loi */
+        .no-results {
+            margin-top: 25px;
+            background: rgba(255, 77, 77, 0.95);
+            border-left: 5px solid #d32f2f;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+        }
+
+        .no-results i {
+            margin-right: 6px;
+        }
+
+        /* THÊM: CSS cho Khứ hồi */
+        #return-date-group {
+            display: none; /* Ẩn mặc định */
+        }
+    </style>
 </head>
+
 <body>
 <div layout:fragment="content">
 
-    <h2 class="page-title">Tìm Kiếm Chuyến Tàu</h2>
+    <div class="hero-slider">
+        <div class="hero-slide" style="background-image: url('/images/hero1.jpg')"></div>
+        <div class="hero-slide" style="background-image: url('/images/hero2.png')"></div>
+        <div class="hero-slide" style="background-image: url('/images/hero3.jpg')"></div>
+    </div>
 
-    <form th:action="@{/trips/search}" method="GET" class="col-md-8">
+    <div class="search-form-container">
+        <h2 class="page-title"><i class="bi bi-search"></i> Tìm Kiếm Chuyến Tàu</h2>
 
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Ga Đi (Start Station)</label>
-                <select name="startStationId" class="form-select form-select-lg" required>
-                    <option value="">Chọn Ga Đi</option>
-                    <option th:each="station : ${allStations}"
-                            th:value="${station.id}"
-                            th:text="|${station.name} (${station.code})|"></option>
-                </select>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <form th:action="@{/trips/search}" method="GET">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Ga Xuất Phát</label>
+                    <select name="startStationId" class="form-select" required>
+                        <option value="">Chọn Ga Xuất Phát</option>
+                        <option th:each="station : ${allStations}"
+                                th:value="${station.id}"
+                                th:text="|${station.name} (${station.code})|"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Ga Đích</label>
+                    <select name="endStationId" class="form-select" required>
+                        <option value="">Chọn Ga Đích</option>
+                        <option th:each="station : ${allStations}"
+                                th:value="${station.id}"
+                                th:text="|${station.name} (${station.code})|"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Ngày Khởi Hành</label>
+                    <input type="date" name="departureDate" id="departureDate" class="form-select" required>
+                </div>
+
+                <div class="col-md-6" id="return-date-group">
+                    <label class="form-label">Ngày Về</label>
+                    <input type="date" name="returnDate" id="returnDate" class="form-select">
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="isRoundTrip" value="true" id="roundTripCheck">
+                        <label class="form-check-label" for="roundTripCheck">
+                            Khứ hồi
+                        </label>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Ga Đến (End Station)</label>
-                <select name="endStationId" class="form-select form-select-lg" required>
-                    <option value="">Chọn Ga Đến</option>
-                    <option th:each="station : ${allStations}"
-                            th:value="${station.id}"
-                            th:text="|${station.name} (${station.code})|"></option>
-                </select>
+            <div class="mt-4 text-center">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-train-front"></i> Tìm Chuyến
+                </button>
             </div>
+        </form>
 
-            <div class="col-md-12 mb-3">
-                <label class="form-label fw-bold">Ngày Đi (Tùy chọn)</label>
-                <input type="date" name="departureDate" class="form-select form-select-lg">
-            </div>
+        <div th:if="${not #lists.isEmpty(param.startStationId)
+                     and not #lists.isEmpty(param.endStationId)
+                     and #lists.isEmpty(trips)}"
+             class="no-results">
+            <i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy chuyến tàu phù hợp.
         </div>
+    </div>
 
-        <div class="mb-3 mt-2">
-            <button type="submit" class="btn btn-primary btn-lg">
-                <i class="bi bi-search"></i> Tìm Chuyến
-            </button>
-        </div>
-    </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roundTripCheck = document.getElementById('roundTripCheck');
+            const returnDateGroup = document.getElementById('return-date-group');
+            const returnDateInput = document.getElementById('returnDate');
+            const departureDateInput = document.getElementById('departureDate');
 
+            roundTripCheck.addEventListener('change', function() {
+                if (this.checked) {
+                    returnDateGroup.style.display = 'block';
+                    returnDateInput.required = true;
+                } else {
+                    returnDateGroup.style.display = 'none';
+                    returnDateInput.required = false;
+                    returnDateInput.value = '';
+                }
+            });
+
+            // Ngăn chọn ngày về trước ngày đi
+            departureDateInput.addEventListener('change', function() {
+                if (departureDateInput.value) {
+                    returnDateInput.min = departureDateInput.value;
+                }
+            });
+
+            // Set ngày đi mặc định là hôm nay
+            const today = new Date().toISOString().split('T')[0];
+            departureDateInput.min = today;
+        });
+    </script>
 </div>
 </body>
 </html>

@@ -1,75 +1,212 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/_admin_layout}">
-<head><title>Trip Management</title></head>
+<head>
+    <title>Quản Lý Chuyến Đi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: url('/images/train01.jpg') center/cover no-repeat fixed;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .container-card {
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 30px 25px;
+            margin: 30px auto;
+            max-width: 1000px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        .page-title {
+            font-weight: 700;
+            font-size: 30px;
+            color: #004a99;
+            margin-bottom: 20px;
+        }
+        .btn {
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #009ffd, #2a2a72);
+            color: #fff;
+            border: none;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+        }
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn-warning { background: #ffc107; color: #fff; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-danger.disabled { opacity: 0.5; pointer-events: none; }
+        table {
+            background: rgba(255,255,255,0.85);
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        table th {
+            background: linear-gradient(135deg,#009ffd,#2a2a72);
+            color: #fff;
+        }
+        table tr:hover {
+            background: rgba(0,159,253,0.15);
+        }
+        .badge { font-weight: 600; }
+        form.d-inline-flex { display: inline-flex; align-items: center; gap: 5px; }
+        .form-select { border-radius: 8px; padding: 5px 10px; }
+
+        /* CSS CHO TÌM KIẾM (LỌC) */
+        .search-form {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* CSS CHO PHÂN TRANG */
+        .pagination {
+            justify-content: center;
+        }
+        .page-item.active .page-link {
+            background-color: #004a99;
+            border-color: #004a99;
+        }
+        .page-link {
+            color: #004a99;
+        }
+
+        @media (max-width: 768px) {
+            .container-card { padding: 20px; }
+            .page-title { font-size: 26px; }
+        }
+    </style>
+</head>
 <body>
-
 <div layout:fragment="content">
-    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    <div class="container-card">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="page-title"><i class="bi bi-calendar-event"></i> Trip List</h1>
-        <a th:href="@{/trips/new}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add New Trip</a>
+        <h2 class="page-title">Quản Lý Chuyến Đi</h2>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <div class="mb-3">
+            <a th:href="@{/trips/new}" class="btn btn-primary">Thêm Chuyến Mới</a>
+        </div>
+
+        <form th:action="@{/trips}" method="get" class="search-form">
+            <div class="input-group">
+                <select name="stationId" class="form-select">
+                    <option value="">-- Lọc theo Ga (Tất cả) --</option>
+                    <option th:each="station : ${allStations}"
+                            th:value="${station.id}"
+                            th:text="${station.name + ' (' + station.code + ')'}"
+                            th:selected="${station.id == selectedStationId}"></option>
+                </select>
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a th:href="@{/trips}" class="btn btn-secondary">Xóa</a>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tàu</th>
+                    <th>Tuyến</th>
+                    <th>Khởi Hành</th>
+                    <th>Đến</th>
+                    <th>Trạng Thái</th>
+                    <th>Hành Động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="trip : ${trips}">
+                    <td th:text="${trip.tripId}"></td>
+                    <td th:text="${trip.train.code}"></td>
+                    <td th:text="${trip.route.code}"></td>
+                    <td th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td th:text="${#temporals.format(trip.arrivalTime, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td>
+                        <span th:text="${trip.status.description}"
+                              th:classappend="${trip.status.name() == 'COMPLETED'} ? 'badge bg-success' :
+                                             (${trip.status.name() == 'IN_PROGRESS'} ? 'badge bg-danger' :
+                                             (${trip.status.name() == 'CANCELLED'} ? 'badge bg-secondary' :
+                                             (${trip.status.name() == 'DELAYED'} ? 'badge bg-warning text-dark' : 'badge bg-info')))">
+                        </span>
+                    </td>
+                    <td>
+                        <form th:action="@{/trips/update-status/{id}(id=${trip.tripId})}" method="POST" class="d-inline-flex">
+                            <input type="hidden" name="page" th:value="${currentPage}">
+                            <input type="hidden" name="stationId" th:value="${selectedStationId}">
+
+                            <select name="status" class="form-select form-select-sm">
+                                <option th:each="s : ${allTripStatus}"
+                                        th:value="${s}"
+                                        th:text="${s.description}"
+                                        th:selected="${s == trip.status}"></option>
+                            </select>
+                            <button type="submit" class="btn btn-secondary btn-sm">Cập Nhật</button>
+                        </form>
+
+                        <a th:href="@{/trips/edit/{id}(id=${trip.tripId})}" class="btn btn-warning btn-sm ms-1">Sửa</a>
+
+                        <a th:href="@{/trips/delete/{id}(id=${trip.tripId})}" class="btn btn-danger btn-sm ms-1"
+                           th:classappend="${trip.status.name() != 'COMPLETED'} ? 'disabled' : ''"
+                           onclick="return confirm('Bạn có chắc muốn xóa chuyến này và tất cả các đặt vé liên quan không?')">Xóa</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(trips)}">
+                    <td colspan="7" class="text-center">Không có chuyến nào.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav aria-label="Page navigation" th:if="${totalPages > 1}">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips(page=1, stationId=${selectedStationId})}">Đầu</a>
+                </li>
+
+                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips(page=${currentPage - 1}, stationId=${selectedStationId})}">Trước</a>
+                </li>
+
+                <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}" th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/trips(page=${i}, stationId=${selectedStationId})}" th:text="${i}"></a>
+                </li>
+
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips(page=${currentPage + 1}, stationId=${selectedStationId})}">Sau</a>
+                </li>
+
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips(page=${totalPages}, stationId=${selectedStationId})}">Cuối</a>
+                </li>
+            </ul>
+        </nav>
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">⬅ Quay Lại Dashboard</a>
     </div>
-
-    <table class="table table-hover table-bordered">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Train</th>
-            <th>Route</th>
-            <th>Departure</th>
-            <th>Arrival</th>
-            <th>Status</th>
-            <th class="text-center">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="trip : ${trips}">
-            <td th:text="${trip.tripId}"></td>
-            <td th:text="${trip.train.code}"></td>
-            <td th:text="${trip.route.code}"></td>
-            <td th:text="${#temporals.format(trip.departureTime, 'dd-MM-yyyy HH:mm')}"></td>
-            <td th:text="${#temporals.format(trip.arrivalTime, 'dd-MM-yyyy HH:mm')}"></td>
-
-            <td>
-                <span th:text="${trip.status.description}"
-                      th:classappend="${trip.status.name() == 'COMPLETED'} ? 'badge bg-success' :
-                                     (${trip.status.name() == 'IN_PROGRESS'} ? 'badge bg-danger' :
-                                     (${trip.status.name() == 'CANCELLED'} ? 'badge bg-secondary' :
-                                     (${trip.status.name() == 'DELAYED'} ? 'badge bg-warning text-dark' : 'badge bg-info')))">
-                </span>
-            </td>
-
-            <td class="text-center">
-                <form th:action="@{/trips/update-status/{id}(id=${trip.tripId})}" method="POST" class="d-inline-flex">
-                    <select name="status" class="form-select form-select-sm" style="width: 150px;">
-                        <option th:each="s : ${allTripStatus}"
-                                th:value="${s}"
-                                th:text="${s.description}"
-                                th:selected="${s == trip.status}"></option>
-                    </select>
-                    <button type="submit" class="btn btn-outline-secondary btn-sm ms-1">OK</button>
-                </form>
-
-                <a th:href="@{/trips/edit/{id}(id=${trip.tripId})}"
-                   class="btn btn-warning btn-sm ms-2">
-                    Edit
-                </a>
-                <a th:href="@{/trips/delete/{id}(id=${trip.tripId})}"
-                   class="btn btn-danger btn-sm"
-                   th:classappend="${trip.status.name() != 'COMPLETED'} ? 'disabled' : ''"
-                   onclick="return confirm('Bạn có chắc muốn xóa vĩnh viễn chuyến này và toàn bộ vé, booking liên quan?');">
-                    Delete
-                </a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-    <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
 </div>
 </body>
 </html>

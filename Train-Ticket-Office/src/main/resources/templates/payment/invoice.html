@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{fragments/_customer_layout}">
 <head>
     <meta charset="UTF-8">
     <title>Hóa đơn thanh toán VNPAY</title>
@@ -8,7 +9,6 @@
         .inv-head { text-align:center; color:#005a9f; }
         .row { display:flex; justify-content:space-between; margin:8px 0; }
 
-        /* CSS cho thông báo lỗi/thành công */
         .status-box {
             padding: 15px;
             border-radius: 5px;
@@ -33,14 +33,17 @@
 <div class="invoice" layout:fragment="content">
     <h2 class="inv-head">HÓA ĐƠN THANH TOÁN</h2>
 
+    <div th:if="${errorMessage}" class="status-box status-fail" th:text="${errorMessage}"></div>
+
     <div th:if="${transactionStatus == 'Thành công'}" class="status-box status-success">
         Giao dịch Thành công!
     </div>
-    <div th:if="${transactionStatus != 'Thành công'}" class="status-box status-fail">
+    <div th:if="${transactionStatus != 'Thành công' and errorMessage == null}" class="status-box status-fail">
         Giao dịch Thất bại hoặc đã bị Hủy.
     </div>
+
     <div class="row"><strong>Mã giao dịch (VNPay):</strong> <span th:text="${transactionNo}"></span></div>
-    <div class="row"><strong>Mã đơn hàng (Shop):</strong> <span th:text="${bookingId}"></span></div>
+    <div class="row"><strong>Mã đơn hàng (Shop):</strong> <span th:text="${orderId}"></span></div>
     <div class="row"><strong>Ngân hàng:</strong> <span th:text="${bankCode}"></span></div>
     <div class="row"><strong>Số tiền:</strong> <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT')}"></span> VND</div>
     <div class="row"><strong>Thời gian:</strong> <span th:text="${#temporals.format(payDate, 'dd/MM/yyyy HH:mm:ss')}"></span></div>
