@@ -90,7 +90,6 @@ public class DataInitializer implements CommandLineRunner {
             createTrainsAndSeats(); // Tạo 6 tàu, toa, và các ghế A1, B1...
             createTrips(today); // Tạo 2 chuyến mẫu
             // createBulkTrips(today); // XÓA: Gây treo
-            createBookingsAndTickets(); // Tạo 3 booking mẫu (ĐÃ SỬA)
 
             System.out.println("--- Realistic Data Initialization COMPLETE ---");
 
@@ -318,97 +317,5 @@ public class DataInitializer implements CommandLineRunner {
 
         System.out.println("Total trips created: " + (DAYS_TO_GENERATE * 6));
     }
-    // ===== SỬA HOÀN TOÀN HÀM NÀY (ĐỂ DÙNG LOGIC BOOKINGREQUEST) =====
-    private void createBookingsAndTickets() {
-        System.out.println("Creating sample Orders, Bookings, Tickets (Passenger Form Logic)...");
 
-        // --- ĐƠN HÀNG 1: (SE1, 1 vé A1) - ĐÃ THANH TOÁN ---
-
-        // 1. Tạo DTO (Giả lập form)
-        BookingRequest request1 = new BookingRequest();
-        request1.setTripId(tripSE1.getTripId());
-
-        PassengerInfo passenger1 = new PassengerInfo();
-        passenger1.setSeatId(se1_vip_seat_A1.getSeatId());
-        passenger1.setPassengerName(customer.getFullName());
-        passenger1.setPhone(customer.getPhone());
-        passenger1.setEmail(customer.getEmail());
-        passenger1.setPassengerType("ADULT");
-        passenger1.setDob(LocalDate.of(1990, 5, 15)); // THÊM NGÀY SINH (ADULT)
-        passenger1.setPassengerIdCard("012345678901"); // THÊM CCCD
-        request1.getPassengers().add(passenger1);
-
-        // 2. Gọi Service
-        Order order1 = bookingService.createOrder(request1, customer);
-
-        // 3. (Tiếp tục logic tạo Vé (Ticket) và Thanh toán (Payment)
-        Booking booking1 = order1.getBookings().get(0);
-        Ticket ticket1 = new Ticket();
-        ticket1.setCode("TICKET-SE1-A1");
-        ticket1.setBooking(booking1);
-        ticket1.setTrip(booking1.getTrip());
-        ticket1.setSeat(booking1.getSeat());
-        ticket1.setFromStation(stationHaNoi);
-        ticket1.setToStation(stationSaiGon);
-        ticket1.setPassengerName(customer.getFullName());
-        ticket1.setPassengerPhone(customer.getPhone());
-
-        // THÊM: Sao chép 2 trường mới sang Ticket
-        ticket1.setPassengerIdCard(booking1.getPassengerIdCard());
-        ticket1.setDob(booking1.getDob());
-
-        ticket1.setTotalPrice(booking1.getPrice());
-        ticket1.setStatus(TicketStatus.ACTIVE);
-        ticket1.setBookedAt(LocalDateTime.now().minusDays(1));
-        ticketRepository.save(ticket1);
-
-        Payment payment1 = new Payment();
-        payment1.setOrder(order1);
-        payment1.setUser(customer);
-        payment1.setAmount(order1.getTotalPrice());
-        payment1.setStatus(PaymentStatus.SUCCESS);
-        payment1.setTransactionRef("TXN_PAID_123");
-        payment1.setOrderInfo("Thanh toán vé tàu (Data init)");
-        payment1.setBankCode("VCB");
-        payment1.setResponseCode("00");
-        payment1.setPayDate(LocalDateTime.now().minusDays(1).plusMinutes(15));
-        paymentRepository.save(payment1);
-
-        order1.setStatus(PaymentStatus.SUCCESS);
-        orderRepository.save(order1);
-        for(Booking b : order1.getBookings()) {
-            b.setStatus(BookingStatus.PAID);
-            bookingRepository.save(b);
-        }
-
-        // --- ĐƠN HÀNG 2: (SE1, 1 vé B1) - CHƯA THANH TOÁN ---
-        BookingRequest request2 = new BookingRequest();
-        request2.setTripId(tripSE1.getTripId());
-        PassengerInfo passenger2 = new PassengerInfo();
-        passenger2.setSeatId(se1_normal_seat_B1.getSeatId());
-        passenger2.setPassengerName("Người Đi Cùng");
-        passenger2.setPhone(customer.getPhone());
-        passenger2.setEmail(customer.getEmail());
-        passenger2.setPassengerType("ADULT");
-        passenger2.setDob(LocalDate.of(1995, 1, 1)); // THÊM NGÀY SINH (ADULT)
-        passenger2.setPassengerIdCard("087654321"); // THÊM CCCD
-        request2.getPassengers().add(passenger2);
-
-        Order order2 = bookingService.createOrder(request2, customer);
-
-        // --- ĐƠN HÀNG 3: (SE3, 1 vé A1) - CHƯA THANH TOÁN ---
-        BookingRequest request3 = new BookingRequest();
-        request3.setTripId(tripSE3.getTripId());
-        PassengerInfo passenger3 = new PassengerInfo();
-        passenger3.setSeatId(se3_vip_seat_A1.getSeatId());
-        passenger3.setPassengerName(customer.getFullName());
-        passenger3.setPhone(customer.getPhone());
-        passenger3.setEmail(customer.getEmail());
-        passenger3.setPassengerType("ADULT");
-        passenger3.setDob(LocalDate.of(1990, 5, 15)); // THÊM NGÀY SINH (ADULT)
-        passenger3.setPassengerIdCard("012345678901"); // THÊM CCCD
-        request3.getPassengers().add(passenger3);
-
-        Order order3 = bookingService.createOrder(request3, customer);
-    }
 }

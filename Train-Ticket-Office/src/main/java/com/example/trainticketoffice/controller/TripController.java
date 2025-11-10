@@ -25,10 +25,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -64,6 +61,8 @@ public class TripController {
                                       @RequestParam(value = "returnDate", required = false)
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate returnDate,
                                       @RequestParam(value = "isRoundTrip", required = false) Boolean isRoundTrip,
+                                      @RequestParam(value = "roundTripFlow", required = false) String roundTripFlow,
+                                      @RequestParam(value = "context", required = false) String context,
                                       Model model,
                                       HttpSession session) {
 
@@ -114,16 +113,35 @@ public class TripController {
         // --- 2. XỬ LÝ MỘT CHIỀU (HOẶC HIỂN THỊ LƯỢT VỀ) ---
 
         // ===== SỬA LỖI LOGIC TẠI ĐÂY =====
-        // Chỉ xóa session nếu chúng ta KHÔNG đang ở giữa 1 lượt đặt khứ hồi
-        // (Tức là session "roundTripGroupId" không tồn tại)
-        if (session.getAttribute("roundTripGroupId") == null) {
-            // Đây là một lượt tìm kiếm MỘT CHIỀU mới
-            session.removeAttribute("roundTripNextLeg");
+        // Nếu đây KHÔNG PHẢI là bước chuyển sang lượt về của hành trình khứ hồi,
+        // hãy xóa các thông tin cũ để tránh dữ liệu rác.
+        boolean isReturnFlow = roundTripFlow != null && roundTripFlow.equalsIgnoreCase("return");
+
+        RoundTripInfo roundTripNextLeg = (RoundTripInfo) session.getAttribute("roundTripNextLeg");
+        boolean matchesSavedReturnLeg = false;
+        if (roundTripNextLeg != null) {
+            boolean sameRoute = Objects.equals(roundTripNextLeg.getStartStationId(), startStationId)
+                    && Objects.equals(roundTripNextLeg.getEndStationId(), endStationId);
+            boolean sameDate = roundTripNextLeg.getDepartureDate() == null
+                    || Objects.equals(roundTripNextLeg.getDepartureDate(), departureDate);
+            matchesSavedReturnLeg = sameRoute && sameDate;
+        }
+
+        boolean selectingReturnLeg = isReturnFlow || matchesSavedReturnLeg;
+
+        if (!selectingReturnLeg) {            session.removeAttribute("roundTripNextLeg");
             session.removeAttribute("roundTripGroupId");
         }
-        // Nếu "roundTripGroupId" tồn tại, nghĩa là ta đang được redirect
-        // từ BookingController để chọn lượt về -> KHÔNG XÓA SESSION.
+        // Khi roundTripFlow=return (được redirect từ BookingController sau khi đặt lượt đi)
+        // chúng ta giữ lại session để người dùng tiếp tục chọn lượt về.
         // ===================================
+
+        if (selectingReturnLeg) {
+            model.addAttribute("bookingContext", "inbound");
+        } else {
+            model.addAttribute("bookingContext", context);
+        }
+        model.addAttribute("selectingReturnLeg", selectingReturnLeg);
 
         Map<String, Object> oneWayResults = findOneWayTrips(startStationId, endStationId, departureDate);
 
