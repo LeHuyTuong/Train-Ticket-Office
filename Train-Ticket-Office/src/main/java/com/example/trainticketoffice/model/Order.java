@@ -23,7 +23,6 @@ public class Order extends BaseEntity {
     private Long orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    // THÊM: referencedColumnName = "id" để chỉ rõ cho IDE
     @JoinColumn(name = "user_id", nullable = false, referencedColumnName = "id")
     private User user;
 

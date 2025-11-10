@@ -11,7 +11,5 @@ import java.util.Optional;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     Optional<Ticket> findByCode(String code);
-
-    // THÊM HÀM NÀY
     List<Ticket> findByBooking(Booking booking);
 }

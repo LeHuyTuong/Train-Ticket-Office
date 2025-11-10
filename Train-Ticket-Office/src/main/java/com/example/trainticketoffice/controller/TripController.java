@@ -45,7 +45,7 @@ public class TripController {
     @Autowired
     private BookingRepository bookingRepository;
 
-    // ===== THÊM HÀM KIỂM TRA LỄ VÀ PHỤ THU =====
+
     private static final BigDecimal HOLIDAY_SURCHARGE_RATE = new BigDecimal("1.20");
 
     private boolean isHoliday(LocalDate date) {
@@ -55,9 +55,7 @@ public class TripController {
         if (date.getMonth() == Month.SEPTEMBER && date.getDayOfMonth() == 2) return true;
         return false;
     }
-    // ==========================================
 
-    // ===== VIẾT LẠI HOÀN TOÀN HÀM NÀY (LOGIC BẢN ĐỒ GHẾ) =====
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
@@ -78,7 +76,7 @@ public class TripController {
         Station startStation = startStationOpt.get();
         Station endStation = endStationOpt.get();
 
-        // 1. Lấy danh sách chuyến đi
+        //Lấy danh sách chuyến đi
         List<Trip> availableTrips;
         if (departureDate != null) {
             availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), departureDate);
@@ -86,7 +84,7 @@ public class TripController {
             availableTrips = tripService.findTripsByRoute(routeOpt.get(0));
         }
 
-        // 2. Lấy KM
+        // Lấy KM
         if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) {
             model.addAttribute("errorMessage", "Lỗi cấu hình: Ga chưa có thông tin KM.");
             return "customer/Home";
@@ -94,17 +92,17 @@ public class TripController {
         int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
         if (distanceKm == 0) distanceKm = 20;
 
-        // Map để lưu trữ thông tin cho View
+
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
 
         for (Trip trip : availableTrips) {
-            // 3. Kiểm tra Lễ
+            // Kiểm tra Lễ
             boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
             BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
 
-            // 4. Lấy các Seat ID đã bị đặt
+            //Lấy các Seat ID đã bị đặt
             List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
                             trip.getTripId(),
                             List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
@@ -116,7 +114,7 @@ public class TripController {
             long normalCount = 0;
             BigDecimal minPriceInTrip = null;
 
-            // 5. Lặp qua các Toa -> Ghế để đếm và tính giá
+            //Lặp qua các Toa -> Ghế để đếm và tính giá
             Train train = trip.getTrain();
             for (Carriage carriage : train.getCarriages()) {
                 SeatType seatType = carriage.getSeatType();
@@ -134,7 +132,6 @@ public class TripController {
                 // Đếm số ghế trống
                 for (Seat seat : carriage.getSeats()) { // Lặp qua các ghế thật
                     if (!bookedSeatIds.contains(seat.getSeatId())) {
-                        // Giả sử tên loại ghế "VIP" để phân loại
                         if (seatType.getName().toLowerCase().contains("vip")) {
                             vipCount++;
                         } else {
@@ -159,7 +156,7 @@ public class TripController {
         return "trip/trip-results";
     }
 
-    // ===== VIẾT LẠI HOÀN TOÀN HÀM NÀY (Logic Bản đồ ghế) =====
+
     @GetMapping("/all")
     public String showAllTrips(Model model) {
 
@@ -186,7 +183,7 @@ public class TripController {
                             trip.getTripId(),
                             List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
                     ).stream()
-                    .map(booking -> booking.getSeat().getSeatId()) // SỬA
+                    .map(booking -> booking.getSeat().getSeatId())
                     .collect(Collectors.toList());
 
             long vipCount = 0;
@@ -206,7 +203,7 @@ public class TripController {
                     minPriceInTrip = finalPrice;
                 }
 
-                for (Seat seat : carriage.getSeats()) { // SỬA
+                for (Seat seat : carriage.getSeats()) {
                     if (!bookedSeatIds.contains(seat.getSeatId())) {
                         if (seatType.getName().toLowerCase().contains("vip")) {
                             vipCount++;
@@ -223,13 +220,13 @@ public class TripController {
         }
 
         model.addAttribute("availableTrips", allTrips);
-        model.addAttribute("availableVipCounts", availableVipCounts); // Gửi VIP
-        model.addAttribute("availableNormalCounts", availableNormalCounts); // Gửi Normal
+        model.addAttribute("availableVipCounts", availableVipCounts);
+        model.addAttribute("availableNormalCounts", availableNormalCounts);
         model.addAttribute("tripMinPrices", tripMinPrices);
 
         return "trip/all-trips";
     }
-    // ======================================================
+
 
     @GetMapping
     public String listTrips(Model model,

@@ -32,13 +32,11 @@ public class PaymentController {
     private final BookingService bookingService;
     private final OrderRepository orderRepository; // THÊM
 
-    // ===== SỬA URL VÀ LOGIC HÀM NÀY =====
-    // URL mới: /payments/orders/{orderId} (SỐ NHIỀU)
+
     @GetMapping("/orders/{orderId}")
     public String showPaymentPage(@PathVariable Long orderId,
                                   Model model,
                                   RedirectAttributes redirectAttributes) {
-        // Tìm Order thay vì Booking
         Optional<Order> order = orderRepository.findById(orderId);
         if (order.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng");
@@ -46,12 +44,11 @@ public class PaymentController {
         }
 
         model.addAttribute("order", order.get());
-        // Trả về trang "checkout" MỚI (xem file số 4)
         return "payment/checkout";
     }
 
-    // ===== SỬA URL VÀ LOGIC HÀM NÀY =====
-    // URL mới: /payments/orders/{orderId} (SỐ NHIỀU)
+
+
     @PostMapping("/orders/{orderId}")
     public String startPayment(@PathVariable Long orderId,
                                @RequestParam(value = "bankCode", required = false) String bankCode,
@@ -61,7 +58,6 @@ public class PaymentController {
                                HttpServletRequest request,
                                RedirectAttributes redirectAttributes) {
         try {
-            // Truyền orderId thay vì bookingId
             String paymentUrl = paymentService.createPaymentRedirectUrl(
                     orderId,
                     bankCode,
@@ -70,10 +66,9 @@ public class PaymentController {
                     locale,
                     resolveClientIp(request)
             );
-            return "redirect:" + paymentUrl; // Chuyển hướng đến trang VNPay
+            return "redirect:" + paymentUrl;
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            // Quay lại trang checkout (số nhiều)
             return "redirect:/payments/orders/" + orderId;
         }
     }

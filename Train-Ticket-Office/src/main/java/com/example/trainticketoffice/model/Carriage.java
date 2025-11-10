@@ -42,7 +42,6 @@ public class Carriage extends BaseEntity {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Seat> seats = new ArrayList<>();
-    // ==================================
 
     @Transient
     public Integer getCapacity() {

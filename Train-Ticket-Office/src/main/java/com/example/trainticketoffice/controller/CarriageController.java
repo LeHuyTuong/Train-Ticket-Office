@@ -39,10 +39,10 @@ public class CarriageController {
 
         List<Carriage> carriages;
         List<Train> allTrains = trainService.getAllTrains();
-        Train selectedTrain = null; // <-- THÊM
+        Train selectedTrain = null;
 
         if (trainId != null) {
-            Optional<Train> trainOpt = allTrains.stream() // Sửa: Lấy thông tin Tàu
+            Optional<Train> trainOpt = allTrains.stream()
                     .filter(train -> train.getId().equals(trainId))
                     .findFirst();
             if (trainOpt.isPresent()) {
@@ -58,16 +58,15 @@ public class CarriageController {
         model.addAttribute("carriages", carriages);
         model.addAttribute("allTrains", allTrains);
         model.addAttribute("selectedTrainId", trainId);
-        model.addAttribute("selectedTrain", selectedTrain); // <-- THÊM (Gửi Tàu ra view)
+        model.addAttribute("selectedTrain", selectedTrain);
         return "carriage/list";
     }
 
-    // Sửa: Thêm trainId vào đây
+
     private void addCommonAttributes(Model model, Long trainId) {
         if(trainId != null) {
-            // Chỉ hiển thị tàu đang được chọn (để tránh user đổi tàu khi thêm/sửa toa)
             model.addAttribute("allTrains", trainService.getTrainById(trainId).stream().toList());
-            model.addAttribute("selectedTrainId", trainId); // Gửi ID Tàu ra view
+            model.addAttribute("selectedTrainId", trainId);
         } else {
             model.addAttribute("allTrains", trainService.getAllTrains());
         }
@@ -76,15 +75,13 @@ public class CarriageController {
         model.addAttribute("allSeatTypes", allSeatTypes);
     }
 
-    // Sửa: Nhận trainId
+
     @GetMapping("/new")
     public String showCreateForm(Model model, @RequestParam(value = "trainId") Long trainId) {
         Carriage carriage = new Carriage();
-        // Gán sẵn Tàu cho Toa mới
         trainService.getTrainById(trainId).ifPresent(carriage::setTrain);
-
         model.addAttribute("carriage", carriage);
-        addCommonAttributes(model, trainId); // Truyền trainId
+        addCommonAttributes(model, trainId);
         return "carriage/form";
     }
 
@@ -93,7 +90,6 @@ public class CarriageController {
         Optional<Carriage> carriage = carriageService.getCarriageById(id);
         if (carriage.isPresent()) {
             model.addAttribute("carriage", carriage.get());
-            // Gửi trainId của toa này
             addCommonAttributes(model, carriage.get().getTrain().getId());
             return "carriage/form";
         }
@@ -108,22 +104,22 @@ public class CarriageController {
         Long trainId = (carriage.getTrain() != null) ? carriage.getTrain().getId() : null;
 
         if (result.hasErrors()) {
-            addCommonAttributes(model, trainId); // Sửa: Gửi lại trainId
+            addCommonAttributes(model, trainId);
             return "carriage/form";
         }
 
         try {
             carriageService.saveCarriage(carriage);
             redirectAttributes.addFlashAttribute("successMessage", "Carriage saved successfully!");
-            return "redirect:/carriages?trainId=" + trainId; // Đã đúng
+            return "redirect:/carriages?trainId=" + trainId;
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Error saving carriage: " + e.getMessage());
-            addCommonAttributes(model, trainId); // Sửa: Gửi lại trainId
+            addCommonAttributes(model, trainId);
             return "carriage/form";
         }
     }
 
-    // Sửa: Nhận trainId để redirect
+
     @GetMapping("/delete/{id}")
     public String deleteCarriage(@PathVariable("id") Long id,
                                  @RequestParam(value = "trainId", required = false) Long trainId,
@@ -136,7 +132,7 @@ public class CarriageController {
         }
 
         if (trainId != null) {
-            return "redirect:/carriages?trainId=" + trainId; // Redirect về trang lọc
+            return "redirect:/carriages?trainId=" + trainId;
         }
         return "redirect:/carriages";
     }

@@ -22,9 +22,7 @@ public class RefundController {
     private final RefundService refundService;
     private final BookingService bookingService;
 
-    /**
-     * Bước 1: Hiển thị form nhập thông tin ngân hàng.
-     */
+
     @GetMapping("/request")
     public String showRefundForm(@RequestParam("bookingId") Long bookingId,
                                  Model model, HttpSession session,
@@ -40,18 +38,13 @@ public class RefundController {
             redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy vé.");
             return "redirect:/bookings";
         }
-
-        // Đóng gói 1 đối tượng RefundRequest rỗng để gửi ra form
         RefundRequest refundRequest = new RefundRequest();
         refundRequest.setBooking(bookingOpt.get());
 
         model.addAttribute("refundRequest", refundRequest);
-        return "refund/form"; // Trả về file form.html (sẽ tạo ở bước 2)
+        return "refund/form";
     }
 
-    /**
-     * Bước 2: Xử lý submit form và tạo Yêu cầu Hoàn vé.
-     */
     @PostMapping("/request")
     public String processRefundRequest(@ModelAttribute RefundRequest refundRequest,
                                        HttpSession session,
@@ -63,7 +56,6 @@ public class RefundController {
         }
 
         try {
-            // Lấy bookingId từ object (do form gửi về)
             Long bookingId = refundRequest.getBooking().getBookingId();
 
             refundService.createRefundRequest(
@@ -75,7 +67,7 @@ public class RefundController {
             );
 
             redirectAttributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hoàn vé thành công! Vé của bạn đang ở trạng thái 'Chờ hoàn vé'.");
-            return "redirect:/bookings"; // Quay về trang "Vé của tôi"
+            return "redirect:/bookings";
 
         } catch (IllegalArgumentException | IllegalStateException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());

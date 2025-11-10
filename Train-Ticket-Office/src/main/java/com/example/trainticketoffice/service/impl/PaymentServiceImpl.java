@@ -45,26 +45,22 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${vnpay.return-url}")
     private String returnUrl;
 
-    // ===== SỬA HOÀN TOÀN LOGIC HÀM NÀY =====
-    // Bây giờ nó nhận orderId thay vì bookingId
+
     @Override
     @Transactional
-    public String createPaymentRedirectUrl(Long orderId, // ĐỔI TÊN BIẾN
+    public String createPaymentRedirectUrl(Long orderId,
                                            String bankCode,
                                            String orderInfo,
                                            String orderType,
                                            String locale,
                                            String clientIp) {
-        // 1. Tìm Order thay vì Booking
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã " + orderId));
-
         if (order.getStatus() == PaymentStatus.SUCCESS) {
             throw new IllegalStateException("Đơn hàng này đã được thanh toán");
         }
-
         String resolvedIp = (clientIp == null || clientIp.isBlank()) ? "127.0.0.1" : clientIp;
-        // 2. Lấy tổng tiền từ Order
+        // total from order
         BigDecimal amount = order.getTotalPrice().setScale(0, RoundingMode.HALF_UP);
         long amountValue = amount.multiply(BigDecimal.valueOf(100)).longValueExact();
 
@@ -74,8 +70,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         String txnRef = VnpayUtils.generateTxnRef();
 
+        //payment
         Payment payment = new Payment();
-        // 3. Liên kết Payment với Order
         payment.setOrder(order);
         payment.setUser(order.getUser());
         payment.setAmount(amount);
@@ -111,7 +107,6 @@ public class PaymentServiceImpl implements PaymentService {
         return payUrl + "?" + query;
     }
 
-    // ===== SỬA LOGIC HÀM NÀY =====
     @Override
     @Transactional
     public Payment handleVnpayReturn(Map<String, String> vnpayParams) {
@@ -142,8 +137,6 @@ public class PaymentServiceImpl implements PaymentService {
             paymentRepository.save(payment);
             return payment;
         }
-        // Kết thúc kiểm tra chữ ký
-
         String responseCode = vnpayParams.get("vnp_ResponseCode");
         payment.setResponseCode(responseCode);
         payment.setBankCode(vnpayParams.get("vnp_BankCode"));
@@ -151,17 +144,12 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setVnpTransactionNo(vnpayParams.get("vnp_TransactionNo"));
         payment.setPayDate(VnpayUtils.parsePayDate(vnpayParams.get("vnp_PayDate")));
 
-        // 4. Lấy Order từ Payment
         Order order = payment.getOrder();
 
         if ("00".equals(responseCode)) {
             payment.setStatus(PaymentStatus.SUCCESS);
-
-            // 5. Cập nhật trạng thái Order
             order.setStatus(PaymentStatus.SUCCESS);
             orderRepository.save(order);
-
-            // 6. Cập nhật trạng thái TẤT CẢ Bookings trong Order
             for(Booking booking : order.getBookings()) {
                 booking.setStatus(BookingStatus.PAID);
                 bookingRepository.save(booking);
@@ -169,7 +157,6 @@ public class PaymentServiceImpl implements PaymentService {
             try {
                 adminWalletService.addToBalance(payment.getAmount());
             } catch (Exception e) {
-                // Ghi log lỗi nếu không cộng được tiền, nhưng không làm hỏng giao dịch của khách
                 System.err.println("LỖI NGHIÊM TRỌNG: Không thể cộng tiền vào ví Admin cho giao dịch " + txnRef);
                 e.printStackTrace();
             }
@@ -177,7 +164,6 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.FAILED);
             order.setStatus(PaymentStatus.FAILED);
             orderRepository.save(order);
-            // (Không giải phóng ghế, để người dùng tự hủy booking)
         }
 
         paymentRepository.save(payment);

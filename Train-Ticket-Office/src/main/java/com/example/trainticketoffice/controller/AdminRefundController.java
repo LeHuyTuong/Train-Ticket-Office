@@ -22,9 +22,7 @@ public class AdminRefundController {
 
     private final RefundService refundService;
 
-    /**
-     * Hiển thị danh sách các vé đang chờ hoàn (PENDING)
-     */
+    //Hiển thị danh sách các vé đang chờ hoàn (PENDING)
     @GetMapping
     public String listPendingRefunds(Model model) {
         List<RefundRequest> pendingRefunds = refundService.getPendingRefunds();
@@ -32,9 +30,7 @@ public class AdminRefundController {
         return "refund/admin-list"; // Trả về file HTML (sẽ tạo ở bước 3)
     }
 
-    /**
-     * Xử lý khi Admin bấm "Duyệt Hoàn Vé"
-     */
+    //Xử lý khi Admin bấm "Duyệt Hoàn Vé"
     @PostMapping("/approve/{id}")
     public String approveRefund(@PathVariable("id") Long refundRequestId,
                                 HttpSession session,
@@ -42,7 +38,7 @@ public class AdminRefundController {
 
         User adminUser = (User) session.getAttribute("userLogin");
         if (adminUser == null || adminUser.getRole() != User.Role.STAFF) {
-            return "redirect:/login"; // Cần quyền Admin
+            return "redirect:/login";
         }
 
         try {
@@ -54,9 +50,7 @@ public class AdminRefundController {
         return "redirect:/admin/refunds";
     }
 
-    /**
-     * Xử lý khi Admin bấm "Từ chối"
-     */
+    //Xử lý khi Admin bấm "Từ chối"
     @PostMapping("/reject/{id}")
     public String rejectRefund(@PathVariable("id") Long refundRequestId,
                                HttpSession session,

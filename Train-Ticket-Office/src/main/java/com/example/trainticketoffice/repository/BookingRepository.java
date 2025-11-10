@@ -12,17 +12,7 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking,Long> {
 
     List<Booking> findByUser_Id(Integer userId);
-
-    // ===== THÊM HÀM NÀY TRỞ LẠI =====
     boolean existsByTrip_TripIdAndSeat_SeatIdAndStatusIn(Long tripId, Long seatId, Collection<BookingStatus> statuses);
-    // ===============================
-
     List<Booking> findAllByTrip_TripIdAndStatusIn(Long tripId, Collection<BookingStatus> statuses);
-
     List<Booking> findAllByTrip_TripIdAndStatus(Long tripId, BookingStatus status);
-
-    // ===== XÓA 2 HÀM NÀY =====
-    // long countByTripAndCarriageAndStatusIn(Trip trip, Carriage carriage, Collection<BookingStatus> statuses);
-    // List<Booking> findByTripAndCarriageAndStatusIn(Trip trip, Carriage carriage, Collection<BookingStatus> statuses);
-    // =========================
 }

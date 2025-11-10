@@ -15,15 +15,10 @@ public class PassengerInfo {
     private String seatNumber;
     private String seatTypeName;
     private BigDecimal basePrice;
-
-    // 4 trường cũ
     private String passengerName;
     private String phone;
     private String email;
     private String passengerType = "ADULT";
-
-    // ===== 2 TRƯỜNG MỚI =====
-    private String passengerIdCard; // CCCD/Passport
-    private LocalDate dob; // Ngày sinh
-    // ========================
+    private String passengerIdCard;
+    private LocalDate dob;
 }

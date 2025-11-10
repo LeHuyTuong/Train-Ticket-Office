@@ -14,8 +14,8 @@ public class SeatType {
     private Long id;
 
     @Column(nullable = false, unique = true, columnDefinition = "nvarchar(255)") // SỬA
-    private String name; // Ví dụ: "Ngồi mềm điều hòa", "Giường nằm VIP 4 chỗ"
+    private String name;
 
     @Column(nullable = false)
-    private BigDecimal pricePerKm; // Đơn giá (VND) cho mỗi KM
+    private BigDecimal pricePerKm;
 }

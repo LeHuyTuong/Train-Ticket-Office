@@ -31,9 +31,8 @@ public class AdminWalletServiceImpl implements AdminWalletService {
     @Transactional
     public void addToBalance(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return; // Không cộng số âm hoặc 0
+            return;
         }
-
         synchronized (walletLock) {
             AdminWallet wallet = getOrCreateWallet();
             wallet.setBalance(wallet.getBalance().add(amount));
@@ -45,7 +44,7 @@ public class AdminWalletServiceImpl implements AdminWalletService {
     @Transactional
     public void subtractFromBalance(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return; // Không trừ số âm hoặc 0
+            return;
         }
 
         synchronized (walletLock) {

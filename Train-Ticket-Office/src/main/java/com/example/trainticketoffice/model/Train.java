@@ -24,11 +24,11 @@ public class Train {
 
     @NotBlank(message = "Train code is mandatory")
     @Size(min = 2, max = 10, message = "Code must be between 2 and 10 characters")
-    @Column(unique = true, nullable = false, length = 10, columnDefinition = "nvarchar(10)") // SỬA
+    @Column(unique = true, nullable = false, length = 10, columnDefinition = "nvarchar(10)")
     private String code;
 
     @NotBlank(message = "Train name is mandatory")
-    @Column(nullable = false, columnDefinition = "nvarchar(255)") // SỬA
+    @Column(nullable = false, columnDefinition = "nvarchar(255)")
     private String name;
 
     @Enumerated(EnumType.STRING)

@@ -11,15 +11,14 @@ import java.math.BigDecimal; // <-- THÊM IMPORT
 
 @Controller
 @RequestMapping("/admin")
-@RequiredArgsConstructor // <-- THÊM ANNOTATION
+@RequiredArgsConstructor
 public class AdminController {
 
-    private final AdminWalletService adminWalletService; // <-- THÊM DÒNG NÀY
+    private final AdminWalletService adminWalletService;
 
-    // Xử lý trang chủ cho STAFF (đường dẫn "/admin/dashboard")
+    // Xử lý trang chủ cho STAFF
     @GetMapping("/dashboard")
-    public String adminDashboard(Model model) { // <-- THÊM Model
-
+    public String adminDashboard(Model model) {
         // Lấy số dư và gửi ra view
         try {
             BigDecimal currentBalance = adminWalletService.getBalance();
@@ -28,6 +27,6 @@ public class AdminController {
             model.addAttribute("walletBalance", "Lỗi");
         }
 
-        return "admin/dashboard"; // Trả về file dashboard.html
+        return "admin/dashboard";
     }
 }

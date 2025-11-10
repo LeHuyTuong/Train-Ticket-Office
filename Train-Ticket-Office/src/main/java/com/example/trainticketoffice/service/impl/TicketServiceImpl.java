@@ -66,15 +66,10 @@ public class TicketServiceImpl implements TicketService {
             ticket.setFromStation(fromStationOpt.get());
             ticket.setToStation(toStationOpt.get());
             ticket.setSeat(seat);
-
             ticket.setPassengerName(booking.getPassengerName());
             ticket.setPassengerPhone(booking.getPhone());
-
-            // ===== THÊM SAO CHÉP 2 TRƯỜNG MỚI =====
             ticket.setPassengerIdCard(booking.getPassengerIdCard());
             ticket.setDob(booking.getDob());
-            // ===================================
-
             ticket.setTotalPrice(booking.getPrice());
             ticket.setStatus(TicketStatus.ACTIVE);
             ticket.setBookedAt(LocalDateTime.now());

@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-// ===== SỬA URL CHÍNH (Xóa /carriages/{carriageId}) =====
-// Chúng ta sẽ dùng @RequestParam để lọc, vì nó đơn giản hơn
 @RequestMapping("/seats")
 public class SeatController {
     private final SeatService seatService;
@@ -30,7 +28,6 @@ public class SeatController {
         this.carriageService = carriageService;
     }
 
-    // ===== SỬA HÀM NÀY (Đã sửa ở lần trước) =====
     @GetMapping
     public String listSeats(Model model, @RequestParam(value = "carriageId", required = false) Long carriageId) {
         List<Seat> seats;
@@ -45,16 +42,16 @@ public class SeatController {
                 selectedCarriage = carriageOpt.get();
                 seats = selectedCarriage.getSeats();
             } else {
-                seats = List.of(); // Không tìm thấy toa
+                seats = List.of();
             }
         } else {
-            seats = seatService.getAllSeats(); // (Hoặc trả về rỗng nếu muốn bắt buộc lọc)
+            seats = seatService.getAllSeats();
         }
 
         model.addAttribute("seats", seats);
         model.addAttribute("allCarriages", allCarriages);
         model.addAttribute("selectedCarriageId", carriageId);
-        model.addAttribute("selectedCarriage", selectedCarriage); // Gửi Toa ra cho nút "Quay Lại"
+        model.addAttribute("selectedCarriage", selectedCarriage);
 
         return "seat/list";
     }
@@ -69,11 +66,10 @@ public class SeatController {
         model.addAttribute("seatStatusTypes", SeatStatus.values());
     }
 
-    // ===== SỬA HÀM NÀY (Nhận carriageId từ param) =====
+
     @GetMapping("/new")
     public String showCreateForm(Model model, @RequestParam("carriageId") Long carriageId) {
         Seat newSeat = new Seat();
-        // Gán sẵn Toa
         carriageService.getCarriageById(carriageId).ifPresent(newSeat::setCarriage);
 
         model.addAttribute("seat", newSeat);
@@ -86,7 +82,6 @@ public class SeatController {
         Optional<Seat> seat = seatService.getSeatById(id);
         if (seat.isPresent()) {
             model.addAttribute("seat", seat.get());
-            // Gửi ID của Toa cha
             addCommonAttributes(model, seat.get().getCarriage().getCarriageId());
             return "seat/form";
         }
@@ -95,8 +90,6 @@ public class SeatController {
 
     @PostMapping("/save")
     public String saveSeat(@Valid @ModelAttribute("seat") Seat seat, BindingResult result, Model model, RedirectAttributes redirectAttributes) {
-
-        // Lấy carriageId (nếu là form edit, nó nằm trong seat.carriage)
         Long carriageId = null;
         if (seat.getCarriage() != null) {
             carriageId = seat.getCarriage().getCarriageId();
@@ -109,7 +102,6 @@ public class SeatController {
         try {
             seatService.saveSeat(seat);
             redirectAttributes.addFlashAttribute("successMessage", "Ghế đã được lưu!");
-            // Sửa: Quay lại trang lọc của Toa đó
             return "redirect:/seats?carriageId=" + seat.getCarriage().getCarriageId();
         } catch (IllegalStateException e) {
             model.addAttribute("errorMessage", e.getMessage());
@@ -127,8 +119,6 @@ public class SeatController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa ghế: " + e.getMessage());
         }
-
-        // Quay về trang lọc Toa (nếu có)
         if (carriageId != null) {
             return "redirect:/seats?carriageId=" + carriageId;
         }

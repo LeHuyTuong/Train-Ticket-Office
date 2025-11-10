@@ -13,6 +13,5 @@ public class BookingRequest {
 
     private Long tripId;
 
-    // Spring sẽ tự động điền danh sách này từ form
     private List<PassengerInfo> passengers = new ArrayList<>();
 }

@@ -24,10 +24,9 @@ public class Seat extends BaseEntity {
     private Carriage carriage;
 
     @NotBlank(message = "Seat number is mandatory")
-    @Column(name = "seat_number", nullable = false, columnDefinition = "nvarchar(10)") // Hỗ trợ NVARCHAR
+    @Column(name = "seat_number", nullable = false, columnDefinition = "nvarchar(10)")
     private String seatNumber;
 
-    // (Price và SeatType đã bị xóa, vì chúng ta lấy từ Toa (Carriage)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

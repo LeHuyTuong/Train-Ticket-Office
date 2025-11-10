@@ -9,6 +9,6 @@ import java.util.Optional;
 @Repository
 public interface AdminWalletRepository extends JpaRepository<AdminWallet, Long> {
 
-    // Chúng ta giả định chỉ có MỘT túi tiền trong hệ thống
+
     Optional<AdminWallet> findFirstByOrderByIdAsc();
 }

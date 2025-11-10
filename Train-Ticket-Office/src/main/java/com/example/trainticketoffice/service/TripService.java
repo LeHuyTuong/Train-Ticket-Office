@@ -16,9 +16,6 @@ public interface TripService {
     void deleteTrip(Long id);
     List<Trip> findTripsByRoute(Route route);
     List<Trip> findTripsByRouteAndDate(Route route, LocalDate departureDate);
-
     void updateTripStatus(Long tripId, TripStatus newStatus);
-
-    // ===== THÊM HÀM MỚI (CHO ADMIN LIST) =====
     Page<Trip> listAllAdmin(int pageNum, Integer stationId);
 }

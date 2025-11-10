@@ -43,7 +43,7 @@ public class BookingServiceImpl implements BookingService {
         return false;
     }
 
-    // ===== HÀM VALIDATE TUỔI (BACKEND) =====
+    // HÀM VALIDATE TUỔI
     private void validateAge(String passengerType, LocalDate dob) {
         if (dob == null) {
             throw new IllegalStateException("Vui lòng nhập Ngày sinh.");
@@ -59,7 +59,6 @@ public class BookingServiceImpl implements BookingService {
                 if (age < 6 || age > 10) throw new IllegalStateException("Tuổi của Trẻ Em (Giảm giá) phải từ 6-10. Tuổi nhập vào là: " + age);
                 break;
             case "SENIOR":
-                // (Giả sử tuổi hưu là 60)
                 if (age < 60) throw new IllegalStateException("Tuổi của Người Cao Tuổi phải từ 60 trở lên. Tuổi nhập vào là: " + age);
                 break;
             case "ADULT":
@@ -67,7 +66,6 @@ public class BookingServiceImpl implements BookingService {
                 break;
         }
     }
-    // =====================================
 
     @Override
     @Transactional
@@ -95,15 +93,11 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> createdBookings = new ArrayList<>();
         boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
 
+        //validation
         for (PassengerInfo passenger : bookingRequest.getPassengers()) {
-
-            // ===== THÊM VALIDATION (BACKEND) =====
             validateAge(passenger.getPassengerType(), passenger.getDob());
-            // ====================================
-
             Seat seat = seatRepository.findById(passenger.getSeatId())
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế: " + passenger.getSeatId()));
-
             Carriage carriage = seat.getCarriage();
             SeatType seatType = carriage.getSeatType();
             if (seatType == null || seatType.getPricePerKm() == null) {
@@ -127,15 +121,10 @@ public class BookingServiceImpl implements BookingService {
             booking.setPhone(passenger.getPhone());
             booking.setEmail(passenger.getEmail());
             booking.setPassengerType(passenger.getPassengerType());
-
-            // ===== THÊM SAO CHÉP 2 TRƯỜNG MỚI =====
             booking.setPassengerIdCard(passenger.getPassengerIdCard());
             booking.setDob(passenger.getDob());
-            // ===================================
-
             booking.setStatus(BookingStatus.BOOKED);
             booking.setBookingTime(LocalDateTime.now());
-
             BigDecimal basePrice = pricePerKm.multiply(BigDecimal.valueOf(distanceKm));
             if (isTripOnHoliday) {
                 basePrice = basePrice.multiply(HOLIDAY_SURCHARGE_RATE);
@@ -163,7 +152,6 @@ public class BookingServiceImpl implements BookingService {
         return orderRepository.save(savedOrder);
     }
 
-    // (Các hàm list, find, delete... giữ nguyên)
     @Override
     public List<Booking> findAllBookings() { return bookingRepository.findAll(); }
     @Override

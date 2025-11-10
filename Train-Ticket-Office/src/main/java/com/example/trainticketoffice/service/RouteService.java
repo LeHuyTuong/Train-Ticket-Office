@@ -16,10 +16,7 @@ public interface RouteService {
     boolean routeExists(String code);
     List<Route> findRouteByStations(Integer startStationId, Integer endStationId);
     List<Route> findByStartStationIdAndEndStationId(Integer startStationId, Integer endStationId);
-
-    // THÊM HÀM NÀY
     Optional<Route> findById(Integer id);
-
     List<Route> findAllAndFetchStations();
 
 }
