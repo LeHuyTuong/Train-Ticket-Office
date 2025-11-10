@@ -13,6 +13,7 @@
         <h4 class="alert-heading">Giữ chỗ thành công! (Mã Đơn Hàng: <span th:text="${primaryOrderId}"></span>)</h4>
         <p>Các vé dưới đây đã được giữ chỗ (giữ trong 15 phút). Vui lòng hoàn tất thanh toán cho đơn hàng để xác nhận.</p>
     </div>
+
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h5 class="card-title">Tóm tắt đơn hàng</h5>
@@ -20,7 +21,7 @@
                 <strong>Số lượng vé:</strong> <span th:text="${#lists.size(bookings)}"></span>
             </p>
             <p class="mb-1">
-                <strong>Tổng tiền:</strong>
+                <strong>Tổng tiền (Gộp 2 chiều):</strong>
                 <span class="fw-bold text-danger fs-5"
                       th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'">
                 </span>
@@ -34,6 +35,8 @@
             <thead>
             <tr>
                 <th>Mã Đặt Vé</th>
+                <th>Hành Khách</th>
+                <th>Loại Vé</th>
                 <th>Chuyến Tàu</th>
                 <th>Toa (Ghế)</th>
                 <th>Giá vé</th>
@@ -43,6 +46,14 @@
             <tbody>
             <tr th:each="booking : ${bookings}">
                 <td th:text="${booking.bookingId}"></td>
+
+                <td th:text="${booking.passengerName}"></td>
+
+                <td>
+                    <span th:if="${booking.trip.route.code.contains('SG-HN')}" class="badge bg-info">Lượt Về</span>
+                    <span th:if="${!booking.trip.route.code.contains('SG-HN')}" class="badge bg-primary">Lượt Đi</span>
+                </td>
+
                 <td th:text="${booking.trip.train.code}"></td>
                 <td th:text="|${booking.seat.carriage.name} (${booking.seat.seatNumber})|"></td>
                 <td th:text="${#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>

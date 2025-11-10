@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode; // THÊM
+import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.Month; // THÊM
+import java.time.Month;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,6 @@ public class TripController {
     @Autowired
     private BookingRepository bookingRepository;
 
-    // ===== THÊM HÀM KIỂM TRA LỄ VÀ PHỤ THU =====
     private static final BigDecimal HOLIDAY_SURCHARGE_RATE = new BigDecimal("1.20");
 
     private boolean isHoliday(LocalDate date) {
@@ -56,9 +55,7 @@ public class TripController {
         if (date.getMonth() == Month.SEPTEMBER && date.getDayOfMonth() == 2) return true;
         return false;
     }
-    // ==========================================
 
-    // ===== VIẾT LẠI HOÀN TOÀN HÀM NÀY (ĐỂ XỬ LÝ KHỨ HỒI) =====
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
@@ -70,7 +67,8 @@ public class TripController {
                                       Model model,
                                       HttpSession session) {
 
-        // --- 1. XỬ LÝ NẾU LÀ KHỨ HỒI ---
+        // --- 1. XỬ LÝ NẾU LÀ KHỨ HỒI (TÌM KIẾM MỚI) ---
+        // (Đây là khi user bấm tìm kiếm từ trang Home)
         if (isRoundTrip != null && isRoundTrip == true) {
             if (returnDate == null) {
                 model.addAttribute("errorMessage", "Bạn đã chọn khứ hồi nhưng chưa chọn ngày về.");
@@ -80,7 +78,7 @@ public class TripController {
 
             // 1. Xóa session cũ (nếu có)
             session.removeAttribute("roundTripNextLeg");
-            session.removeAttribute("roundTripGroupId"); // Cũng xóa group id cũ
+            session.removeAttribute("roundTripGroupId");
 
             // 2. Tạo và lưu thông tin chặng về
             RoundTripInfo returnLegInfo = new RoundTripInfo(endStationId, startStationId, returnDate);
@@ -113,13 +111,19 @@ public class TripController {
             return "trip/round-trip-results";
         }
 
-        // --- 2. XỬ LÝ MỘT CHIỀU (LOGIC CŨ) ---
+        // --- 2. XỬ LÝ MỘT CHIỀU (HOẶC HIỂN THỊ LƯỢT VỀ) ---
 
-        // ===== DI CHUYỂN DÒNG XÓA VÀO ĐÂY =====
-        // (Đảm bảo chỉ xóa session khi tìm 1 chiều)
-        session.removeAttribute("roundTripNextLeg");
-        session.removeAttribute("roundTripGroupId");
-        // ======================================
+        // ===== SỬA LỖI LOGIC TẠI ĐÂY =====
+        // Chỉ xóa session nếu chúng ta KHÔNG đang ở giữa 1 lượt đặt khứ hồi
+        // (Tức là session "roundTripGroupId" không tồn tại)
+        if (session.getAttribute("roundTripGroupId") == null) {
+            // Đây là một lượt tìm kiếm MỘT CHIỀU mới
+            session.removeAttribute("roundTripNextLeg");
+            session.removeAttribute("roundTripGroupId");
+        }
+        // Nếu "roundTripGroupId" tồn tại, nghĩa là ta đang được redirect
+        // từ BookingController để chọn lượt về -> KHÔNG XÓA SESSION.
+        // ===================================
 
         Map<String, Object> oneWayResults = findOneWayTrips(startStationId, endStationId, departureDate);
 
@@ -138,6 +142,7 @@ public class TripController {
 
         return "trip/trip-results";
     }
+
 
     // (Hàm findOneWayTrips - Chỉ 1 hàm)
     private Map<String, Object> findOneWayTrips(Integer startId, Integer endId, LocalDate date) {
@@ -224,54 +229,45 @@ public class TripController {
         return modelData;
     }
 
-    // ===== VIẾT LẠI HOÀN TOÀN HÀM NÀY (Logic Bản đồ ghế) =====
+
+    // (Các hàm /all, /list, /new, /edit, /save, /delete, /update-status giữ nguyên)
+
     @GetMapping("/all")
     public String showAllTrips(Model model) {
-
         List<Trip> allTrips = tripService.getAllTrips().stream()
                 .filter(trip -> trip.getStatus() == TripStatus.UPCOMING || trip.getStatus() == TripStatus.DELAYED)
                 .collect(Collectors.toList());
-
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
-
         for (Trip trip : allTrips) {
             Station startStation = trip.getRoute().getStartStation();
             Station endStation = trip.getRoute().getEndStation();
             if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) continue;
-
             int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
             if (distanceKm == 0) distanceKm = 20;
-
             boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
             BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
-
             List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
                             trip.getTripId(),
                             List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
                     ).stream()
-                    .map(booking -> booking.getSeat().getSeatId()) // SỬA
+                    .map(booking -> booking.getSeat().getSeatId())
                     .collect(Collectors.toList());
-
             long vipCount = 0;
             long normalCount = 0;
             BigDecimal minPriceInTrip = null;
-
             Train train = trip.getTrain();
             for (Carriage carriage : train.getCarriages()) {
                 SeatType seatType = carriage.getSeatType();
                 if (seatType == null || seatType.getPricePerKm() == null) continue;
-
                 BigDecimal basePrice = seatType.getPricePerKm().multiply(BigDecimal.valueOf(distanceKm));
                 BigDecimal priceWithSurcharge = basePrice.multiply(currentSurchargeRate);
                 BigDecimal finalPrice = priceWithSurcharge.setScale(0, RoundingMode.HALF_UP);
-
                 if (minPriceInTrip == null || finalPrice.compareTo(minPriceInTrip) < 0) {
                     minPriceInTrip = finalPrice;
                 }
-
-                for (Seat seat : carriage.getSeats()) { // SỬA
+                for (Seat seat : carriage.getSeats()) {
                     if (!bookedSeatIds.contains(seat.getSeatId())) {
                         if (seatType.getName().toLowerCase().contains("vip")) {
                             vipCount++;
@@ -281,26 +277,21 @@ public class TripController {
                     }
                 }
             }
-
             availableVipCounts.put(trip.getTripId(), vipCount);
             availableNormalCounts.put(trip.getTripId(), normalCount);
             tripMinPrices.put(trip.getTripId(), minPriceInTrip != null ? minPriceInTrip : BigDecimal.ZERO);
         }
-
         model.addAttribute("availableTrips", allTrips);
-        model.addAttribute("availableVipCounts", availableVipCounts); // Gửi VIP
-        model.addAttribute("availableNormalCounts", availableNormalCounts); // Gửi Normal
+        model.addAttribute("availableVipCounts", availableVipCounts);
+        model.addAttribute("availableNormalCounts", availableNormalCounts);
         model.addAttribute("tripMinPrices", tripMinPrices);
-
         return "trip/all-trips";
     }
-    // ======================================================
 
     @GetMapping
     public String listTrips(Model model,
                             @RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "stationId", required = false) Integer stationId) {
-
         Page<Trip> tripPage = tripService.listAllAdmin(page, stationId);
         List<Trip> trips = tripPage.getContent();
         model.addAttribute("trips", trips);
@@ -310,7 +301,6 @@ public class TripController {
         model.addAttribute("selectedStationId", stationId);
         model.addAttribute("allTripStatus", TripStatus.values());
         model.addAttribute("allStations", stationService.getAllStations());
-
         return "trip/list";
     }
 
