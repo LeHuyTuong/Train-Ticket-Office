@@ -29,7 +29,7 @@ public class SeatTypeController {
     public String listSeatTypes(Model model) {
         List<SeatType> seatTypes = seatTypeService.getAllSeatTypes();
         model.addAttribute("seatTypes", seatTypes);
-        return "seattype/list"; // Trỏ đến file list.html mới
+        return "seattype/list"; // Trỏ đến file form.html mới
     }
 
     @GetMapping("/new")

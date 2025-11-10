@@ -27,7 +27,7 @@ public class TicketController {
     public String listAllTickets(Model model) {
         List<Ticket> tickets = ticketService.findAll();
         model.addAttribute("tickets", tickets);
-        return "admin/ticket/list"; // Trỏ đến file FE list.html MỚI
+        return "admin/ticket/list"; // Trỏ đến file FE form.html MỚI
     }
 
     /**

@@ -27,7 +27,6 @@ public class AuthenticationFilter implements Filter {
             "/js/"
     );
 
-    // ===== SỬA DANH SÁCH NÀY =====
     private final List<String> adminPaths = List.of(
             "/admin",
             "/routes",
@@ -38,9 +37,9 @@ public class AuthenticationFilter implements Filter {
             "/users",
             "/tickets",
             "/seat-types",
-            "/seats" // <-- THÊM DÒNG NÀY (ĐỂ SỬA LỖI)
+            "/seats",
+            "/admin/refunds"
     );
-    // =============================
 
     // Hàm kiểm tra Admin path (đã xử lý ngoại lệ)
     private boolean isAdminPath(String requestURI) {
@@ -74,33 +73,49 @@ public class AuthenticationFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) servletResponse;
         String requestURI = request.getRequestURI();
 
+        // 1. Cho phép tất cả các trang Public (/, /login, /images...)
         if (isPublicPath(requestURI)) {
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
 
+        // 2. Kiểm tra Session (Từ đây, mọi trang đều yêu cầu login)
         HttpSession session = request.getSession(false);
-
         if (session == null || session.getAttribute("userLogin") == null) {
             response.sendRedirect("/login");
             return;
         }
 
+        // 3. ĐÃ ĐĂNG NHẬP
+
+        // ===== SỬA LỖI LOGOUT Ở ĐÂY =====
+        // Cho phép /logout đi qua để đến LoginController
+        if (requestURI.startsWith("/logout")) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+        // ================================
+
         User user = (User) session.getAttribute("userLogin");
         boolean isRequestingAdminPath = isAdminPath(requestURI);
 
         if (user.getRole() == User.Role.STAFF) {
-            if (!isRequestingAdminPath && !requestURI.startsWith("/logout")) {
+            // (STAFF)
+            if (!isRequestingAdminPath) {
+                // Nếu Staff cố vào trang customer (như /bookings) -> Về dashboard admin
                 response.sendRedirect("/admin/dashboard");
                 return;
             }
         } else {
+            // (CUSTOMER)
             if (isRequestingAdminPath) {
+                // Nếu Customer cố vào trang admin (/admin, /routes...) -> Về trang chủ customer
                 response.sendRedirect("/");
                 return;
             }
         }
 
+        // (Nếu đúng quyền: Staff vào admin, Customer vào /bookings...)
         filterChain.doFilter(servletRequest, servletResponse);
     }
 }

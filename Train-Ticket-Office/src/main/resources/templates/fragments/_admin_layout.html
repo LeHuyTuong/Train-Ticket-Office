@@ -9,62 +9,28 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        :root {
-            --primary-color: #004a99;
-            --secondary-color: #f2c94c;
-            --bg-light: #f9f9f9;
-            --sidebar-width: 240px;
-        }
+        /* (CSS giữ nguyên) */
+        :root { --primary-color: #004a99; --secondary-color: #f2c94c; --bg-light: #f9f9f9; --sidebar-width: 240px; }
         body { font-family: 'Roboto', sans-serif; background-color: var(--bg-light); }
-        .sidebar {
-            width: var(--sidebar-width); height: 100vh; position: fixed; top: 0; left: 0;
-            background-color: var(--primary-color); color: white; padding-top: 1rem;
-            display: flex; flex-direction: column; transition: all 0.3s; overflow-y: auto;
-        }
+        .sidebar { width: var(--sidebar-width); height: 100vh; position: fixed; top: 0; left: 0; background-color: var(--primary-color); color: white; padding-top: 1rem; display: flex; flex-direction: column; transition: all 0.3s; overflow-y: auto; }
         .sidebar.collapsed { width: 70px; }
-        .sidebar .sidebar-brand {
-            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem;
-            padding: 0.8rem 1rem; margin-bottom: 1rem; text-align: center; color: white;
-            border-bottom: 1px solid rgba(255,255,255,0.3); white-space: nowrap;
-            text-decoration: none;
-        }
-        .sidebar a {
-            color: white; text-decoration: none; padding: 0.75rem 1.5rem;
-            display: flex; align-items: center; font-weight: 500;
-            border-radius: 6px; margin: 0.25rem 0; transition: background 0.2s, padding 0.2s;
-        }
+        .sidebar .sidebar-brand { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem; padding: 0.8rem 1rem; margin-bottom: 1rem; text-align: center; color: white; border-bottom: 1px solid rgba(255,255,255,0.3); white-space: nowrap; text-decoration: none; }
+        .sidebar a { color: white; text-decoration: none; padding: 0.75rem 1.5rem; display: flex; align-items: center; font-weight: 500; border-radius: 6px; margin: 0.25rem 0; transition: background 0.2s, padding 0.2s; }
         .sidebar a i { margin-right: 10px; }
         .sidebar.collapsed a span { display: none; }
         .sidebar.collapsed .sidebar-toggle span { display: none; }
         .sidebar.collapsed .sidebar-toggle { text-align: center; padding-left: 0; padding-right: 0; }
-        .sidebar a:hover, .sidebar a.active {
-            background-color: var(--secondary-color); color: var(--primary-color); font-weight: 600;
-        }
-        .sidebar .dropdown-menu {
-            position: static; float: none; background-color: transparent;
-            border: none; box-shadow: none; padding-left: 1.5rem;
-            width: 100%; margin: 0; padding-top: 0;
-        }
+        .sidebar a:hover, .sidebar a.active { background-color: var(--secondary-color); color: var(--primary-color); font-weight: 600; }
+        .sidebar .dropdown-menu { position: static; float: none; background-color: transparent; border: none; box-shadow: none; padding-left: 1.5rem; width: 100%; margin: 0; padding-top: 0; }
         .sidebar .dropdown-item { padding-left: 1.2rem; }
         .sidebar .dropdown-toggle::after { margin-left: auto; transition: transform 0.2s; }
         .sidebar a.dropdown-toggle.active::after { transform: rotate(90deg); }
-        .sidebar-toggle {
-            cursor: pointer; padding: 0.5rem 1.5rem; color: white;
-            text-align: left; font-size: 1.2rem; margin-bottom: 1rem;
-        }
+        .sidebar-toggle { cursor: pointer; padding: 0.5rem 1.5rem; color: white; text-align: left; font-size: 1.2rem; margin-bottom: 1rem; }
         .sidebar-toggle i { margin-right: 10px; }
         .main-content { margin-left: var(--sidebar-width); padding: 2rem; transition: margin-left 0.3s; }
         .sidebar.collapsed + .main-content { margin-left: 70px; }
         .content-card { background-color: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
-        .page-title {
-            color: var(--primary-color); font-family: 'Montserrat', sans-serif; font-weight: 700;
-            border-bottom: 3px solid var(--secondary-color); padding-bottom: 8px;
-            display: inline-block; margin-bottom: 1.5rem; font-size: 1.75rem;
-        }
-        @media (max-width: 768px) {
-            .sidebar { width: 100%; height: auto; position: relative; }
-            .main-content { margin-left: 0; padding: 1rem; }
-        }
+        .page-title { color: var(--primary-color); font-family: 'Montserrat', sans-serif; font-weight: 700; border-bottom: 3px solid var(--secondary-color); padding-bottom: 8px; display: inline-block; margin-bottom: 1.5rem; font-size: 1.75rem; }
     </style>
 </head>
 <body>
@@ -89,8 +55,11 @@
     <ul class="dropdown-menu" id="trainMenu">
         <li><a class="dropdown-item" th:href="@{/trains}" th:classappend="${#strings.startsWith(requestURI, '/trains') ? 'active' : ''}">Quản lý Tàu</a></li>
         <li><a class="dropdown-item" th:href="@{/seat-types}" th:classappend="${#strings.startsWith(requestURI, '/seat-types') ? 'active' : ''}">Quản lý Loại Ghế (Giá)</a></li>
-
     </ul>
+
+    <a th:href="@{/admin/refunds}" th:classappend="${#strings.startsWith(requestURI, '/admin/refunds') ? 'active' : ''}">
+        <i class="bi bi-cash-coin"></i> <span>Duyệt Hoàn Vé</span>
+    </a>
     <a th:href="@{/logout}"><i class="bi bi-box-arrow-right"></i> <span>Đăng Xuất</span></a>
 </div>
 
@@ -104,11 +73,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Sidebar collapse toggle
+    // (JavaScript cho Sidebar và Dropdown giữ nguyên)
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('sidebarToggle');
     const toggleBtnText = toggleBtn.querySelector('span');
-
     toggleBtn.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
         if (sidebar.classList.contains('collapsed')) {
@@ -117,17 +85,13 @@
             toggleBtnText.textContent = 'Thu gọn';
         }
     });
-
-    // Dropdown menu toggle
     const trainDropdown = document.getElementById('trainDropdown');
     const trainMenu = document.getElementById('trainMenu');
-
     if (trainDropdown.classList.contains('active')) {
         trainMenu.style.display = 'block';
     } else {
         trainMenu.style.display = 'none';
     }
-
     trainDropdown.addEventListener('click', function(e){
         e.preventDefault();
         trainMenu.style.display = (trainMenu.style.display === 'none') ? 'block' : 'none';

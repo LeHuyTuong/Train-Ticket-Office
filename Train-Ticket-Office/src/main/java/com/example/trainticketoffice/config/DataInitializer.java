@@ -11,11 +11,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-// Xóa: import java.util.Map;
+import java.util.Map; // THÊM
 
 /**
- * DataInitializer PHIÊN BẢN KHÔI PHỤC (Logic Bản đồ ghế / Seat Map)
- * Đã cập nhật (Giai đoạn 8.3) để dùng BookingRequest
+ * DataInitializer - Đã Gộp Logic (Bản đồ ghế)
+ * Cập nhật (Giai đoạn 8.3) để dùng BookingRequest
  * Đã GIẢM TẢI (xóa bulk data) để khởi động nhanh
  */
 @Component
@@ -84,11 +84,13 @@ public class DataInitializer implements CommandLineRunner {
         try {
             createUsers(today);
             createStations();
-            createRoutes();
-            createSeatTypes();
-            createTrainsAndSeats();
-            createTrips(today);
-            createBookingsAndTickets();
+            createRoutes(); // Tạo 6 tuyến mẫu
+            // createBulkRoutes(); // XÓA: Gây treo
+            createSeatTypes(); // Tạo 2 loại ghế (VIP, Thường)
+            createTrainsAndSeats(); // Tạo 6 tàu, toa, và các ghế A1, B1...
+            createTrips(today); // Tạo 2 chuyến mẫu
+            // createBulkTrips(today); // XÓA: Gây treo
+            createBookingsAndTickets(); // Tạo 3 booking mẫu (ĐÃ SỬA)
 
             System.out.println("--- Realistic Data Initialization COMPLETE ---");
 
@@ -147,6 +149,7 @@ public class DataInitializer implements CommandLineRunner {
         return routeService.createRoute(route);
     }
 
+    // (Hàm tạo 6 tuyến mẫu)
     private void createRoutes() {
         System.out.println("Creating sample Routes...");
         routeHnSg = createRoute("HN-SG", stationHaNoi, stationSaiGon);
@@ -157,6 +160,7 @@ public class DataInitializer implements CommandLineRunner {
         routeSgNt = createRoute("SG-NT", stationSaiGon, stationNhaTrang);
     }
 
+    // (Hàm tạo Loại ghế)
     private void createSeatTypes() {
         System.out.println("Creating Seat Types (Price per KM)...");
         SeatType vip = new SeatType();
@@ -177,13 +181,15 @@ public class DataInitializer implements CommandLineRunner {
         return trainService.saveTrain(train);
     }
 
+    // (Hàm tạo Tàu, Toa, Ghế)
     private void createTrainsAndSeats() {
         System.out.println("Creating Trains, Carriages, and Seats (Reduced Quantity)...");
         trainSE1 = createTrain("SE1", "Thống Nhất (HN-SG)");
         trainSE3 = createTrain("SE3", "Thống Nhất (HN-SG)");
-        List<Train> allTrains = List.of(trainSE1, trainSE3);
+        List<Train> allTrains = List.of(trainSE1, trainSE3); // Chỉ tạo 2 tàu mẫu
 
         for (Train train : allTrains) {
+            // 1 Toa VIP
             Carriage carriage = new Carriage();
             carriage.setTrain(train);
             carriage.setName("Toa 1 (VIP)");
@@ -202,21 +208,25 @@ public class DataInitializer implements CommandLineRunner {
                 if (train.getCode().equals("SE3") && j == 1) se3_vip_seat_A1 = seat;
             }
 
-            Carriage carriage2 = new Carriage();
-            carriage2.setTrain(train);
-            carriage2.setName("Toa 2 (Thường)");
-            carriage2.setType("Ngồi mềm điều hòa");
-            carriage2.setPosition(2);
-            carriage2.setSeatType(seatTypeNormal);
-            carriage2 = carriageRepository.save(carriage2);
-            for (int j = 1; j <= 20; j++) { // 20 ghế
-                Seat seat = new Seat();
-                seat.setCarriage(carriage2);
-                seat.setSeatNumber("B" + j);
-                seat.setStatus(SeatStatus.AVAILABLE);
-                seat.setIsActive(true);
-                seat = seatService.saveSeat(seat);
-                if (train.getCode().equals("SE1") && j == 1) se1_normal_seat_B1 = seat;
+            // 2 Toa Thường
+            for (int i = 1; i <= 2; i++) {
+                int toaPos = i + 1;
+                Carriage carriage2 = new Carriage();
+                carriage2.setTrain(train);
+                carriage2.setName("Toa " + toaPos + " (Thường)");
+                carriage2.setType("Ngồi mềm điều hòa");
+                carriage2.setPosition(toaPos);
+                carriage2.setSeatType(seatTypeNormal);
+                carriage2 = carriageRepository.save(carriage2);
+                for (int j = 1; j <= 20; j++) { // 20 ghế
+                    Seat seat = new Seat();
+                    seat.setCarriage(carriage2);
+                    seat.setSeatNumber("B" + j);
+                    seat.setStatus(SeatStatus.AVAILABLE);
+                    seat.setIsActive(true);
+                    seat = seatService.saveSeat(seat);
+                    if (train.getCode().equals("SE1") && i == 1 && j == 1) se1_normal_seat_B1 = seat;
+                }
             }
         }
     }
@@ -233,6 +243,7 @@ public class DataInitializer implements CommandLineRunner {
         return tripService.saveTrip(trip);
     }
 
+    // (Hàm tạo 2 chuyến mẫu)
     private void createTrips(LocalDate today) {
         System.out.println("Creating sample Trips (Schedule)...");
         tripSE1 = createTrip(trainSE1, routeHnSg,
@@ -246,12 +257,13 @@ public class DataInitializer implements CommandLineRunner {
     }
 
 
-    // ===== SỬA HÀM NÀY (THÊM DOB VÀ ID CARD) =====
+    // ===== SỬA HOÀN TOÀN HÀM NÀY (ĐỂ DÙNG LOGIC BOOKINGREQUEST) =====
     private void createBookingsAndTickets() {
         System.out.println("Creating sample Orders, Bookings, Tickets (Passenger Form Logic)...");
 
         // --- ĐƠN HÀNG 1: (SE1, 1 vé A1) - ĐÃ THANH TOÁN ---
 
+        // 1. Tạo DTO (Giả lập form)
         BookingRequest request1 = new BookingRequest();
         request1.setTripId(tripSE1.getTripId());
 
@@ -265,8 +277,10 @@ public class DataInitializer implements CommandLineRunner {
         passenger1.setPassengerIdCard("012345678901"); // THÊM CCCD
         request1.getPassengers().add(passenger1);
 
+        // 2. Gọi Service
         Order order1 = bookingService.createOrder(request1, customer);
 
+        // 3. (Tiếp tục logic tạo Vé (Ticket) và Thanh toán (Payment)
         Booking booking1 = order1.getBookings().get(0);
         Ticket ticket1 = new Ticket();
         ticket1.setCode("TICKET-SE1-A1");
