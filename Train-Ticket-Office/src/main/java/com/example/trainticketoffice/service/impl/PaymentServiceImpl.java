@@ -9,6 +9,7 @@ import com.example.trainticketoffice.model.Payment;
 import com.example.trainticketoffice.repository.BookingRepository;
 import com.example.trainticketoffice.repository.OrderRepository; // THÊM
 import com.example.trainticketoffice.repository.PaymentRepository;
+import com.example.trainticketoffice.service.AdminWalletService;
 import com.example.trainticketoffice.service.PaymentService;
 import com.example.trainticketoffice.util.VnpayUtils;
 import jakarta.transaction.Transactional;
@@ -29,9 +30,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
-    // THÊM OrderRepository
-    private final OrderRepository orderRepository;
 
+    private final OrderRepository orderRepository;
+    private final AdminWalletService adminWalletService;
     @Value("${vnpay.tmn-code}")
     private String tmnCode;
 
@@ -165,7 +166,13 @@ public class PaymentServiceImpl implements PaymentService {
                 booking.setStatus(BookingStatus.PAID);
                 bookingRepository.save(booking);
             }
-
+            try {
+                adminWalletService.addToBalance(payment.getAmount());
+            } catch (Exception e) {
+                // Ghi log lỗi nếu không cộng được tiền, nhưng không làm hỏng giao dịch của khách
+                System.err.println("LỖI NGHIÊM TRỌNG: Không thể cộng tiền vào ví Admin cho giao dịch " + txnRef);
+                e.printStackTrace();
+            }
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             order.setStatus(PaymentStatus.FAILED);

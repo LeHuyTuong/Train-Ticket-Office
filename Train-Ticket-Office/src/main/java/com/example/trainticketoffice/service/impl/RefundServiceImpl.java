@@ -11,6 +11,7 @@ import com.example.trainticketoffice.model.User;
 import com.example.trainticketoffice.repository.BookingRepository;
 import com.example.trainticketoffice.repository.RefundRequestRepository;
 import com.example.trainticketoffice.repository.SeatRepository;
+import com.example.trainticketoffice.service.AdminWalletService;
 import com.example.trainticketoffice.service.RefundService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class RefundServiceImpl implements RefundService {
     private final BookingRepository bookingRepository;
     private final RefundRequestRepository refundRequestRepository;
     private final SeatRepository seatRepository;
-
+    private final AdminWalletService adminWalletService;
     /**
      * Khách hàng tạo yêu cầu
      */
@@ -105,7 +106,21 @@ public class RefundServiceImpl implements RefundService {
         Booking booking = refund.getBooking();
         booking.setStatus(BookingStatus.REFUNDED); // (Hoặc CANCELLED tùy bạn)
         bookingRepository.save(booking);
-
+        try {
+            adminWalletService.subtractFromBalance(booking.getPrice());
+        } catch (Exception e) {
+            // Ghi log lỗi nếu không trừ được tiền
+            // Cân nhắc: Có nên dừng lại nếu không trừ được tiền?
+            // Tạm thời vẫn cho duyệt refund, nhưng báo lỗi.
+            System.err.println("LỖI NGHIÊM TRỌNG: Không thể trừ tiền ví Admin cho refund " + refundRequestId);
+            e.printStackTrace();
+            // (Bạn có thể ném lại lỗi ở đây nếu muốn giao dịch thất bại)
+            // throw new RuntimeException("Không thể cập nhật ví Admin, vui lòng thử lại.", e);
+        }
+// 1. Cập nhật Yêu cầu (chuyển xuống sau khi trừ tiền thành công)
+        refund.setStatus(RefundStatus.APPROVED);
+        refund.setProcessedAt(LocalDateTime.now());
+        refundRequestRepository.save(refund);
         // 3. Giải phóng Ghế (Seat)
         Seat seat = booking.getSeat();
         if (seat != null) {

@@ -38,6 +38,7 @@ public class DataInitializer implements CommandLineRunner {
     private final BookingRepository bookingRepository;
     private final OrderRepository orderRepository;
     private final SeatTypeRepository seatTypeRepository; // <-- (Logic Giá/KM)
+    private final AdminWalletService adminWalletService; // <-- THÊM MỚI
 
     // Các biến tạm
     private User customer;
@@ -56,7 +57,8 @@ public class DataInitializer implements CommandLineRunner {
                            TicketRepository ticketRepository, PaymentRepository paymentRepository,
                            CarriageRepository carriageRepository, BookingRepository bookingRepository,
                            OrderRepository orderRepository, RouteRepository routeRepository,
-                           SeatTypeRepository seatTypeRepository) {
+                           SeatTypeRepository seatTypeRepository,
+                           AdminWalletService adminWalletService) { // <-- THÊM THAM SỐ
         this.userService = userService;
         this.userRepository = userRepository;
         this.stationService = stationService;
@@ -73,6 +75,7 @@ public class DataInitializer implements CommandLineRunner {
         this.orderRepository = orderRepository;
         this.routeRepository = routeRepository;
         this.seatTypeRepository = seatTypeRepository;
+        this.adminWalletService = adminWalletService; // <-- THÊM DÒNG NÀY
     }
 
     @Override
@@ -82,6 +85,9 @@ public class DataInitializer implements CommandLineRunner {
         LocalDate today = LocalDate.now();
 
         try {
+            // Khởi tạo ví Admin trước
+            adminWalletService.initializeWallet(); // <-- THÊM DÒNG NÀY
+
             createUsers(today);
             createStations();
             createRoutes(); // Tạo 6 tuyến mẫu
@@ -319,6 +325,11 @@ public class DataInitializer implements CommandLineRunner {
             b.setStatus(BookingStatus.PAID);
             bookingRepository.save(b);
         }
+
+        // CẬP NHẬT VÍ ADMIN (GIẢ LẬP ĐÃ THANH TOÁN)
+        adminWalletService.addToBalance(payment1.getAmount());
+        System.out.println("Đã cộng " + payment1.getAmount() + " vào ví Admin.");
+
 
         // --- ĐƠN HÀNG 2: (SE1, 1 vé B1) - CHƯA THANH TOÁN ---
         BookingRequest request2 = new BookingRequest();
