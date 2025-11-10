@@ -78,7 +78,8 @@ public class RefundServiceImpl implements RefundService {
      */
     @Override
     public List<RefundRequest> getPendingRefunds() {
-        return refundRequestRepository.findByStatus(RefundStatus.PENDING);
+
+        return refundRequestRepository.findByStatusWithDetails(RefundStatus.PENDING); // <-- Dòng MỚI
     }
 
     /**

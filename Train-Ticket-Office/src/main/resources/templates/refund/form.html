@@ -48,7 +48,7 @@
 
             <p class="mb-0">
                 <strong>Giá vé đã thanh toán:</strong>
-                <span class="fw-bold text-danger" th:text="${#numbers.formatDecimal(price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></span>
+                <span class="fw-bold text-danger" th:text="*{#numbers.formatDecimal(price, 0, 'COMMA', 0, 'POINT') + ' VND'}"></span>
             </p>
         </div>
 

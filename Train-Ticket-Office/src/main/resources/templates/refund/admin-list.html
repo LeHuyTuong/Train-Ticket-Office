@@ -50,7 +50,7 @@
                         <div><strong>Chuyến:</strong> <span th:text="*{booking.trip.train.code}"></span></div>
                         <div><strong>Ghế:</strong> <span th:text="*{booking.seat.seatNumber}"></span></div>
 
-                        <div><strong>Giá:</strong> <span th:text="${#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></div>
+                        <div><strong>Giá:</strong> <div><strong>Giá:</strong> <span th:text="*{#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT') + ' đ'}"></span></div></div>
                     </td>
                     <td>
                         <div><strong>Tên:</strong> <span th:text="*{booking.passengerName}"></span></div>
