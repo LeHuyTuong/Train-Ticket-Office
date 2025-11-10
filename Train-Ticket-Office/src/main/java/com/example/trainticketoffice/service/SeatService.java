@@ -6,10 +6,7 @@ import java.util.Optional;
 
 public interface SeatService {
     List<Seat> getAllSeats();
-
     Optional<Seat> getSeatById(Long id);
-
     Seat saveSeat(Seat seat);
-
     void deleteSeat(Long id);
 }

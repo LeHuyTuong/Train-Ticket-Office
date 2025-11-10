@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
+    <title>Bước 2: Nhập Thông Tin Hành Khách</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background: #f0f4f8; padding: 20px; }
+        .trip-info-box {
+            background: linear-gradient(135deg, #004a99, #003366);
+            color: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 25px;
+        }
+        .trip-info-box h4 { font-weight: 700; font-size: 1.5rem; margin-bottom: 10px; }
+        .trip-route {
+            font-size: 1.2rem; font-weight: 500; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .trip-time { display: flex; flex-wrap: wrap; gap: 20px; font-size: 0.95rem; opacity: 0.9; }
+        .page-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; color: #004a99; }
+
+        .passenger-card {
+            background: #fff; border-radius: 12px; margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden;
+        }
+        .passenger-header {
+            background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dee2e6;
+        }
+        .passenger-header h5 {
+            font-weight: 700; color: #004a99; margin-bottom: 0;
+            display: flex; justify-content: space-between;
+        }
+        .passenger-header .seat-info { font-size: 1rem; color: #333; }
+        .passenger-header .seat-price { font-size: 1rem; color: #d9534f; font-weight: 600; }
+
+        .passenger-body { padding: 20px; }
+
+        #total-price-summary {
+            font-size: 1.5rem; font-weight: 700; color: #d9534f;
+        }
+
+        .age-validation-msg {
+            color: #d9534f;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: none; /* Ẩn mặc định */
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="trip-info-box" th:if="${trip != null}" th:object="${trip}">
+        <h4 th:text="|*{train.code} - *{train.name}|"></h4>
+        <div class="trip-route">
+            <span th:text="*{departureStation}"></span>
+            <i class="bi bi-arrow-right-short"></i>
+            <span th:text="*{arrivalStation}"></span>
+        </div>
+        <div class="trip-time">
+            <span><strong>Khởi hành:</strong> <span th:text="${#temporals.format(trip.departureTime, 'dd/MM/yyyy HH:mm')}"></span></span>
+        </div>
+    </div>
+
+    <h2 class="page-title">Bước 2: Nhập Thông Tin Hành Khách</h2>
+
+    <form th:action="@{/bookings/create-order}" th:object="${bookingRequest}" method="POST">
+        <input type="hidden" th:field="*{tripId}" />
+
+        <div th:each="passenger, stat : *{passengers}" class="passenger-card">
+
+            <div class="passenger-header">
+                <h5>
+                    <span class="seat-info">
+                        <i class="bi bi-person-fill"></i>
+                        Vé <span th:text="${stat.count}">1</span>:
+                        <span th:text="${passenger.seatNumber}">A1 (Toa 1)</span>
+                    </span>
+                    <span class="seat-price" th:text="${#numbers.formatDecimal(passenger.basePrice, 0, 'COMMA', 0, 'POINT')} + ' đ (Gốc)'"></span>
+                </h5>
+            </div>
+
+            <input type="hidden" th:field="*{passengers[__${stat.index}__].seatId}" />
+            <input type="hidden" class="base-price-input" th:value="${passenger.basePrice}" />
+
+            <div class="passenger-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label th:for="|name-${stat.index}|" class="form-label">Tên Hành Khách</label>
+                        <input type="text" th:field="*{passengers[__${stat.index}__].passengerName}" th:id="|name-${stat.index}|" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label th:for="|dob-${stat.index}|" class="form-label">Ngày Sinh</label>
+                        <input type="date" th:field="*{passengers[__${stat.index}__].dob}" th:id="|dob-${stat.index}|" class="form-control dob-input" required>
+                    </div>
+
+                    <div class="col-md-6 id-card-wrapper">
+                        <label th:for="|idcard-${stat.index}|" class="form-label">CCCD / Passport</label>
+                        <input type="text" th:field="*{passengers[__${stat.index}__].passengerIdCard}" th:id="|idcard-${stat.index}|" class="form-control id-card-input">
+                    </div>
+                    <div class="col-md-6">
+                        <label th:for="|type-${stat.index}|" class="form-label">Loại Hành Khách</label>
+                        <select th:field="*{passengers[__${stat.index}__].passengerType}" th:id="|type-${stat.index}|" class="form-select passenger-type-select" required>
+                            <option value="ADULT">Người Lớn (11-59 tuổi)</option>
+                            <option value="CHILD">Trẻ Em (6-10 tuổi)</option>
+                            <option value="INFANT">Trẻ Em (<6 tuổi)</option>
+                            <option value="SENIOR">Người Cao Tuổi (>= 60 tuổi)</option>
+                        </select>
+                        <div class="age-validation-msg">Loại vé không khớp với ngày sinh!</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label th:for="|phone-${stat.index}|" class="form-label">Số Điện Thoại</label>
+                        <input type="tel" th:field="*{passengers[__${stat.index}__].phone}" th:id="|phone-${stat.index}|" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label th:for="|email-${stat.index}|" class="form-label">Email</label>
+                        <input type="email" th:field="*{passengers[__${stat.index}__].email}" th:id="|email-${stat.index}|" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="my-4 text-end">
+            <h3>Tổng Tiền (Đã giảm trừ):
+                <span id="total-price-summary">0 VNĐ</span>
+            </h3>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success btn-lg">Hoàn Tất Đặt Vé</button>
+            <a th:href="@{/bookings/new(tripId=*{tripId})}" class="btn btn-secondary btn-lg">Quay Lại Chọn Ghế</a>
+        </div>
+    </form>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalElement = document.getElementById('total-price-summary');
+            const allPassengerCards = document.querySelectorAll('.passenger-card');
+
+            // --- HÀM 1: TÍNH TỔNG TIỀN ---
+            function calculateTotal() {
+                let total = 0;
+                allPassengerCards.forEach(card => {
+                    const basePriceInput = card.querySelector('.base-price-input');
+                    const typeSelect = card.querySelector('.passenger-type-select');
+                    if (!basePriceInput || !typeSelect) return;
+
+                    let basePrice = parseFloat(basePriceInput.value);
+                    let passengerType = typeSelect.value;
+                    let discountRate = 1.0;
+
+                    if (passengerType === 'INFANT') discountRate = 0.0;
+                    else if (passengerType === 'CHILD') discountRate = 0.5;
+                    else if (passengerType === 'SENIOR') discountRate = 0.75;
+
+                    total += (basePrice * discountRate);
+                });
+                let roundedTotal = Math.round(total / 1000) * 1000;
+                totalElement.textContent = roundedTotal.toLocaleString('vi-VN') + ' VNĐ';
+            }
+
+            // --- HÀM 2: TÍNH TUỔI ---
+            function getAge(dobString) {
+                if (!dobString) return -1;
+                const today = new Date();
+                const birthDate = new Date(dobString);
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                return age;
+            }
+
+            // --- HÀM 3: VALIDATE LOẠI VÉ (KHÓA LỰA CHỌN SAI) ---
+            function validatePassengerType(passengerCard) {
+                const dobInput = passengerCard.querySelector('.dob-input');
+                const typeSelect = passengerCard.querySelector('.passenger-type-select');
+                const errorMsg = passengerCard.querySelector('.age-validation-msg');
+
+                if (!dobInput || !typeSelect || !errorMsg) return;
+
+                const age = getAge(dobInput.value);
+                if (age === -1) {
+                    Array.from(typeSelect.options).forEach(opt => opt.disabled = false);
+                    errorMsg.style.display = 'none';
+                    return;
+                }
+
+                let valid = true;
+
+                Array.from(typeSelect.options).forEach(opt => {
+                    const type = opt.value;
+                    let isDisabled = false;
+
+                    if (type === 'INFANT' && age >= 6) isDisabled = true;
+                    if (type === 'CHILD' && (age < 6 || age > 10)) isDisabled = true;
+                    if (type === 'SENIOR' && age < 60) isDisabled = true;
+                    if (type === 'ADULT' && (age < 11 || age >= 60)) isDisabled = true;
+
+                    opt.disabled = isDisabled;
+                });
+
+                if (typeSelect.options[typeSelect.selectedIndex].disabled) {
+                    valid = false;
+                    errorMsg.style.display = 'block';
+                } else {
+                    valid = true;
+                    errorMsg.style.display = 'none';
+                }
+
+                return valid;
+            }
+
+            // --- HÀM 4: ẨN/HIỆN CCCD (THEO YÊU CẦU MỚI) ---
+            function toggleIdCardRequirement(passengerCard) {
+                const typeSelect = passengerCard.querySelector('.passenger-type-select');
+                const idCardWrapper = passengerCard.querySelector('.id-card-wrapper');
+                const idCardInput = passengerCard.querySelector('.id-card-input');
+
+                if (!typeSelect || !idCardWrapper || !idCardInput) return;
+
+                const passengerType = typeSelect.value;
+
+                if (passengerType === 'INFANT' || passengerType === 'CHILD') {
+                    // Nếu là trẻ em, ẩn và không bắt buộc
+                    idCardWrapper.style.display = 'none';
+                    idCardInput.required = false;
+                    idCardInput.value = ''; // Xóa giá trị nếu có
+                } else {
+                    // (ADULT or SENIOR)
+                    // Hiện và bắt buộc
+                    idCardWrapper.style.display = 'block';
+                    idCardInput.required = true;
+                }
+            }
+            // ===========================================
+
+            // --- GẮN SỰ KIỆN ---
+            allPassengerCards.forEach(card => {
+                const dobInput = card.querySelector('.dob-input');
+                const typeSelect = card.querySelector('.passenger-type-select');
+
+                // Khi thay đổi Ngày sinh
+                dobInput.addEventListener('change', () => {
+                    validatePassengerType(card);
+                    toggleIdCardRequirement(card); // <-- GỌI HÀM MỚI
+                    calculateTotal();
+                });
+
+                // Khi thay đổi Loại vé
+                typeSelect.addEventListener('change', () => {
+                    validatePassengerType(card);
+                    toggleIdCardRequirement(card); // <-- GỌI HÀM MỚI
+                    calculateTotal();
+                });
+
+                // Chạy lần đầu khi tải trang
+                validatePassengerType(card);
+                toggleIdCardRequirement(card); // <-- GỌI HÀM MỚI
+            });
+
+            // Tính tổng lần đầu khi tải trang
+            calculateTotal();
+        });
+    </script>
+</div>
+</body>
+</html>

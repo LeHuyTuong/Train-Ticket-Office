@@ -6,9 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal; // <-- THÊM
-import java.time.LocalDate;
-import java.time.LocalDateTime; // <-- THÊM
+import java.math.BigDecimal;
+import java.time.LocalDate; // THÊM
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
@@ -34,22 +34,30 @@ public class Booking extends BaseEntity{
     @JoinColumn(name = "seat_id")
     private Seat seat;
 
-    // ===== THÊM QUAN HỆ NÀY =====
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id") // Tên cột khóa ngoại trong bảng bookings
+    @JoinColumn(name = "order_id")
     private Order order;
-    // =============================
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, columnDefinition = "nvarchar(100)")
     private String passengerName;
 
-    @Column(length = 20)
+    @Column(length = 20, columnDefinition = "nvarchar(20)")
+    private String passengerType;
+
+    // ===== 2 TRƯỜNG MỚI (LƯU VÀO DB) =====
+    @Column(length = 20, columnDefinition = "nvarchar(20)")
+    private String passengerIdCard; // CCCD/Passport
+
+    @Column(name = "date_of_birth")
+    private LocalDate dob; // Ngày sinh
+    // ===================================
+
+    @Column(length = 20, columnDefinition = "nvarchar(20)")
     private String phone;
 
-    @Column(length = 100)
+    @Column(length = 100, columnDefinition = "nvarchar(100)")
     private String email;
 
-    // ===== THÊM TRƯỜNG NÀY =====
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
@@ -57,7 +65,6 @@ public class Booking extends BaseEntity{
     @Column(nullable = false, length = 20)
     private BookingStatus status = BookingStatus.BOOKED;
 
-    // ===== SỬA TỪ LocalDate thành LocalDateTime =====
     @Column(name = "booking_time", nullable = false)
     private LocalDateTime bookingTime;
 }

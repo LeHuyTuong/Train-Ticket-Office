@@ -6,97 +6,20 @@
     <title>Quản Lý Tàu</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            background: url('/images/train01.jpg') center/cover no-repeat fixed;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .container-card {
-            backdrop-filter: blur(12px);
-            background: rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 30px 25px;
-            margin: 30px auto;
-            max-width: 1000px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-        }
-
-        .page-title {
-            font-weight: 700;
-            font-size: 30px;
-            color: #004a99;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.25s ease;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #009ffd, #2a2a72);
-            color: #fff;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-            border: none;
-        }
-
-        .btn-secondary:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #fff;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: #fff;
-        }
-
-        table {
-            background: rgba(255,255,255,0.85);
-            border-radius: 10px;
-            overflow: hidden;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        table th, table td {
-            padding: 12px 15px;
-            text-align: left;
-            vertical-align: middle;
-        }
-
-        table th {
-            background: linear-gradient(135deg,#009ffd,#2a2a72);
-            color: #fff;
-        }
-
-        table tr:hover {
-            background: rgba(0,159,253,0.15);
-        }
-
-        .badge {
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .container-card { padding: 20px 15px; }
-            .page-title { font-size: 26px; }
-        }
+        /* (CSS giữ nguyên) */
+        body { background: url('/images/train01.jpg') center/cover no-repeat fixed; font-family: 'Montserrat', sans-serif; }
+        .container-card { backdrop-filter: blur(12px); background: rgba(255,255,255,0.2); border-radius: 16px; padding: 30px 25px; margin: 30px auto; max-width: 1000px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+        .page-title { font-weight: 700; font-size: 30px; color: #004a99; margin-bottom: 20px; }
+        .btn { border-radius: 10px; font-weight: 600; transition: all 0.25s ease; }
+        .btn-primary { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; border: none; }
+        .btn-info { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; border: none; }
+        .btn-secondary { background: #e0e0e0; color: #333; border: none; }
+        .btn-warning { background: #ffc107; color: #fff; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        table { background: rgba(255,255,255,0.85); border-radius: 10px; overflow: hidden; width: 100%; margin-bottom: 20px; }
+        table th, table td { padding: 12px 15px; text-align: left; vertical-align: middle; }
+        table th { background: linear-gradient(135deg,#009ffd,#2a2a72); color: #fff; }
+        table tr:hover { background: rgba(0,159,253,0.15); }
     </style>
 </head>
 <body>
@@ -120,6 +43,7 @@
                     <th>ID</th>
                     <th>Mã Tàu</th>
                     <th>Tên Tàu</th>
+                    <th>Sức Chứa (Tổng)</th>
                     <th>Trạng Thái</th>
                     <th>Hành Động</th>
                 </tr>
@@ -129,18 +53,24 @@
                     <td th:text="${train.id}"></td>
                     <td th:text="${train.code}"></td>
                     <td th:text="${train.name}"></td>
+                    <td th:text="${train.getTotalCapacity() + ' ghế'}"></td>
                     <td>
-                        <span th:if="${train.status.name() == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
-                        <span th:if="${train.status.name() == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
+                        <span th:text="${train.status.description}"
+                              th:classappend="${train.status.name() == 'AVAILABLE'} ? 'badge bg-success' :
+                                             (${train.status.name() == 'ON_TRIP'} ? 'badge bg-danger' : 'badge bg-warning text-dark')">
+                        </span>
                     </td>
-                    <td>
-                        <a th:href="@{/trains/edit/{id}(id=${train.id})}" class="btn btn-sm btn-warning">Chỉnh sửa</a>
-                        <a th:href="@{/trains/delete/{id}(id=${train.id})}" class="btn btn-sm btn-danger"
-                           onclick="return confirm('Bạn có chắc chắn muốn xóa tàu này?')">Xóa</a>
+
+                    <td class="d-flex flex-wrap gap-2">
+                        <a th:href="@{/carriages(trainId=${train.id})}" class="btn btn-info btn-sm">Quản lý Toa</a>
+
+                        <a th:href="@{/trains/edit/{id}(id=${train.id})}" class="btn btn-warning btn-sm">Sửa Tàu</a>
+                        <a th:href="@{/trains/delete/{id}(id=${train.id})}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Bạn có chắc chắn muốn xóa tàu này?')">Xóa Tàu</a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(trains)}">
-                    <td colspan="5" class="text-center">Không tìm thấy tàu nào.</td>
+                    <td colspan="6" class="text-center">Không tìm thấy tàu nào.</td>
                 </tr>
                 </tbody>
             </table>

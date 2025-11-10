@@ -6,94 +6,15 @@
     <title th:text="${carriage.carriageId != null ? 'Chỉnh Sửa Toa Tàu' : 'Thêm Mới Toa Tàu'}">Biểu Mẫu Toa Tàu</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            background: url('/images/train01.jpg') center/cover no-repeat fixed;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .form-container {
-            backdrop-filter: blur(12px);
-            background: rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 40px;
-            margin-top: 30px;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-        }
-
-        .page-title {
-            font-weight: 700;
-            font-size: 30px;
-            color: #004a99;
-            margin-bottom: 25px;
-        }
-
-        label {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-control, .form-select {
-            border-radius: 10px;
-            padding: 10px 12px;
-            border: 1px solid #cfd9e0;
-            width: 100%;
-            margin-top: 5px;
-            margin-bottom: 18px;
-            font-size: 0.95rem;
-            transition: all 0.25s ease;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #004a99;
-            box-shadow: 0 0 8px rgba(0,74,153,0.2);
-            outline: none;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.25s ease;
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #009ffd, #2a2a72);
-            color: #fff;
-        }
-
-        .btn-success:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .alert-danger {
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .form-container {
-                padding: 30px 20px;
-            }
-            .page-title {
-                font-size: 26px;
-            }
-        }
+        /* (CSS giữ nguyên) */
+        body { background: url('/images/train01.jpg') center/cover no-repeat fixed; font-family: 'Montserrat', sans-serif; }
+        .form-container { backdrop-filter: blur(12px); background: rgba(255,255,255,0.2); border-radius: 16px; padding: 40px; margin-top: 30px; max-width: 700px; margin-left: auto; margin-right: auto; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+        .page-title { font-weight: 700; font-size: 30px; color: #004a99; margin-bottom: 25px; }
+        label { font-weight: 600; color: #333; }
+        .form-control, .form-select { border-radius: 10px; padding: 10px 12px; border: 1px solid #cfd9e0; width: 100%; margin-top: 5px; margin-bottom: 18px; font-size: 0.95rem; }
+        .btn { padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: all 0.25s ease; }
+        .btn-success { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
     </style>
 </head>
 <body>
@@ -108,12 +29,14 @@
 
             <div>
                 <label>Thuộc Tàu</label>
-                <select th:field="*{train}" class="form-select" required>
+                <select th:field="*{train}" class="form-select" required
+                        th:disabled="${#lists.size(allTrains) == 1}">
                     <option value="">-- Chọn Tàu --</option>
                     <option th:each="train : ${allTrains}"
                             th:value="${train.id}"
                             th:text="|${train.code} - ${train.name}|"></option>
                 </select>
+                <input th:if="${#lists.size(allTrains) == 1}" type="hidden" th:field="*{train}" />
             </div>
 
             <div>
@@ -122,8 +45,18 @@
             </div>
 
             <div>
-                <label>Loại Toa (Ví dụ: Ngồi mềm, Giường nằm)</label>
-                <input type="text" th:field="*{type}" class="form-control" placeholder="Nhập loại toa" required>
+                <label>Loại Ghế (Dùng để tính giá)</label>
+                <select th:field="*{seatType}" class="form-select" required>
+                    <option value="">-- Chọn Loại Ghế --</option>
+                    <option th:each="st : ${allSeatTypes}"
+                            th:value="${st.id}"
+                            th:text="${st.name + ' (' + #numbers.formatDecimal(st.pricePerKm, 0, 'COMMA', 0, 'POINT') + 'đ/km)'}"></option>
+                </select>
+            </div>
+
+            <div>
+                <label>Mô tả (Ví dụ: Ngồi mềm, Giường nằm)</label>
+                <input type="text" th:field="*{type}" class="form-control" placeholder="Nhập mô tả" required>
             </div>
 
             <div>
@@ -133,7 +66,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-success">Lưu Toa Tàu</button>
-                <a th:href="@{/carriages}" class="btn btn-secondary">Hủy</a>
+                <a th:href="@{/carriages(trainId=${selectedTrainId})}" class="btn btn-secondary">Hủy</a>
             </div>
         </form>
     </div>

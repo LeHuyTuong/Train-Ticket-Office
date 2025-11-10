@@ -6,79 +6,40 @@
     <title>Quản Lý Toa Tàu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body {
-            background: url('/images/train01.jpg') center/cover no-repeat fixed;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .container-card {
-            backdrop-filter: blur(12px);
-            background: rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 30px 25px;
-            margin: 30px auto;
-            max-width: 1100px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-        }
-
-        .page-title {
-            font-weight: 700;
-            font-size: 32px;
-            color: #004a99;
-            margin-bottom: 25px;
-        }
-
-        .btn {
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.25s ease;
-            border: none;
-        }
-
+        /* (CSS giữ nguyên) */
+        body { background: url('/images/train01.jpg') center/cover no-repeat fixed; font-family: 'Montserrat', sans-serif; }
+        .container-card { backdrop-filter: blur(12px); background: rgba(255,255,255,0.2); border-radius: 16px; padding: 30px 25px; margin: 30px auto; max-width: 1100px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+        .page-title { font-weight: 700; font-size: 32px; color: #004a99; margin-bottom: 25px; }
+        .btn { border-radius: 10px; font-weight: 600; transition: all 0.25s ease; border: none; }
         .btn-primary { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; }
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
-
         .btn-info { background: linear-gradient(135deg, #00b09b, #96c93d); color: #fff; }
-        .btn-info:hover { opacity: 0.9; transform: translateY(-2px); }
-
+        .btn-success { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; }
         .btn-warning { background: #ffc107; color: #fff; }
         .btn-danger { background: #dc3545; color: #fff; }
-
         .btn-secondary { background: #e0e0e0; color: #333; }
-        .btn-secondary:hover { opacity: 0.9; transform: translateY(-2px); }
-
         .form-select { border-radius: 10px; padding: 8px; }
-
-        table.table {
-            background: rgba(255,255,255,0.85);
-            border-radius: 12px;
-            overflow: hidden;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
+        table.table { background: rgba(255,255,255,0.85); border-radius: 12px; overflow: hidden; width: 100%; margin-bottom: 20px; }
         table th, table td { padding: 12px 15px; text-align: left; vertical-align: middle; }
         table th { background: linear-gradient(135deg,#009ffd,#2a2a72); color: #fff; }
         table tr:hover { background: rgba(0,159,253,0.15); }
-
-        @media (max-width: 768px) {
-            .page-title { font-size: 26px; }
-            .container-card { padding: 20px; }
-        }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="container-card">
         <h2 class="page-title">Quản Lý Toa Tàu</h2>
+        <h4 th:if="${selectedTrain != null}" th:text="|Tàu: ${selectedTrain.code} - ${selectedTrain.name}|"></h4>
 
         <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
         <div class="mb-3">
-            <a th:href="@{/carriages/new}" class="btn btn-primary">
+            <a th:href="@{/carriages/new(trainId=${selectedTrainId})}"
+               class="btn btn-primary"
+               th:classappend="${selectedTrainId == null} ? 'disabled' : ''">
                 <i class="bi bi-plus-circle"></i> Thêm Toa Mới
             </a>
+            <small th:if="${selectedTrainId == null}" class="ms-2 text-danger fw-bold">(Vui lòng lọc theo Tàu để thêm Toa)</small>
         </div>
 
         <form th:action="@{/carriages}" method="GET" class="row g-3 mb-4 p-3 bg-light border rounded">
@@ -102,9 +63,10 @@
             <tr>
                 <th>ID</th>
                 <th>Tên Toa</th>
-                <th>Loại Toa</th>
+                <th>Loại Ghế (Giá)</th>
                 <th>Tàu Thuộc</th>
                 <th>Vị Trí</th>
+                <th>Sức Chứa</th>
                 <th>Thao Tác</th>
             </tr>
             </thead>
@@ -112,22 +74,27 @@
             <tr th:each="carriage : ${carriages}">
                 <td th:text="${carriage.carriageId}"></td>
                 <td th:text="${carriage.name}"></td>
-                <td th:text="${carriage.type}"></td>
+                <td th:text="${carriage.seatType != null ? carriage.seatType.name : 'Chưa gán'}"></td>
                 <td th:text="${carriage.train.code}"></td>
                 <td th:text="${carriage.position}"></td>
-                <td class="d-flex gap-2">
-                    <a th:href="@{/carriages/edit/{id}(id=${carriage.carriageId})}" class="btn btn-warning btn-sm">Chỉnh Sửa</a>
-                    <a th:href="@{/carriages/delete/{id}(id=${carriage.carriageId})}" class="btn btn-danger btn-sm"
-                       onclick="return confirm('Bạn có chắc chắn muốn xóa không?')">Xóa</a>
+                <td th:text="${carriage.getCapacity() + ' ghế'}"></td>
+
+                <td class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/seats(carriageId=${carriage.carriageId})}" class="btn btn-success btn-sm">Quản lý Ghế</a>
+
+                    <a th:href="@{/carriages/edit/{id}(id=${carriage.carriageId})}" class="btn btn-warning btn-sm">Sửa Toa</a>
+
+                    <a th:href="@{/carriages/delete/{id}(id=${carriage.carriageId}, trainId=${selectedTrainId})}" class="btn btn-danger btn-sm"
+                       onclick="return confirm('Bạn có chắc chắn muốn xóa không?')">Xóa Toa</a>
                 </td>
             </tr>
             <tr th:if="${#lists.isEmpty(carriages)}">
-                <td colspan="6" class="text-center">Không tìm thấy toa tàu nào.</td>
+                <td colspan="7" class="text-center">Không tìm thấy toa tàu nào (Hoặc bạn chưa lọc).</td>
             </tr>
             </tbody>
         </table>
 
-        <a th:href="@{/admin/dashboard}" class="btn btn-secondary mt-3">⬅ Quay Lại Dashboard</a>
+        <a th:href="@{/trains}" class="btn btn-secondary mt-3">⬅ Quay Lại Danh Sách Tàu</a>
     </div>
 </div>
 </body>

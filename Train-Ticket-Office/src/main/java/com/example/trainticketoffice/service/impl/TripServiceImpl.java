@@ -10,9 +10,9 @@ import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.TripService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page; // <-- THÊM
-import org.springframework.data.domain.PageRequest; // <-- THÊM
-import org.springframework.data.domain.Pageable; // <-- THÊM
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,7 +23,6 @@ import java.util.Optional;
 @Service
 public class TripServiceImpl implements TripService {
 
-    // ===== SỐ LƯỢNG CHUYẾN TRÊN MỖI TRANG =====
     public static final int TRIPS_PER_PAGE = 5;
 
     @Autowired
@@ -44,20 +43,15 @@ public class TripServiceImpl implements TripService {
         return tripRepository.findAll();
     }
 
-    // ===== IMPLEMENT HÀM PHÂN TRANG MỚI =====
     @Override
     public Page<Trip> listAllAdmin(int pageNum, Integer stationId) {
         Pageable pageable = PageRequest.of(pageNum - 1, TRIPS_PER_PAGE);
 
         if (stationId != null) {
-            // Nếu có lọc theo Ga, gọi hàm tìm kiếm
             return tripRepository.findByRoute_StartStation_IdOrRoute_EndStation_Id(stationId, stationId, pageable);
         }
-
-        // Mặc định, trả về tất cả (đã phân trang)
         return tripRepository.findAll(pageable);
     }
-    // ======================================
 
     @Override
     public Optional<Trip> getTripById(Long id) {
@@ -67,17 +61,19 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public Trip saveTrip(Trip trip) {
-        // (Code hàm này giữ nguyên)
+        // ===== SỬA LOGIC KIỂM TRA TÀU =====
         if (trip.getTripId() == null) {
             Train train = trainRepository.findById(trip.getTrain().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid Train ID"));
 
-            if (train.getStatus() != TrainStatus.AVAILABLE) {
-                throw new IllegalStateException("Tàu " + train.getCode() + " không rảnh (đang chạy hoặc bảo trì).");
+            // CHỈ KIỂM TRA BẢO TRÌ
+            if (train.getStatus() == TrainStatus.MAINTENANCE) {
+                throw new IllegalStateException("Tàu " + train.getCode() + " đang bảo trì.");
             }
 
-            train.setStatus(TrainStatus.ON_TRIP);
-            trainRepository.save(train);
+            // KHÔNG ĐẶT ON_TRIP NỮA. Tàu vẫn AVAILABLE cho đến khi chạy.
+            // train.setStatus(TrainStatus.ON_TRIP);
+            // trainRepository.save(train);
         }
 
         if(trip.getStatus() == null) {
@@ -86,11 +82,11 @@ public class TripServiceImpl implements TripService {
 
         return tripRepository.save(trip);
     }
+    // ===================================
 
     @Override
     @Transactional
     public void deleteTrip(Long id) {
-        // (Code hàm này giữ nguyên)
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Chuyến (Trip) ID: " + id));
 
@@ -106,7 +102,6 @@ public class TripServiceImpl implements TripService {
             List<Ticket> tickets = ticketRepository.findByBooking(booking);
             ticketRepository.deleteAll(tickets);
 
-            // Sửa logic (nếu dùng Order)
             if(booking.getOrder() != null) {
                 List<Payment> payments = paymentRepository.findByOrder(booking.getOrder());
                 paymentRepository.deleteAll(payments);
@@ -124,7 +119,6 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public List<Trip> findTripsByRouteAndDate(Route route, LocalDate departureDate) {
-        // (Code hàm này giữ nguyên)
         LocalDateTime startTime = departureDate.atStartOfDay();
         LocalDateTime endTime = departureDate.atTime(23, 59, 59);
         return tripRepository.findAllByRouteAndDepartureTimeBetween(route, startTime, endTime);
@@ -133,7 +127,6 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public void updateTripStatus(Long tripId, TripStatus newStatus) {
-        // (Code hàm này giữ nguyên)
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Chuyến (Trip) ID: " + tripId));
 
@@ -147,7 +140,7 @@ public class TripServiceImpl implements TripService {
             case COMPLETED:
                 trip.setStatus(TripStatus.COMPLETED);
                 if (train != null) {
-                    train.setStatus(TrainStatus.AVAILABLE);
+                    train.setStatus(TrainStatus.AVAILABLE); // Tàu rảnh
                     trainRepository.save(train);
                 }
                 for (Booking booking : bookings) {
@@ -166,7 +159,7 @@ public class TripServiceImpl implements TripService {
             case CANCELLED:
                 trip.setStatus(TripStatus.CANCELLED);
                 if (train != null) {
-                    train.setStatus(TrainStatus.AVAILABLE);
+                    train.setStatus(TrainStatus.AVAILABLE); // Tàu rảnh
                     trainRepository.save(train);
                 }
                 for (Booking booking : bookings) {
@@ -178,7 +171,7 @@ public class TripServiceImpl implements TripService {
                         ticketRepository.save(ticket);
                     }
                     Seat seat = booking.getSeat();
-                    seat.setStatus(SeatStatus.AVAILABLE);
+                    seat.setStatus(SeatStatus.AVAILABLE); // Trả ghế
                     seatRepository.save(seat);
                 }
                 break;
@@ -190,18 +183,18 @@ public class TripServiceImpl implements TripService {
             case IN_PROGRESS:
                 trip.setStatus(TripStatus.IN_PROGRESS);
                 if (train != null && train.getStatus() != TrainStatus.ON_TRIP) {
-                    train.setStatus(TrainStatus.ON_TRIP);
+                    train.setStatus(TrainStatus.ON_TRIP); // Tàu bận
                     trainRepository.save(train);
                 }
                 break;
 
+            // ===== SỬA LOGIC NÀY =====
             case UPCOMING:
                 trip.setStatus(TripStatus.UPCOMING);
-                if (train != null && train.getStatus() != TrainStatus.ON_TRIP) {
-                    train.setStatus(TrainStatus.ON_TRIP);
-                    trainRepository.save(train);
-                }
+                // KHÔNG set Tàu thành ON_TRIP khi chuyến đi SẮP DIỄN RA
+                // (Tàu vẫn AVAILABLE)
                 break;
+            // =========================
         }
 
         tripRepository.save(trip);

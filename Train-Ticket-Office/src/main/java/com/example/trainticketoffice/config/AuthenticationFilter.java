@@ -13,33 +13,32 @@ import java.util.List;
 @Component
 public class AuthenticationFilter implements Filter {
 
-    // ===== SỬA LOGIC KIỂM TRA PATH =====
-
-    // 1. Các đường dẫn phải khớp CHÍNH XÁC (Trang chủ, login, trang lỗi)
+    // 1. Các đường dẫn phải khớp CHÍNH XÁC
     private final List<String> publicExactPaths = List.of(
             "/",
             "/login",
             "/error"
     );
 
-    // 2. Các đường dẫn chỉ cần khớp TIỀN TỐ (Thư mục tĩnh)
+    // 2. Các đường dẫn chỉ cần khớp TIỀN TỐ
     private final List<String> publicPrefixPaths = List.of(
             "/images/",
             "/css/",
-            "/js/" // Thêm nếu bạn có
+            "/js/"
     );
 
-    // 3. Các đường dẫn của Admin (yêu cầu quyền STAFF)
     private final List<String> adminPaths = List.of(
             "/admin",
             "/routes",
-            "/trips",   // (Trừ /trips/search và /trips/all)
+            "/trips",
             "/stations",
-            "/trains",  // (Trừ /trains/all)
+            "/trains",
             "/carriages",
-            "/seats",
             "/users",
-            "/tickets"
+            "/tickets",
+            "/seat-types",
+            "/seats",
+            "/admin/refunds"
     );
 
     // Hàm kiểm tra Admin path (đã xử lý ngoại lệ)
@@ -53,13 +52,11 @@ public class AuthenticationFilter implements Filter {
         return adminPaths.stream().anyMatch(path -> requestURI.startsWith(path));
     }
 
-    // Hàm kiểm tra Public path (ĐÃ SỬA)
+    // Hàm kiểm tra Public path
     private boolean isPublicPath(String requestURI) {
-        // Kiểm tra khớp chính xác
         if (publicExactPaths.contains(requestURI)) {
             return true;
         }
-        // Kiểm tra khớp tiền tố
         for (String prefix : publicPrefixPaths) {
             if (requestURI.startsWith(prefix)) {
                 return true;
@@ -67,9 +64,6 @@ public class AuthenticationFilter implements Filter {
         }
         return false;
     }
-
-    // ======================================
-
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
@@ -79,43 +73,49 @@ public class AuthenticationFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) servletResponse;
         String requestURI = request.getRequestURI();
 
-        // 1. Kiểm tra xem đây có phải là đường dẫn công khai không
+        // 1. Cho phép tất cả các trang Public (/, /login, /images...)
         if (isPublicPath(requestURI)) {
-            // Nếu là public (login, /, /images/...) -> Cho qua
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
 
         // 2. Kiểm tra Session (Từ đây, mọi trang đều yêu cầu login)
         HttpSession session = request.getSession(false);
-
         if (session == null || session.getAttribute("userLogin") == null) {
-            // Chưa đăng nhập -> Đá về trang login
             response.sendRedirect("/login");
             return;
         }
 
-        // 3. Đã đăng nhập -> Lấy User và Phân quyền
+        // 3. ĐÃ ĐĂNG NHẬP
+
+        // ===== SỬA LỖI LOGOUT Ở ĐÂY =====
+        // Cho phép /logout đi qua để đến LoginController
+        if (requestURI.startsWith("/logout")) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+        // ================================
+
         User user = (User) session.getAttribute("userLogin");
         boolean isRequestingAdminPath = isAdminPath(requestURI);
 
         if (user.getRole() == User.Role.STAFF) {
-            // Người dùng là STAFF
-            if (!isRequestingAdminPath && !requestURI.startsWith("/logout")) {
-                // STAFF cố vào trang customer (ví dụ /bookings)
+            // (STAFF)
+            if (!isRequestingAdminPath) {
+                // Nếu Staff cố vào trang customer (như /bookings) -> Về dashboard admin
                 response.sendRedirect("/admin/dashboard");
                 return;
             }
         } else {
-            // Người dùng là CUSTOMER
+            // (CUSTOMER)
             if (isRequestingAdminPath) {
-
-                response.sendRedirect("/"); // Về trang chủ customer
+                // Nếu Customer cố vào trang admin (/admin, /routes...) -> Về trang chủ customer
+                response.sendRedirect("/");
                 return;
             }
         }
 
-        // Cho phép truy cập (logout, hoặc đã đúng quyền)
+        // (Nếu đúng quyền: Staff vào admin, Customer vào /bookings...)
         filterChain.doFilter(servletRequest, servletResponse);
     }
 }

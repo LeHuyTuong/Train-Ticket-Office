@@ -2,9 +2,7 @@ package com.example.trainticketoffice.model;
 
 import com.example.trainticketoffice.common.SeatStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.math.BigDecimal;
 
@@ -26,17 +24,10 @@ public class Seat extends BaseEntity {
     private Carriage carriage;
 
     @NotBlank(message = "Seat number is mandatory")
-    @Column(name = "seat_number", nullable = false, columnDefinition = "NVARCHAR(20)")
+    @Column(name = "seat_number", nullable = false, columnDefinition = "nvarchar(10)") // Hỗ trợ NVARCHAR
     private String seatNumber;
 
-    @NotBlank(message = "Seat type is mandatory")
-    @Column(nullable = false, columnDefinition = "NVARCHAR(50)")
-    private String seatType; // "normal", "vip"
-
-    @NotNull(message = "Price is mandatory")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Price must be >= 0")
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
+    // (Price và SeatType đã bị xóa, vì chúng ta lấy từ Toa (Carriage)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

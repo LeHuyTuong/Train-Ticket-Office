@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
+    <title th:text="${seatType.id != null ? 'Chỉnh Sửa Loại Ghế' : 'Thêm Loại Ghế Mới'}">Form Loại Ghế</title>
+    <style>
+        body { background: url('/images/train01.jpg') center/cover no-repeat fixed; font-family: 'Montserrat', sans-serif; }
+        .form-container { backdrop-filter: blur(12px); background: rgba(255,255,255,0.2); border-radius: 16px; padding: 40px; margin-top: 30px; max-width: 700px; margin-left: auto; margin-right: auto; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+        .page-title { font-weight: 700; font-size: 30px; color: #004a99; margin-bottom: 25px; }
+        label { font-weight: 600; color: #333; }
+        .form-control, .form-select { border-radius: 10px; padding: 10px 12px; border: 1px solid #cfd9e0; width: 100%; margin-top: 5px; margin-bottom: 18px; font-size: 0.95rem; }
+        .btn { padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: all 0.25s ease; }
+        .btn-success { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="form-container">
+        <h2 class="page-title" th:text="${seatType.id != null ? 'Chỉnh Sửa Loại Ghế' : 'Thêm Loại Ghế Mới'}">Form Loại Ghế</h2>
+
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <form th:action="@{/seat-types/save}" th:object="${seatType}" method="post">
+            <input type="hidden" th:field="*{id}">
+
+            <div>
+                <label>Tên Loại Ghế</label>
+                <input type="text" th:field="*{name}" class="form-control" placeholder="VD: Ngồi mềm điều hòa" required>
+            </div>
+
+            <div>
+                <label>Đơn Giá (VND / 1 KM)</label>
+                <input type="number" th:field="*{pricePerKm}" class="form-control" placeholder="VD: 700" required>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">Lưu Loại Ghế</button>
+                <a th:href="@{/seat-types}" class="btn btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

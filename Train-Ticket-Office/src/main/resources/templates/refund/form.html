@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_customer_layout}">
+<head>
+    <title>Yêu Cầu Hoàn Vé</title>
+    <style>
+        .form-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .ticket-summary {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .ticket-summary h5 {
+            font-weight: 700;
+            color: #004a99;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="form-container">
+        <h2 class="page-title">Yêu Cầu Hoàn Vé</h2>
+
+        <div class="ticket-summary" th:object="${refundRequest.booking}">
+            <h5>Thông Tin Vé Cần Hoàn</h5>
+            <p class="mb-1">
+                <strong>Mã vé:</strong> <span th:text="*{bookingId}"></span>
+            </p>
+            <p class="mb-1">
+                <strong>Chuyến:</strong>
+                <span th:text="*{trip.train.code}"></span>
+                (<span th:text="*{trip.departureStation}"></span>
+                →
+                <span th:text="*{trip.arrivalStation}"></span>)
+            </p>
+            <p class="mb-1">
+                <strong>Ghế:</strong> <span th:text="|*{seat.carriage.name} (*{seat.seatNumber})|"></span>
+            </p>
+
+            <p class="mb-0">
+                <strong>Giá vé đã thanh toán:</strong>
+                <span class="fw-bold text-danger" th:text="${#numbers.formatDecimal(price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></span>
+            </p>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Lưu ý:</strong> Yêu cầu hoàn vé sẽ được Admin xử lý. Vé của bạn sẽ bị khóa lại (chuyển sang trạng thái "Chờ hoàn vé") trong thời gian này.
+        </div>
+
+        <form th:action="@{/refund/request}" th:object="${refundRequest}" method="POST">
+
+            <input type="hidden" th:field="*{booking.bookingId}" />
+
+            <div class="mb-3">
+                <label for="bankName" class="form-label fw-bold">Tên Ngân Hàng</label>
+                <input type="text" th:field="*{bankName}" id="bankName" class="form-control" placeholder="VD: Vietcombank, Techcombank..." required>
+            </div>
+
+            <div class="mb-3">
+                <label for="accountHolderName" class="form-label fw-bold">Tên Chủ Tài Khoản</label>
+                <input type="text" th:field="*{accountHolderName}" id="accountHolderName" class="form-control" placeholder="Tên in trên thẻ, viết hoa không dấu" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="bankAccountNumber" class="form-label fw-bold">Số Tài Khoản</label>
+                <input type="text" th:field="*{bankAccountNumber}" id="bankAccountNumber" class="form-control" placeholder="Nhập chính xác số tài khoản" required>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-danger">Xác Nhận Yêu Cầu Hoàn Vé</button>
+                <a th:href="@{/bookings}" class="btn btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

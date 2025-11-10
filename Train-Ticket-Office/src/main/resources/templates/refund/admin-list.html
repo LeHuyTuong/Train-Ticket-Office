@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/_admin_layout}">
+<head>
+    <title>Duyệt Yêu Cầu Hoàn Vé</title>
+    <style>
+        /* (CSS cho trang Admin) */
+        .container-card { backdrop-filter: blur(12px); background: rgba(255,255,255,0.2); border-radius: 16px; padding: 30px 25px; margin: 30px auto; max-width: 1200px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+        .page-title { font-weight: 700; font-size: 30px; color: #004a99; margin-bottom: 20px; }
+        .btn { border-radius: 10px; font-weight: 600; transition: all 0.25s ease; border: none; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        table { background: rgba(255,255,255,0.85); border-radius: 10px; overflow: hidden; width: 100%; margin-bottom: 20px; }
+        table th, table td { padding: 12px 15px; text-align: left; vertical-align: middle; }
+        table th { background: linear-gradient(135deg,#009ffd,#2a2a72); color: #fff; }
+        table tr:hover { background: rgba(0,159,253,0.15); }
+        .bank-info { font-size: 0.9rem; color: #333; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-card">
+        <h2 class="page-title">Quản Lý Yêu Cầu Hoàn Vé</h2>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <div th:if="${#lists.isEmpty(refundRequests)}" class="alert alert-info">
+            Hiện không có yêu cầu hoàn vé nào đang chờ xử lý.
+        </div>
+
+        <div class="table-responsive" th:if="${not #lists.isEmpty(refundRequests)}">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <th>ID Yêu Cầu</th>
+                    <th>Thông Tin Vé</th>
+                    <th>Thông Tin Khách Hàng</th>
+                    <th>Thông Tin Ngân Hàng</th>
+                    <th>Hành Động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="refund : ${refundRequests}" th:object="${refund}">
+                    <td th:text="*{id}"></td>
+                    <td>
+                        <div><strong>Mã vé:</strong> <span th:text="*{booking.bookingId}"></span></div>
+                        <div><strong>Chuyến:</strong> <span th:text="*{booking.trip.train.code}"></span></div>
+                        <div><strong>Ghế:</strong> <span th:text="*{booking.seat.seatNumber}"></span></div>
+
+                        <div><strong>Giá:</strong> <span th:text="${#numbers.formatDecimal(booking.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></div>
+                    </td>
+                    <td>
+                        <div><strong>Tên:</strong> <span th:text="*{booking.passengerName}"></span></div>
+                        <div><strong>Email:</strong> <span th:text="*{booking.email}"></span></div>
+                        <div><strong>SĐT:</strong> <span th:text="*{booking.phone}"></span></div>
+                    </td>
+                    <td class="bank-info">
+                        <div><strong>Ngân hàng:</strong> <span th:text="*{bankName}"></span></div>
+                        <div><strong>Chủ TK:</strong> <span th:text="*{accountHolderName}"></span></div>
+                        <div><strong>STK:</strong> <span th:text="*{bankAccountNumber}"></span></div>
+                    </td>
+                    <td>
+                        <form th:action="@{/admin/refunds/approve/{id}(id=*{id})}" method="POST" class="d-inline-block mb-1">
+                            <button type="submit" class="btn btn-success btn-sm"
+                                    onclick="return confirm('Xác nhận duyệt hoàn vé này? Ghế sẽ được mở bán lại.')">
+                                <i class="bi bi-check-circle"></i> Duyệt
+                            </button>
+                        </form>
+
+                        <form th:action="@{/admin/refunds/reject/{id}(id=*{id})}" method="POST" class="d-inline-block">
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Bạn có chắc muốn từ chối yêu cầu này?')">
+                                <i class="bi bi-x-circle"></i> Từ chối
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">⬅ Quay Lại Dashboard</a>
+    </div>
+</div>
+</body>
+</html>
