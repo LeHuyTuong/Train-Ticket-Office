@@ -20,44 +20,55 @@
 <div layout:fragment="content">
     <h2 class="page-title">Xác Nhận & Thanh Toán Đơn Hàng</h2>
 
-    <div th:if="${successMessage}" class="alert alert-info" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <div class="card shadow-sm mb-4" th:object="${order}">
+    <div th:each="order : ${orders}" class="card shadow-sm mb-4">
         <div class="card-body">
-            <h5 class="card-title">Thông tin đơn hàng</h5>
-            <p class="mb-1"><strong>Mã đơn hàng:</strong> <span th:text="*{orderId}"></span></p>
-            <p class="mb-1"><strong>Số lượng vé:</strong> <span th:text="*{bookings.size()}"></span></p>
+            <h5 class="card-title">Chi Tiết Đơn Hàng: <span th:text="${order.orderId}"></span></h5>
+            <p class="mb-1"><strong>Số lượng vé:</strong> <span th:text="${order.bookings.size()}"></span></p>
 
-            <th:block th:if="*{!bookings.isEmpty()}" th:with="firstBooking=*{bookings[0]}">
+            <th:block th:if="${!order.bookings.isEmpty()}" th:with="firstBooking=${order.bookings[0]}">
                 <p class="mb-1"><strong>Hành khách:</strong> <span th:text="${firstBooking.passengerName}"></span></p>
                 <p class="mb-1"><strong>Chuyến đi:</strong>
                     <span th:text="${firstBooking.trip.departureStation + ' → ' + firstBooking.trip.arrivalStation}"></span>
                 </p>
                 <p class="mb-1"><strong>Loại vé (ví dụ):</strong>
-                    <span th:text="${firstBooking.seat.carriage.seatType.name}"></span>
+                    <span th:text="${firstBooking.seat.carriage.seatType != null ? firstBooking.seat.carriage.seatType.name : 'N/A'}"></span>
                 </p>
             </th:block>
 
-            <p class="mb-1"><strong>Tổng tiền:</strong>
+            <p class="mb-1"><strong>Tổng tiền (đơn này):</strong>
                 <span class="fw-bold text-danger fs-5"
                       th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'">
                 </span>
             </p>
         </div>
     </div>
+    <h4 class="mb-3">Thanh Toán Toàn Bộ</h4>
+    <p class="mb-1">
+        <strong>Tổng tiền (Tất cả đơn hàng):</strong>
+        <span class="fw-bold text-danger fs-5"
+              th:text="${#numbers.formatDecimal(totalGroupPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'">
+        </span>
+    </p>
 
-    <h4 class="mb-3">Chọn hình thức thanh toán</h4>
-
-    <form th:action="@{/payments/orders/{id}(id=${order.orderId})}" method="post" class="p-4">
-        <input type="hidden" name="orderInfo" th:value="${'Thanh toan don hang ' + order.orderId}">
+    <form th:action="@{/payments/orders/{id}(id=${primaryOrder.orderId})}" method="post" class="p-4">
+        <input type="hidden" name="orderInfo" th:value="${'Thanh toan don hang khứ hồi'}">
 
         <div class="mt-4 d-flex gap-2">
-            <button type="submit" class="vnpay-button">
+            <button type="submit" class="vnpay-button"
+                    th:if="${totalGroupPrice.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
                 <img th:src="@{/images/vnpay-logo.jpg}" alt="VNPay Logo">
                 Thanh toán ngay
             </button>
-            <a th:href="@{/bookings}" class="btn btn-secondary" style="padding: 15px 30px; font-size: 1.2rem;">Quay lại</a>
+
+            <a th:href="@{/bookings}" class="vnpay-button"
+               th:if="${totalGroupPrice.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+               style="background-color: #28a745; text-decoration: none;">
+                Xác nhận (Miễn phí)
+            </a>
+
+            <a th:href="@{/bookings}" class="btn btn-secondary" style="padding: 15px 30px; font-size: 1.2rem;">Hủy & Quay lại</a>
         </div>
     </form>
 </div>

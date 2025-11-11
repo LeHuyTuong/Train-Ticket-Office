@@ -38,4 +38,11 @@ public class Order extends BaseEntity {
 
     @Column(name = "order_time", nullable = false)
     private LocalDateTime orderTime;
+
+    /**
+     * Dùng để nhóm các đơn hàng (VD: lượt đi và lượt về)
+     * cho một lần thanh toán khứ hồi.
+     */
+    @Column(name = "round_trip_group_id", length = 64)
+    private String roundTripGroupId;
 }

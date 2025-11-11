@@ -5,8 +5,9 @@
 <head>
     <title>Kết Quả Tìm Kiếm</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <style>
-        /* (CSS giữ nguyên) */
         body {
             background: url('/images/train01.jpg') center/cover no-repeat fixed;
             font-family: 'Montserrat', sans-serif;
@@ -26,16 +27,130 @@
             color: #004a99;
             margin-bottom: 20px;
         }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-        thead th { background: rgba(0,0,0,0.05); font-weight: 600; padding: 12px; text-align: left; }
-        tbody td { background: rgba(255,255,255,0.8); padding: 12px; vertical-align: middle; border-radius: 8px; }
-        tbody tr:hover td { background: rgba(255,255,255,0.95); }
-        .badge { font-weight: 600; padding: 0.4em 0.7em; border-radius: 0.5rem; }
-        .btn { padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: all 0.25s ease; }
-        .btn-primary { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; }
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
-        .btn-secondary { background: #e0e0e0; color: #333; }
-        .btn-secondary:hover { opacity: 0.9; transform: translateY(-2px); }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        thead th {
+            background: rgba(0,0,0,0.05);
+            font-weight: 600;
+            padding: 12px 15px;
+            text-align: left;
+            border-radius: 8px; /* Thêm bo góc cho header */
+        }
+        tbody td {
+            background: rgba(255,255,255,0.8);
+            padding: 12px 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(0,0,0,0.02); /* Thêm đường kẻ mờ */
+            border-top: 1px solid rgba(0,0,0,0.02);
+        }
+        tbody tr:hover td {
+            background: rgba(255,255,255,0.95);
+        }
+        /* Style cho cell đầu và cuối của 1 hàng */
+        tbody td:first-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+        tbody td:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .badge {
+            font-weight: 600;
+            padding: 0.4em 0.7em;
+            border-radius: 0.5rem;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s ease;
+            text-decoration: none; /* Thêm cho thẻ <a> */
+            display: inline-block; /* Thêm cho thẻ <a> */
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #009ffd, #2a2a72);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn.disabled, .btn:disabled {
+            background: #ccc;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* CSS RESPONSIVE CHO TABLE */
+        @media (max-width: 768px) {
+            .content-container {
+                padding: 20px;
+                margin: 20px auto;
+            }
+            thead {
+                display: none; /* Ẩn header của bảng */
+            }
+            table {
+                border-spacing: 0 15px; /* Tăng khoảng cách giữa các 'card' */
+            }
+            tbody tr {
+                display: block; /* Chuyển hàng thành block */
+                width: 100%;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.85);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                margin-bottom: 15px; /* Thay cho border-spacing */
+            }
+            tbody td {
+                display: flex; /* Dùng flex để căn label và value */
+                justify-content: space-between; /* Đẩy value sang phải */
+                align-items: center;
+                padding: 12px 15px;
+                text-align: right; /* Căn phải cho value */
+                background: none; /* Tắt background riêng của td */
+                border: none; /* Bỏ border riêng */
+                border-bottom: 1px solid rgba(0,0,0,0.05); /* Thêm border ngăn cách */
+            }
+            tbody tr:hover td {
+                background: none; /* Tắt hover effect của td */
+            }
+            tbody td:first-child { border-radius: 0; }
+            tbody td:last-child {
+                border-bottom: none; /* Bỏ border cho cell cuối */
+                justify-content: center; /* Căn giữa cho nút */
+                padding: 15px;
+                border-radius: 0;
+            }
+            tbody td::before {
+                content: attr(data-label); /* Lấy nội dung từ data-label */
+                font-weight: 600;
+                text-align: left; /* Căn trái cho label */
+                margin-right: 10px;
+                color: #333;
+            }
+            /* Cell cuối (chứa nút) không cần label */
+            tbody td:last-child::before {
+                content: none;
+            }
+            .btn {
+                width: 100%; /* Nút full-width trên mobile */
+                box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
+            }
+        }
     </style>
 </head>
 <body>
@@ -43,11 +158,16 @@
     <div class="content-container">
         <h2 class="page-title">
             Chuyến: <span th:text="${startStation.name}">Ga Đi</span>
-            → <span th:text="${endStation.name}">Ga Đến</span>
+            <i class="bi bi-arrow-right-short"></i>
+            <span th:text="${endStation.name}">Ga Đến</span>
         </h2>
 
         <div th:if="${#lists.isEmpty(availableTrips)}" class="alert alert-warning">
             Không tìm thấy chuyến tàu nào phù hợp với tuyến đường của bạn.
+        </div>
+
+        <div th:if="${selectingReturnLeg}" class="alert alert-info">
+            Bạn đang chọn vé cho <strong>lượt về</strong>. Sau khi hoàn tất bước này, cả hai chiều sẽ được gộp chung trong đơn hàng.
         </div>
 
         <div th:if="${not #lists.isEmpty(availableTrips)}">
@@ -60,8 +180,7 @@
                     <th>Giờ Đến</th>
                     <th>Ghế Trống</th>
                     <th>Giá từ (VNĐ)</th>
-                    <th></th>
-                </tr>
+                    <th></th> </tr>
                 </thead>
                 <tbody>
                 <tr th:each="trip : ${availableTrips}">
@@ -74,11 +193,15 @@
                         <span th:text="|Thường: ${availableNormalCounts[trip.tripId]}|" class="badge bg-light text-dark"></span>
                     </td>
 
-                    <td class="align-middle" data-label="Giá từ (VNĐ)" th:text="${#numbers.formatDecimal(tripMinPrices[trip.tripId], 0, 'COMMA', 0, 'POINT')}"></td>
-                    <td class="text-end" data-label="">
+                    <td class="align-middle" data-label="Giá từ" th:text="${#numbers.formatDecimal(tripMinPrices[trip.tripId], 0, 'COMMA', 0, 'POINT')}"></td>
 
+                    <td class="text-end">
                         <th:block th:with="totalAvailable=${availableVipCounts[trip.tripId] + availableNormalCounts[trip.tripId]}">
-                            <a th:href="@{/bookings/new(tripId=${trip.tripId})}" class="btn btn-primary" th:classappend="${totalAvailable == 0} ? 'disabled' : ''">
+
+                            <a th:href="@{/bookings/new(tripId=${trip.tripId}, context=${bookingContext})}"
+                               class="btn btn-primary"
+                               th:classappend="${totalAvailable == 0} ? 'disabled' : ''">
+
                                 <span th:if="${totalAvailable > 0}">Chọn Ghế & Đặt Vé</span>
                                 <span th:if="${totalAvailable == 0}">Hết Vé</span>
                                 <i class="bi bi-chevron-right" th:if="${totalAvailable > 0}"></i>

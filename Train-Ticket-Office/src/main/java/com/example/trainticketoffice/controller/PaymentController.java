@@ -9,6 +9,7 @@ import com.example.trainticketoffice.service.BookingService;
 import com.example.trainticketoffice.service.PaymentService;
 import com.example.trainticketoffice.repository.OrderRepository; // THÊM
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,7 +33,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final BookingService bookingService;
-    private final OrderRepository orderRepository; // THÊM
+    private final OrderRepository orderRepository;
 
 
     @GetMapping("/orders/{orderId}")
@@ -73,21 +76,31 @@ public class PaymentController {
         }
     }
 
+    /**
+     * SỬA LẠI (Truyền session vào service)
+     */
     @GetMapping("/vnpay-return")
-    public String handleVnpayReturn(HttpServletRequest request, Model model) {
+    public String handleVnpayReturn(HttpServletRequest request, Model model,
+                                    HttpSession session) { // Nhận session
         Map<String, String> params = new HashMap<>();
         request.getParameterMap().forEach((key, value) -> params.put(key, value[0]));
 
         try {
-            Payment payment = paymentService.handleVnpayReturn(params);
+            // ===== SỬA DÒNG NÀY =====
+            // Truyền session vào service để service tự dọn dẹp
+            Payment payment = paymentService.handleVnpayReturn(params, session);
+            // ========================
+
             boolean isSuccess = payment.getStatus() == PaymentStatus.SUCCESS;
+
+            // (XÓA KHỐI IF DỌN DẸP SESSION Ở ĐÂY)
 
             String transactionNo = payment.getVnpTransactionNo() != null
                     ? payment.getVnpTransactionNo()
                     : payment.getTransactionRef();
 
             model.addAttribute("transactionNo", transactionNo);
-            model.addAttribute("orderId", payment.getOrder().getOrderId()); // Sửa: Lấy OrderId
+            model.addAttribute("orderId", payment.getOrder().getOrderId());
             model.addAttribute("bankCode", payment.getBankCode());
             model.addAttribute("amount", payment.getAmount());
             model.addAttribute("payDate", payment.getPayDate());
@@ -101,6 +114,7 @@ public class PaymentController {
         }
     }
 
+    // (Hàm này đã OK - Giữ nguyên)
     private String resolveClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {

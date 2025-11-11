@@ -1,6 +1,7 @@
 package com.example.trainticketoffice.service;
 
 import com.example.trainticketoffice.model.Payment;
+import jakarta.servlet.http.HttpSession; // <-- THÊM IMPORT
 
 import java.util.Map;
 
@@ -13,6 +14,7 @@ public interface PaymentService {
                                     String locale,
                                     String clientIp);
 
-    Payment handleVnpayReturn(Map<String, String> vnpayParams);
-
+    // ===== SỬA HÀM NÀY (THÊM SESSION) =====
+    Payment handleVnpayReturn(Map<String, String> vnpayParams, HttpSession session);
+    // =====================================
 }
