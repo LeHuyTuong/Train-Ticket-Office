@@ -29,6 +29,17 @@ public class LoginController {
                 return "redirect:/login";
             }
             session.setAttribute("userLogin", user);
+
+            // ===== LOGIC CHUYỂN HƯỚNG NÂNG CAO =====
+            String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+
+            if (redirectUrl != null && !redirectUrl.isBlank()) {
+                session.removeAttribute("redirectAfterLogin"); // Xóa session
+                return "redirect:" + redirectUrl; // Chuyển đến nơi khách muốn
+            }
+            // ======================================
+
+
             if (user.getRole() == User.Role.STAFF) {
                 return "redirect:/admin/dashboard";
             } else {

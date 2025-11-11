@@ -1,5 +1,6 @@
 package com.example.trainticketoffice.repository;
 
+import com.example.trainticketoffice.common.TripStatus; // <-- THÊM
 import com.example.trainticketoffice.model.Route;
 import com.example.trainticketoffice.model.Trip;
 import org.springframework.data.domain.Page; // <-- THÊM
@@ -20,5 +21,5 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     Page<Trip> findByRoute_StartStation_IdOrRoute_EndStation_Id(Integer startStationId, Integer endStationId, Pageable pageable);
 
-
+    Page<Trip> findByStatusIn(List<TripStatus> statuses, Pageable pageable);
 }

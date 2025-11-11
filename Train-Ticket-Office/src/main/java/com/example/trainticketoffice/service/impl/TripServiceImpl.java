@@ -31,7 +31,10 @@ import java.util.stream.Collectors; // <-- THÊM
 @Service
 public class TripServiceImpl implements TripService {
 
-    public static final int TRIPS_PER_PAGE = 5;
+    // SỬA LẠI: 10 chuyến / trang cho Admin
+    public static final int TRIPS_PER_PAGE = 10;
+    // THÊM MỚI: 10 chuyến / trang cho Customer
+    public static final int CUSTOMER_TRIPS_PER_PAGE = 10;
 
     // Các repo đã có
     @Autowired
@@ -169,20 +172,30 @@ public class TripServiceImpl implements TripService {
     /**
      * Logic lấy tất cả chuyến sắp đi, tính giá, đếm vé
      * (Đã ở trong Service Layer)
+     * SỬA LẠI: Thêm tham số pageNum
      */
     @Override
-    public Map<String, Object> getAllAvailableTripsForDisplay() {
+    public Map<String, Object> getAllAvailableTripsForDisplay(int pageNum) {
         Map<String, Object> modelData = new HashMap<>();
 
-        List<Trip> allTrips = tripRepository.findAll().stream()
-                .filter(trip -> trip.getStatus() == TripStatus.UPCOMING || trip.getStatus() == TripStatus.DELAYED)
-                .collect(Collectors.toList());
+        // THÊM MỚI: Tạo đối tượng Pageable
+        Pageable pageable = PageRequest.of(pageNum - 1, CUSTOMER_TRIPS_PER_PAGE);
+
+        // SỬA LẠI: Lấy 1 trang (Page) thay vì tất cả (List)
+        Page<Trip> tripPage = tripRepository.findByStatusIn(
+                List.of(TripStatus.UPCOMING, TripStatus.DELAYED),
+                pageable
+        );
+
+        // Lấy danh sách chuyến đi trong trang hiện tại
+        List<Trip> tripsOnPage = tripPage.getContent();
 
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
 
-        for (Trip trip : allTrips) {
+        // SỬA LẠI: Chỉ lặp qua các chuyến trong trang này
+        for (Trip trip : tripsOnPage) {
             Station startStation = trip.getRoute().getStartStation();
             Station endStation = trip.getRoute().getEndStation();
 
@@ -232,7 +245,8 @@ public class TripServiceImpl implements TripService {
             tripMinPrices.put(trip.getTripId(), minPriceInTrip != null ? minPriceInTrip : BigDecimal.ZERO);
         }
 
-        modelData.put("availableTrips", allTrips);
+        // SỬA LẠI: Trả về Page object và các Map
+        modelData.put("tripPage", tripPage); // <-- Gửi cả đối tượng Page
         modelData.put("availableVipCounts", availableVipCounts);
         modelData.put("availableNormalCounts", availableNormalCounts);
         modelData.put("tripMinPrices", tripMinPrices);
