@@ -2,10 +2,12 @@ package com.example.trainticketoffice.service.impl;
 
 import com.example.trainticketoffice.common.BookingStatus;
 import com.example.trainticketoffice.common.PaymentStatus;
+import com.example.trainticketoffice.common.ResourceNotFoundException;
 import com.example.trainticketoffice.common.SeatStatus;
 import com.example.trainticketoffice.model.*; // (Dùng *)
 import com.example.trainticketoffice.repository.*;
 import com.example.trainticketoffice.service.BookingService;
+import com.example.trainticketoffice.service.SeatService; // <-- THÊM
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,17 +18,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Period; // THÊM
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors; // <-- THÊM
 
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor // Sử dụng @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
     private static final int HOLD_DURATION_MINUTES = 15;
     private static final BigDecimal HOLIDAY_SURCHARGE_RATE = new BigDecimal("1.20");
 
+    // Các repo/service đã inject qua @RequiredArgsConstructor
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
@@ -34,6 +36,10 @@ public class BookingServiceImpl implements BookingService {
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final SeatService seatService; // <-- THÊM (từ BookingController)
+    private final StationRepository stationRepository; // <-- THÊM (từ BookingController)
+    private final SeatTypeRepository seatTypeRepository; // <-- THÊM (từ BookingController)
+
 
     private boolean isHoliday(LocalDate date) {
         if (date.getMonth() == Month.JANUARY && date.getDayOfMonth() == 1) return true;
@@ -67,15 +73,149 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
+    // ===== HÀM LOGIC MỚI (CHUYỂN TỪ CONTROLLER) =====
+
+    @Override
+    @Transactional(rollbackOn = Exception.class) // Đảm bảo rollback nếu có lỗi
+    public Map<String, Object> getBookingFormDetails(Long tripId, User currentUser) {
+        Map<String, Object> modelData = new HashMap<>();
+
+        Trip selectedTrip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyến đi"));
+
+        // Hủy vé hết hạn
+        autoCancelExpiredBookingsForTrip(tripId);
+
+        Train train = selectedTrip.getTrain();
+        List<Carriage> carriages = train.getCarriages();
+        List<Seat> allSeatsOnTrain = seatService.getAllSeats().stream()
+                .filter(s -> s.getCarriage().getTrain().getId().equals(train.getId()))
+                .collect(Collectors.toList());
+
+        Station startStation = selectedTrip.getRoute().getStartStation();
+        Station endStation = selectedTrip.getRoute().getEndStation();
+
+        if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) {
+            throw new IllegalStateException("Lỗi cấu hình: Ga chưa có thông tin KM.");
+        }
+        int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
+        if (distanceKm == 0) distanceKm = 20;
+
+        boolean isTripOnHoliday = isHoliday(selectedTrip.getDepartureTime().toLocalDate());
+        BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
+
+        Map<Long, BigDecimal> seatPrices = new HashMap<>();
+        for (Seat seat : allSeatsOnTrain) {
+            SeatType seatType = seat.getCarriage().getSeatType();
+            if (seatType != null && seatType.getPricePerKm() != null) {
+                BigDecimal basePrice = seatType.getPricePerKm().multiply(BigDecimal.valueOf(distanceKm));
+                BigDecimal priceWithSurcharge = basePrice.multiply(currentSurchargeRate);
+                priceWithSurcharge = priceWithSurcharge.setScale(0, RoundingMode.HALF_UP);
+                seatPrices.put(seat.getSeatId(), priceWithSurcharge);
+            } else {
+                // Giá lỗi để dễ nhận biết
+                seatPrices.put(seat.getSeatId(), BigDecimal.valueOf(999999));
+            }
+        }
+
+        List<Booking> allBookingsForTrip = bookingRepository.findAllByTrip_TripIdAndStatusIn(
+                tripId, List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
+        );
+
+        List<Long> paidSeatIds = allBookingsForTrip.stream()
+                .filter(b -> b.getStatus() == BookingStatus.PAID || b.getStatus() == BookingStatus.COMPLETED)
+                .map(booking -> booking.getSeat().getSeatId())
+                .collect(Collectors.toList());
+
+        List<Long> pendingSeatIds = allBookingsForTrip.stream()
+                .filter(b -> b.getStatus() == BookingStatus.BOOKED)
+                .map(booking -> booking.getSeat().getSeatId())
+                .collect(Collectors.toList());
+
+        modelData.put("selectedTrip", selectedTrip);
+        modelData.put("carriages", carriages);
+        modelData.put("allSeats", allSeatsOnTrain);
+        modelData.put("seatPrices", seatPrices);
+        modelData.put("paidSeatIds", paidSeatIds);
+        modelData.put("pendingSeatIds", pendingSeatIds);
+        modelData.put("currentUser", currentUser);
+        modelData.put("isHoliday", isTripOnHoliday);
+        modelData.put("surchargeRate", HOLIDAY_SURCHARGE_RATE);
+
+        return modelData;
+    }
+
+    @Override
+    public BookingRequest preparePassengerDetails(Long tripId, List<Long> seatIds, User currentUser) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyến đi."));
+
+        Station startStation = trip.getRoute().getStartStation();
+        Station endStation = trip.getRoute().getEndStation();
+        int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
+        if (distanceKm == 0) distanceKm = 20;
+
+        boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
+        BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setTripId(tripId);
+        // (Context sẽ được set ở Controller)
+
+        for (Long seatId : seatIds) {
+            Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Ghế không hợp lệ: " + seatId));
+
+            SeatType seatType = seat.getCarriage().getSeatType();
+            BigDecimal basePrice = seatType.getPricePerKm().multiply(BigDecimal.valueOf(distanceKm));
+            if (isTripOnHoliday) {
+                basePrice = basePrice.multiply(currentSurchargeRate);
+            }
+
+            PassengerInfo passenger = new PassengerInfo();
+            passenger.setSeatId(seat.getSeatId());
+            passenger.setSeatNumber(seat.getSeatNumber() + " (Toa " + seat.getCarriage().getName() + ")");
+            passenger.setSeatTypeName(seatType.getName());
+            passenger.setBasePrice(basePrice.setScale(0, RoundingMode.HALF_UP));
+
+            // Set thông tin người dùng hiện tại cho hành khách ĐẦU TIÊN
+            if (bookingRequest.getPassengers().isEmpty()) {
+                passenger.setPassengerName(currentUser.getFullName());
+                passenger.setPhone(currentUser.getPhone());
+                passenger.setEmail(currentUser.getEmail());
+            }
+
+            bookingRequest.getPassengers().add(passenger);
+        }
+
+        return bookingRequest;
+    }
+
     @Override
     @Transactional
     public Order createOrder(BookingRequest bookingRequest, User user) {
+        // Đây là hàm cũ, gọi hàm mới với groupId = null
+        return createOrder(bookingRequest, user, null);
+    }
+
+
+    /**
+     * HÀM TẠO ORDER ĐÃ REFACTOR (thêm roundTripGroupId)
+     */
+    @Override
+    @Transactional
+    public Order createOrder(BookingRequest bookingRequest, User user, String roundTripGroupId) {
 
         Trip trip = tripRepository.findById(bookingRequest.getTripId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chuyến đi: " + bookingRequest.getTripId()));
 
-        Station startStation = trip.getRoute().getStartStation();
-        Station endStation = trip.getRoute().getEndStation();
+        // (Sử dụng stationRepository đã tiêm)
+        Station startStation = stationRepository.findById(trip.getRoute().getStartStation().getId())
+                .orElseThrow(() -> new IllegalStateException("Lỗi cấu hình: Ga đi không tồn tại"));
+        Station endStation = stationRepository.findById(trip.getRoute().getEndStation().getId())
+                .orElseThrow(() -> new IllegalStateException("Lỗi cấu hình: Ga đến không tồn tại"));
+
+
         if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) {
             throw new IllegalStateException("Lỗi cấu hình: Ga chưa có thông tin KM.");
         }
@@ -87,6 +227,7 @@ public class BookingServiceImpl implements BookingService {
         order.setOrderTime(LocalDateTime.now());
         order.setStatus(PaymentStatus.PENDING);
         order.setTotalPrice(BigDecimal.ZERO);
+        order.setRoundTripGroupId(roundTripGroupId); // <-- GÁN GROUP ID
         Order savedOrder = orderRepository.save(order);
 
         BigDecimal calculatedTotalPrice = BigDecimal.ZERO;
@@ -95,16 +236,23 @@ public class BookingServiceImpl implements BookingService {
 
         //validation
         for (PassengerInfo passenger : bookingRequest.getPassengers()) {
+            // 1. Validate tuổi
             validateAge(passenger.getPassengerType(), passenger.getDob());
+
+            // 2. Lấy thông tin ghế, toa, loại ghế
             Seat seat = seatRepository.findById(passenger.getSeatId())
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ghế: " + passenger.getSeatId()));
             Carriage carriage = seat.getCarriage();
-            SeatType seatType = carriage.getSeatType();
-            if (seatType == null || seatType.getPricePerKm() == null) {
+            // (Sử dụng seatTypeRepository đã tiêm)
+            SeatType seatType = seatTypeRepository.findById(carriage.getSeatType().getId())
+                    .orElseThrow(() -> new IllegalStateException("Lỗi cấu hình: Loại ghế không tồn tại"));
+
+            if (seatType.getPricePerKm() == null) {
                 throw new IllegalStateException("Lỗi cấu hình: Toa " + carriage.getName() + " chưa có Loại Ghế/Giá.");
             }
             BigDecimal pricePerKm = seatType.getPricePerKm();
 
+            // 3. Kiểm tra logic nghiệp vụ (ghế đã bị đặt?)
             if (seat.getStatus() == SeatStatus.BOOKED) {
                 throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã bị đặt mất. Vui lòng thử lại.");
             }
@@ -112,6 +260,7 @@ public class BookingServiceImpl implements BookingService {
                 throw new IllegalStateException("Ghế " + seat.getSeatNumber() + " đã bị giữ chỗ.");
             }
 
+            // 4. Tạo Booking
             Booking booking = new Booking();
             booking.setUser(user);
             booking.setTrip(trip);
@@ -125,6 +274,8 @@ public class BookingServiceImpl implements BookingService {
             booking.setDob(passenger.getDob());
             booking.setStatus(BookingStatus.BOOKED);
             booking.setBookingTime(LocalDateTime.now());
+
+            // 5. Tính giá
             BigDecimal basePrice = pricePerKm.multiply(BigDecimal.valueOf(distanceKm));
             if (isTripOnHoliday) {
                 basePrice = basePrice.multiply(HOLIDAY_SURCHARGE_RATE);
@@ -138,6 +289,7 @@ public class BookingServiceImpl implements BookingService {
 
             booking.setPrice(finalPrice.setScale(0, RoundingMode.HALF_UP));
 
+            // 6. Liên kết và cập nhật
             booking.setOrder(savedOrder);
             createdBookings.add(booking);
             calculatedTotalPrice = calculatedTotalPrice.add(booking.getPrice());
@@ -153,6 +305,65 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public Map<String, Object> getConfirmationDetails(Long primaryOrderId, User currentUser) {
+        Map<String, Object> modelData = new HashMap<>();
+
+        Order justCreatedOrder = orderRepository.findById(primaryOrderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng"));
+
+        String orderGroupId = justCreatedOrder.getRoundTripGroupId();
+
+        List<Order> ordersToShow = new ArrayList<>();
+        List<Booking> bookingsToShow = new ArrayList<>();
+        Map<Long, String> bookingLegLabels = new HashMap<>();
+        BigDecimal totalGroupPrice = BigDecimal.ZERO;
+        boolean isRoundTripOrder = false;
+
+        if (orderGroupId != null && !orderGroupId.isBlank()) {
+            ordersToShow = orderRepository.findByRoundTripGroupId(orderGroupId);
+            if (ordersToShow.isEmpty()) {
+                ordersToShow.add(justCreatedOrder); // Fallback
+            }
+
+            ordersToShow.sort(Comparator.comparing(Order::getOrderTime));
+
+            for (int index = 0; index < ordersToShow.size(); index++) {
+                Order order = ordersToShow.get(index);
+                totalGroupPrice = totalGroupPrice.add(order.getTotalPrice());
+                String legLabel = (index == 0) ? "Lượt Đi" : "Lượt Về";
+                for (Booking booking : order.getBookings()) {
+                    bookingsToShow.add(booking);
+                    bookingLegLabels.put(booking.getBookingId(), legLabel);
+                }
+            }
+            isRoundTripOrder = ordersToShow.size() > 1;
+
+        } else {
+            // Xử lý 1 chiều
+            ordersToShow.add(justCreatedOrder);
+            bookingsToShow.addAll(justCreatedOrder.getBookings());
+            totalGroupPrice = justCreatedOrder.getTotalPrice();
+            for (Booking booking : bookingsToShow) {
+                bookingLegLabels.put(booking.getBookingId(), "Một chiều");
+            }
+            isRoundTripOrder = false;
+        }
+
+        modelData.put("primaryOrderId", primaryOrderId);
+        modelData.put("orders", ordersToShow);
+        modelData.put("bookings", bookingsToShow);
+        modelData.put("totalPrice", totalGroupPrice);
+        modelData.put("totalTickets", bookingsToShow.size());
+        modelData.put("isRoundTrip", isRoundTripOrder);
+        modelData.put("bookingLegLabels", bookingLegLabels);
+
+        return modelData;
+    }
+
+
+    // ===== CÁC HÀM GỐC (GIỮ NGUYÊN) =====
+
+    @Override
     public List<Booking> findAllBookings() { return bookingRepository.findAll(); }
     @Override
     public List<Booking> findAllBookingsByUserId(Integer userId) { return bookingRepository.findByUser_Id(userId); }
@@ -160,7 +371,7 @@ public class BookingServiceImpl implements BookingService {
     public Optional<Booking> findById(Long bookingId) { return bookingRepository.findById(bookingId); }
 
     @Transactional
-   public void internalCancelBooking(Booking booking) {
+    public void internalCancelBooking(Booking booking) {
         Seat seat = booking.getSeat();
         if (seat != null) {
             seat.setStatus(SeatStatus.AVAILABLE);
