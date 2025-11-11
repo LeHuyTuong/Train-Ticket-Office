@@ -3,6 +3,7 @@ package com.example.trainticketoffice.controller;
 import com.example.trainticketoffice.common.TrainStatus;
 import com.example.trainticketoffice.common.TripStatus;
 import com.example.trainticketoffice.model.*;
+import com.example.trainticketoffice.repository.BookingRepository;
 import com.example.trainticketoffice.service.RouteService;
 import com.example.trainticketoffice.service.StationService;
 import com.example.trainticketoffice.service.TrainService;
@@ -35,6 +36,12 @@ public class TripController {
     private RouteService routeService;
     @Autowired
     private StationService stationService;
+    // Ghi chú: BookingRepository không còn cần thiết ở đây nữa
+    // @Autowired
+    // private BookingRepository bookingRepository;
+
+
+    // ===== HÀM TÌM KIẾM ĐÃ ĐƯỢC REFACTOR =====
     @GetMapping("/search")
     public String searchTripsForRoute(@RequestParam("startStationId") Integer startStationId,
                                       @RequestParam("endStationId") Integer endStationId,
@@ -138,17 +145,35 @@ public class TripController {
         return "trip/trip-results";
     }
 
+    // ===== HÀM findOneWayTrips VÀ isHoliday ĐÃ BỊ XÓA KHỎI CONTROLLER =====
+
 
     // ===== HÀM HIỂN THỊ TẤT CẢ CHUYẾN ĐÃ ĐƯỢC REFACTOR =====
     @GetMapping("/all")
-    public String showAllTrips(Model model) {
+    public String showAllTrips(@RequestParam(value = "page", defaultValue = "1") int page, Model model) {
         // Chỉ cần gọi service, service sẽ trả về 1 map chứa mọi thứ
-        Map<String, Object> modelData = tripService.getAllAvailableTripsForDisplay();
-        model.addAllAttributes(modelData);
+        Map<String, Object> modelData = tripService.getAllAvailableTripsForDisplay(page);
+
+        // Lấy Page object từ kết quả
+        Page<Trip> tripPage = (Page<Trip>) modelData.get("tripPage");
+
+        // Gửi các thuộc tính phân trang và danh sách chuyến đi của trang hiện tại
+        model.addAttribute("availableTrips", tripPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", tripPage.getTotalPages());
+        model.addAttribute("totalItems", tripPage.getTotalElements());
+
+        // Gửi các map tính toán
+        model.addAttribute("availableVipCounts", modelData.get("availableVipCounts"));
+        model.addAttribute("availableNormalCounts", modelData.get("availableNormalCounts"));
+        model.addAttribute("tripMinPrices", modelData.get("tripMinPrices"));
+
         return "trip/all-trips";
     }
 
 
+    // (Các hàm /list, /new, /edit, /save, /delete, /update-status giữ nguyên)
+    // ... (Giữ nguyên các hàm admin)
     @GetMapping
     public String listTrips(Model model,
                             @RequestParam(value = "page", defaultValue = "1") int page,

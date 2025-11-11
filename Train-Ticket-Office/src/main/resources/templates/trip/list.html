@@ -106,7 +106,9 @@
 
         <h2 class="page-title">Quản Lý Chuyến Đi</h2>
 
+        <!--/*@thymesVar id="successMessage" type="java.lang.String"*/-->
         <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <!--/*@thymesVar id="errorMessage" type="java.lang.String"*/-->
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
         <div class="mb-3">
@@ -115,8 +117,11 @@
 
         <form th:action="@{/trips}" method="get" class="search-form">
             <div class="input-group">
-                <select name="stationId" class="form-select">
+                <!-- Sửa lỗi Accessibility: Thêm label và id -->
+                <label for="stationIdSelect" class="input-group-text">Lọc:</label>
+                <select name="stationId" id="stationIdSelect" class="form-select">
                     <option value="">-- Lọc theo Ga (Tất cả) --</option>
+                    <!--/*@thymesVar id="allStations" type="java.util.List"*/-->
                     <option th:each="station : ${allStations}"
                             th:value="${station.id}"
                             th:text="${station.name + ' (' + station.code + ')'}"
@@ -140,6 +145,7 @@
                 </tr>
                 </thead>
                 <tbody>
+                <!--/*@thymesVar id="trips" type="java.util.List"*/-->
                 <tr th:each="trip : ${trips}">
                     <td th:text="${trip.tripId}"></td>
                     <td th:text="${trip.train.code}"></td>
@@ -159,7 +165,10 @@
                             <input type="hidden" name="page" th:value="${currentPage}">
                             <input type="hidden" name="stationId" th:value="${selectedStationId}">
 
-                            <select name="status" class="form-select form-select-sm">
+                            <!-- Sửa lỗi Accessibility: Thêm label ẩn -->
+                            <label th:for="|statusSelect-${trip.tripId}|" class="visually-hidden">Cập nhật trạng thái</label>
+                            <select name="status" th:id="|statusSelect-${trip.tripId}|" class="form-select form-select-sm">
+                                <!--/*@thymesVar id="allTripStatus" type="java.util.List"*/-->
                                 <option th:each="s : ${allTripStatus}"
                                         th:value="${s}"
                                         th:text="${s.description}"
@@ -192,9 +201,24 @@
                     <a class="page-link" th:href="@{/trips(page=${currentPage - 1}, stationId=${selectedStationId})}">Trước</a>
                 </li>
 
-                <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}" th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/trips(page=${i}, stationId=${selectedStationId})}" th:text="${i}"></a>
-                </li>
+                <!-- SỬA LẠI LOGIC HIỂN THỊ SỐ TRANG -->
+                <th:block th:with="startPage=${T(java.lang.Math).max(1, currentPage - 2)}, endPage=${T(java.lang.Math).min(totalPages, currentPage + 2)}">
+
+                    <!-- Hiển thị '...' ở đầu -->
+                    <li class="page-item" th:if="${startPage > 1}">
+                        <a class="page-link" th:href="@{/trips(page=${startPage - 1}, stationId=${selectedStationId})}">...</a>
+                    </li>
+
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/trips(page=${i}, stationId=${selectedStationId})}" th:text="${i}"></a>
+                    </li>
+
+                    <!-- Hiển thị '...' ở cuối -->
+                    <li class="page-item" th:if="${endPage < totalPages}">
+                        <a class="page-link" th:href="@{/trips(page=${endPage + 1}, stationId=${selectedStationId})}">...</a>
+                    </li>
+                </th:block>
+                <!-- KẾT THÚC SỬA LOGIC -->
 
                 <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
                     <a class="page-link" th:href="@{/trips(page=${currentPage + 1}, stationId=${selectedStationId})}">Sau</a>

@@ -110,6 +110,7 @@
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav ms-auto">
 
+                <!-- ===== CÁC LINK CÔNG KHAI (AI CŨNG THẤY) ===== -->
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/}" th:classappend="${requestURI=='/' ? 'active':''}">
                         <i class="bi bi-search"></i> Tìm tuyến
@@ -128,17 +129,48 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/bookings}" th:classappend="${#strings.startsWith(requestURI,'/bookings')?'active':''}">
-                        <i class="bi bi-ticket-perforated-fill"></i> Vé của tôi
-                    </a>
-                </li>
+                <!-- ===== LINK KHI ĐÃ ĐĂNG NHẬP (CUSTOMER) ===== -->
+                <th:block th:if="${session.userLogin != null && session.userLogin.role.name() == 'CUSTOMER'}">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/bookings}" th:classappend="${#strings.startsWith(requestURI,'/bookings')?'active':''}">
+                            <i class="bi bi-ticket-perforated-fill"></i> Vé của tôi
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/logout}">
+                            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                        </a>
+                    </li>
+                </th:block>
 
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/logout}">
-                        <i class="bi bi-box-arrow-right"></i> Đăng xuất
-                    </a>
-                </li>
+                <!-- ===== LINK KHI ĐÃ ĐĂNG NHẬP (STAFF - nếu lỡ vào trang này) ===== -->
+                <th:block th:if="${session.userLogin != null && session.userLogin.role.name() == 'STAFF'}">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/dashboard}">
+                            <i class="bi bi-speedometer2"></i> Tới Dashboard Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/logout}">
+                            <i class="bi bi-box-arrow-right"></i> Đăng xuất Staff
+                        </a>
+                    </li>
+                </th:block>
+
+
+                <!-- ===== LINK CHO KHÁCH (CHƯA ĐĂNG NHẬP) ===== -->
+                <th:block th:unless="${session.userLogin != null}">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/login}" th:classappend="${#strings.startsWith(requestURI,'/login')?'active':''}">
+                            <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/register}" th:classappend="${#strings.startsWith(requestURI,'/register')?'active':''}">
+                            <i class="bi bi-person-plus-fill"></i> Đăng ký
+                        </a>
+                    </li>
+                </th:block>
 
             </ul>
         </div>

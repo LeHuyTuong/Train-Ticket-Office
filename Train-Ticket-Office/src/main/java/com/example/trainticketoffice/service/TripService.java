@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page; // <-- THÊM
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
+import java.util.Map; // <-- THÊM
 import java.util.Optional;
 
 public interface TripService {
@@ -19,6 +19,9 @@ public interface TripService {
     List<Trip> findTripsByRouteAndDate(Route route, LocalDate departureDate);
     void updateTripStatus(Long tripId, TripStatus newStatus);
     Page<Trip> listAllAdmin(int pageNum, Integer stationId);
+
+    // ===== LOGIC MỚI ĐƯỢC CHUYỂN TỪ CONTROLLER VÀO =====
+
     /**
      * Tìm kiếm các chuyến đi một chiều, tính toán giá và số ghế trống.
      * (Logic được chuyển từ TripController.findOneWayTrips)
@@ -30,8 +33,9 @@ public interface TripService {
     /**
      * Lấy tất cả các chuyến đi SẮP DIỄN RA, tính toán giá và số ghế trống.
      * (Logic được chuyển từ TripController.showAllTrips)
+     * SỬA LẠI: Thêm tham số pageNum
      *
-     * @return Một Map chứa: availableTrips, availableVipCounts, availableNormalCounts, tripMinPrices
+     * @return Một Map chứa: tripPage, availableVipCounts, availableNormalCounts, tripMinPrices
      */
-    Map<String, Object> getAllAvailableTripsForDisplay();
+    Map<String, Object> getAllAvailableTripsForDisplay(int pageNum);
 }

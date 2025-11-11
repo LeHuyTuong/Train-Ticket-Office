@@ -204,17 +204,6 @@ public class BookingController {
         }
     }
 
-    // (Hàm này đã OK - Giữ nguyên)
-    private String resolveLegLabel(int legIndex) {
-        if (legIndex == 0) {
-            return "Lượt Đi";
-        }
-        if (legIndex == 1) {
-            return "Lượt Về";
-        }
-        return "Chặng " + (legIndex + 1);
-    }
-
     // ===== CÁC HÀM CÒN LẠI (GIỮ NGUYÊN) =====
     @GetMapping
     public String listBookings(HttpSession session, Model model) {

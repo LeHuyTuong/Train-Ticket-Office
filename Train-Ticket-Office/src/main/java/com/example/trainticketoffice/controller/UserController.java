@@ -10,10 +10,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate; // <-- THÊM IMPORT NÀY
 import java.util.List;
 
 @Controller
-@RequestMapping("/users")
+// @RequestMapping("/users") // <-- XÓA DÒNG NÀY
 public class UserController {
 
     private final UserService userService;
@@ -23,7 +24,49 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping
+    // ===== CHỨC NĂNG REGISTER MỚI =====
+
+    @GetMapping("/register")
+    public String showRegisterForm(Model model) {
+        model.addAttribute("user", new User());
+        return "user/register"; // Trả về file register.html
+    }
+
+    @PostMapping("/register")
+    public String processRegister(@Valid @ModelAttribute("user") User user,
+                                  BindingResult result, Model model,
+                                  RedirectAttributes redirectAttributes) {
+
+        // (Chúng ta có thể thêm validation chi tiết hơn ở đây, ví dụ: check trùng email)
+
+        try {
+            // Thiết lập các giá trị mặc định cho CUSTOMER
+            user.setRole(User.Role.CUSTOMER);
+            user.setCreateDate(LocalDate.now());
+
+            boolean isAdded = userService.addUser(user);
+
+            if (!isAdded) {
+                // Điều này có thể xảy ra nếu logic addUser của bạn trả về false
+                // (Hiện tại, logic của bạn đang kiểm tra email trùng trong service)
+                model.addAttribute("errorMessage", "Email này đã được sử dụng. Vui lòng chọn email khác.");
+                return "user/register";
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");
+            return "redirect:/login"; // Chuyển về trang login
+
+        } catch (Exception e) {
+            // Bắt lỗi nếu email là UNIQUE trong DB (DataIntegrityViolationException)
+            model.addAttribute("errorMessage", "Email này đã được sử dụng. Vui lòng chọn email khác.");
+            return "user/register";
+        }
+    }
+
+
+    // ===== CÁC CHỨC NĂNG ADMIN (Thêm lại /users) =====
+
+    @GetMapping("/users") // <-- THÊM /users
     public String listUsers(Model model) {
         List<User> users = userService.getUser();
         model.addAttribute("users", users);
@@ -34,14 +77,14 @@ public class UserController {
         model.addAttribute("roleTypes", new String[]{"STAFF", "CUSTOMER"});
     }
 
-    @GetMapping("/new")
+    @GetMapping("/users/new") // <-- THÊM /users
     public String showCreateForm(Model model) {
         model.addAttribute("user", new User());
         addCommonAttributes(model);
         return "user/form";
     }
 
-    @GetMapping("/edit/{id}")
+    @GetMapping("/users/edit/{id}") // <-- THÊM /users
     public String showEditForm(@PathVariable("id") Integer id, Model model) {
         User user = userService.getUser().stream()
                 .filter(u -> u.getId().equals(id))
@@ -56,7 +99,7 @@ public class UserController {
         return "redirect:/users";
     }
 
-    @PostMapping("/save")
+    @PostMapping("/users/save") // <-- THÊM /users
     public String saveUser(@Valid @ModelAttribute("user") User user,
                            BindingResult result, Model model,
                            RedirectAttributes redirectAttributes) {
@@ -86,7 +129,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/delete/{id}")
+    @GetMapping("/users/delete/{id}") // <-- THÊM /users
     public String deleteUser(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
         try {
             userService.deleteUser(id);
@@ -97,12 +140,12 @@ public class UserController {
         return "redirect:/users";
     }
 
-    @GetMapping("/search")
+    @GetMapping("/users/search") // <-- THÊM /users
     public String searchUsersForm() {
         return "user/search";
     }
 
-    @PostMapping("/search")
+    @PostMapping("/users/search") // <-- THÊM /users
     public String searchUsers(@RequestParam String fullName, Model model) {
         try {
             User user = userService.findByUserName(fullName);

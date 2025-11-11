@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng Nhập - Vé Tàu Việt Nam</title>
+    <title>Đăng Ký - Vé Tàu Việt Nam</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Google Fonts -->
@@ -27,6 +27,7 @@
             justify-content:center;
             align-items:center;
             min-height:100vh;
+            padding: 20px; /* Thêm padding cho màn hình nhỏ */
         }
 
         .login-card {
@@ -48,7 +49,7 @@
 
         .login-left {
             width:50%;
-            padding: 3rem 2.5rem;
+            padding: 2rem 2.5rem; /* Giảm padding một chút */
             display:flex;
             flex-direction: column;
             justify-content:center;
@@ -56,7 +57,7 @@
 
         .login-left h1 {
             color: var(--primary-color);
-            font-size: 2.4rem;
+            font-size: 2.2rem; /* Giảm size chữ */
             margin-bottom: 10px;
             font-weight: 700;
         }
@@ -64,11 +65,11 @@
         .login-left p.slogan {
             font-size: 1rem;
             color: rgba(0,0,0,0.6);
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Giảm margin */
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem; /* Giảm margin */
             position: relative;
         }
 
@@ -85,7 +86,7 @@
             border-radius: 12px;
             border: 1px solid rgba(0,0,0,0.15);
             background: rgba(255,255,255,0.85);
-            font-size: 1rem;
+            font-size: 0.95rem; /* Giảm size chữ */
             transition: all 0.3s ease;
         }
 
@@ -178,12 +179,19 @@
             font-size: 1.1rem;
         }
 
-        .alert-success {
+        .alert {
             padding: 10px;
             margin-bottom: 15px;
             border-radius: 8px;
             font-size: 0.9rem;
             font-weight: 600;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
@@ -203,32 +211,45 @@
 <div class="login-card">
 
     <div class="login-left">
-        <h1>Đăng nhập hệ thống</h1>
-        <p class="slogan">Hệ thống quản lý và đặt vé tàu an toàn, tiện lợi và chuyên nghiệp</p>
+        <h1>Tạo Tài Khoản Mới</h1>
+        <p class="slogan">Đăng ký để bắt đầu đặt vé nhanh chóng.</p>
 
-        <!-- THÊM: Hiển thị thông báo đăng ký thành công -->
+        <!-- Hiển thị lỗi nếu có -->
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
         <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
 
-        <form method="post" th:action="@{/login}">
+
+        <form method="post" th:action="@{/register}" th:object="${user}">
+
+            <div class="form-group">
+                <label>Họ và Tên</label>
+                <input type="text" th:field="*{fullName}" placeholder="Nguyễn Văn A" required>
+                <i class="bi bi-person-fill"></i>
+            </div>
+
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" name="email" placeholder="email@gmail.com" required>
+                <input type="email" th:field="*{email}" placeholder="email@gmail.com" required>
                 <i class="bi bi-envelope-fill"></i>
             </div>
 
             <div class="form-group">
+                <label>Số Điện Thoại</label>
+                <input type="tel" th:field="*{phone}" placeholder="0909123456" required>
+                <i class="bi bi-phone-fill"></i>
+            </div>
+
+            <div class="form-group">
                 <label>Mật khẩu</label>
-                <input type="password" name="password" placeholder="********" required>
+                <input type="password" th:field="*{password}" placeholder="********" required>
                 <i class="bi bi-lock-fill"></i>
             </div>
 
-            <button type="submit" class="login-button">Đăng nhập</button>
+            <button type="submit" class="login-button">Đăng Ký</button>
 
-            <!-- THÊM LIÊN KẾT ĐĂNG KÝ -->
             <div style="text-align: center; margin-top: 15px;">
-                <a th:href="@{/register}" style="color: #004a99; font-weight: 600;">Chưa có tài khoản? Đăng ký ngay</a>
+                <a th:href="@{/login}" style="color: #004a99; font-weight: 600;">Đã có tài khoản? Đăng nhập ngay</a>
             </div>
-
         </form>
     </div>
 

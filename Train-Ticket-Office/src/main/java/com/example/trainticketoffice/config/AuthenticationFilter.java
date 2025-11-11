@@ -17,14 +17,16 @@ public class AuthenticationFilter implements Filter {
     private final List<String> publicExactPaths = List.of(
             "/",
             "/login",
-            "/error"
+            "/error",
+            "/register" // <-- THÊM MỚI
     );
 
     // 2. Các đường dẫn chỉ cần khớp TIỀN TỐ
     private final List<String> publicPrefixPaths = List.of(
             "/images/",
             "/css/",
-            "/js/"
+            "/js/",
+            "/trips/search" // <-- THÊM MỚI
     );
 
     private final List<String> adminPaths = List.of(
@@ -82,6 +84,16 @@ public class AuthenticationFilter implements Filter {
         // 2. Kiểm tra Session (Từ đây, mọi trang đều yêu cầu login)
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userLogin") == null) {
+
+            // ===== LƯU LẠI NƠI KHÁCH MUỐN ĐẾN =====
+            String queryString = request.getQueryString();
+            String targetUrl = requestURI + (queryString != null ? "?" + queryString : "");
+
+            // Lưu vào session (session sẽ được tạo mới)
+            HttpSession newSession = request.getSession(true);
+            newSession.setAttribute("redirectAfterLogin", targetUrl);
+            // ===============================================
+
             response.sendRedirect("/login");
             return;
         }

@@ -12,12 +12,17 @@
         .page-title { font-weight: 700; font-size: 28px; color: #004a99; margin-bottom: 20px; }
         table { width: 100%; background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border-radius: 12px; overflow: hidden; }
         table th, table td { padding: 12px; }
+        table th { background: rgba(0,74,153,0.9); color: white; font-weight: bold; }
         .btn { padding: 8px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: all 0.25s ease; }
         .btn-primary { background: linear-gradient(135deg, #009ffd, #2a2a72); color: #fff; }
         .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
         .btn-secondary { background: #e0e0e0; color: #333; }
         .btn-secondary:hover { opacity: 0.9; transform: translateY(-2px); }
         .badge { font-weight: 600; }
+        /* THÊM CSS PHÂN TRANG */
+        .pagination { justify-content: center; }
+        .page-item.active .page-link { background-color: #004a99; border-color: #004a99; }
+        .page-link { color: #004a99; }
     </style>
 </head>
 <body>
@@ -72,6 +77,44 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- THÊM KHỐI PHÂN TRANG CHO CUSTOMER -->
+        <nav aria-label="Page navigation" th:if="${totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips/all(page=1)}">Đầu</a>
+                </li>
+
+                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips/all(page=${currentPage - 1})}">Trước</a>
+                </li>
+
+                <th:block th:with="startPage=${T(java.lang.Math).max(1, currentPage - 2)}, endPage=${T(java.lang.Math).min(totalPages, currentPage + 2)}">
+
+                    <li class="page-item" th:if="${startPage > 1}">
+                        <a class="page-link" th:href="@{/trips/all(page=${startPage - 1})}">...</a>
+                    </li>
+
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/trips/all(page=${i})}" th:text="${i}"></a>
+                    </li>
+
+                    <li class="page-item" th:if="${endPage < totalPages}">
+                        <a class="page-link" th:href="@{/trips/all(page=${endPage + 1})}">...</a>
+                    </li>
+                </th:block>
+
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips/all(page=${currentPage + 1})}">Sau</a>
+                </li>
+
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/trips/all(page=${totalPages})}">Cuối</a>
+                </li>
+            </ul>
+        </nav>
+        <!-- KẾT THÚC KHỐI PHÂN TRANG -->
+
 
         <a th:href="@{/}" class="btn btn-secondary mt-3">
             <i class="bi bi-arrow-left"></i> Quay lại Tìm kiếm
