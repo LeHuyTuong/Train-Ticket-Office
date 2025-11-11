@@ -322,9 +322,6 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // CẬP NHẬT VÍ ADMIN (GIẢ LẬP ĐÃ THANH TOÁN)
-        adminWalletService.addToBalance(payment1.getAmount());
-        System.out.println("Đã cộng " + payment1.getAmount() + " vào ví Admin.");
-
 
         // --- ĐƠN HÀNG 2: (SE1, 1 vé B1) - CHƯA THANH TOÁN ---
         BookingRequest request2 = new BookingRequest();

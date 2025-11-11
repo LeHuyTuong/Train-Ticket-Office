@@ -180,14 +180,6 @@ public class BookingController {
 
         User currentUser = (User) session.getAttribute("userLogin");
         if (currentUser == null) return "redirect:/login";
-
-        // (Thêm xử lý validation nếu cần)
-        // if (bindingResult.hasErrors()) {
-        //    // Trả về form passenger-form với lỗi
-        //    return "ticket/passenger-form";
-        // }
-
-
         try {
             // 1. Tạo Order như bình thường
             Order createdOrder = bookingService.createOrder(bookingRequest, currentUser);
