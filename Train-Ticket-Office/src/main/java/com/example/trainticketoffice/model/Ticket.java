@@ -46,12 +46,10 @@ public class Ticket extends BaseEntity {
     @Column(columnDefinition = "nvarchar(50)")
     private String passengerPhone;
     @Column(columnDefinition = "nvarchar(50)")
-    private String passengerIdCard; // (Đã có)
-
-    // ===== THÊM TRƯỜNG NÀY =====
+    private String passengerIdCard;
     @Column(name = "date_of_birth")
-    private LocalDate dob; // Ngày sinh
-    // ==========================
+    private LocalDate dob;
+
 
     private BigDecimal totalPrice;
 

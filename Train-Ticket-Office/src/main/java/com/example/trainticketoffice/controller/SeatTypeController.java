@@ -29,13 +29,13 @@ public class SeatTypeController {
     public String listSeatTypes(Model model) {
         List<SeatType> seatTypes = seatTypeService.getAllSeatTypes();
         model.addAttribute("seatTypes", seatTypes);
-        return "seattype/list"; // Trỏ đến file form.html mới
+        return "seattype/list";
     }
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("seatType", new SeatType());
-        return "seattype/form"; // Trỏ đến file form.html mới
+        return "seattype/form";
     }
 
     @GetMapping("/edit/{id}")

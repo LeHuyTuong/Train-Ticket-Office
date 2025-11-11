@@ -14,25 +14,21 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/tickets") // URL MỚI: /tickets (dành cho Admin)
+@RequestMapping("/tickets")
 @RequiredArgsConstructor
 public class TicketController {
 
     private final TicketService ticketService;
 
-    /**
-     * 1. Hiển thị danh sách TẤT CẢ các vé (Trang Admin)
-     */
+    //Hiển thị danh sách TẤT CẢ các vé (Trang Admin)
     @GetMapping
     public String listAllTickets(Model model) {
         List<Ticket> tickets = ticketService.findAll();
         model.addAttribute("tickets", tickets);
-        return "admin/ticket/list"; // Trỏ đến file FE form.html MỚI
+        return "admin/ticket/list";
     }
 
-    /**
-     * 2. Xem chi tiết 1 vé (Trang Admin)
-     */
+    //Xem chi tiết 1 vé (Trang Admin)
     @GetMapping("/{id}")
     public String viewTicketDetails(@PathVariable("id") Long id, Model model, RedirectAttributes ra) {
         Optional<Ticket> ticketOpt = ticketService.findById(id);
@@ -43,12 +39,10 @@ public class TicketController {
         }
 
         model.addAttribute("ticket", ticketOpt.get());
-        return "admin/ticket/detail"; // Trỏ đến file FE detail.html MỚI
+        return "admin/ticket/detail";
     }
 
-    /**
-     * 3. Xử lý Check-In (Hành động Admin)
-     */
+    //Xử lý Check-In (Hành động Admin)
     @GetMapping("/{id}/check-in")
     public String checkInTicket(@PathVariable("id") Long id, RedirectAttributes ra) {
         boolean success = ticketService.checkInTicket(id);
@@ -57,12 +51,10 @@ public class TicketController {
         } else {
             ra.addFlashAttribute("errorMessage", "Ticket could not be checked in (already checked in or not found).");
         }
-        return "redirect:/tickets/" + id; // Quay lại trang chi tiết
+        return "redirect:/tickets/" + id;
     }
 
-    /**
-     * 4. Xử lý Hủy vé (Hành động Admin)
-     */
+    //Xử lý Hủy vé (Hành động Admin)
     @GetMapping("/{id}/cancel")
     public String cancelTicket(@PathVariable("id") Long id, RedirectAttributes ra) {
         boolean success = ticketService.cancelTicket(id);
@@ -71,6 +63,6 @@ public class TicketController {
         } else {
             ra.addFlashAttribute("errorMessage", "Ticket could not be cancelled (already cancelled or checked in).");
         }
-        return "redirect:/tickets/" + id; // Quay lại trang chi tiết
+        return "redirect:/tickets/" + id;
     }
 }

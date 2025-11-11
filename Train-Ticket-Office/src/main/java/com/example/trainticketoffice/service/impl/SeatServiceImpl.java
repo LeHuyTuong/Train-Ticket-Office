@@ -32,7 +32,6 @@ public class SeatServiceImpl implements SeatService {
     @Override
     public Seat saveSeat(Seat seat) {
         if (seat.getSeatId() == null) {
-            // Kiểm tra trùng lặp khi tạo mới
             if (seatRepository.existsByCarriageAndSeatNumber(seat.getCarriage(), seat.getSeatNumber())) {
                 throw new IllegalStateException("Số ghế '" + seat.getSeatNumber() + "' đã tồn tại trên toa '" + seat.getCarriage().getName() + "'.");
             }

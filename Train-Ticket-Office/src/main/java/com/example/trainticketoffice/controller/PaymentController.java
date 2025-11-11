@@ -35,43 +35,23 @@ public class PaymentController {
     private final BookingService bookingService;
     private final OrderRepository orderRepository;
 
-    // (Hàm này đã OK - Giữ nguyên)
+
     @GetMapping("/orders/{orderId}")
     public String showPaymentPage(@PathVariable Long orderId,
                                   Model model,
                                   RedirectAttributes redirectAttributes) {
-
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        if (orderOpt.isEmpty()) {
+        Optional<Order> order = orderRepository.findById(orderId);
+        if (order.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng");
             return "redirect:/bookings";
         }
 
-        Order primaryOrder = orderOpt.get();
-        String groupId = primaryOrder.getRoundTripGroupId();
-        BigDecimal totalGroupPrice = BigDecimal.ZERO;
-        List<Order> ordersToShow; // Khai báo
-
-        if (groupId != null && !groupId.isBlank()) {
-            // --- XỬ LÝ KHỨ HỒI (Gộp đơn) ---
-            ordersToShow = orderRepository.findByRoundTripGroupId(groupId); // Gán
-            for (Order o : ordersToShow) {
-                totalGroupPrice = totalGroupPrice.add(o.getTotalPrice());
-            }
-        } else {
-            // --- XỬ LÝ 1 CHIỀU ---
-            totalGroupPrice = primaryOrder.getTotalPrice();
-            ordersToShow = List.of(primaryOrder); // Gán
-        }
-
-        model.addAttribute("primaryOrder", primaryOrder);
-        model.addAttribute("orders", ordersToShow); // Gửi list
-        model.addAttribute("totalGroupPrice", totalGroupPrice);
-
+        model.addAttribute("order", order.get());
         return "payment/checkout";
     }
 
-    // (Hàm này đã OK - Giữ nguyên)
+
+
     @PostMapping("/orders/{orderId}")
     public String startPayment(@PathVariable Long orderId,
                                @RequestParam(value = "bankCode", required = false) String bankCode,

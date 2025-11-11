@@ -21,17 +21,16 @@ public class Payment extends BaseEntity {
     @Column(name = "payment_id")
     private Long paymentId;
 
-    // ===== SỬA TỪ Booking SANG Order =====
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "order_id", nullable = false) // Đổi từ booking_id sang order_id
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
-    // ===================================
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // ===== SỬA TỪ double =====
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 

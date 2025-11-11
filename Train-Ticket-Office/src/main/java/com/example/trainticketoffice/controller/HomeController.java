@@ -15,9 +15,9 @@ import java.util.List; // <-- THÊM
 public class HomeController {
 
     private final StationService stationService;
-    private final TrainService trainService; // <-- THÊM
+    private final TrainService trainService;
 
-    // Xử lý trang chủ cho CUSTOMER (đường dẫn "/")
+
     @GetMapping("/")
     public String customerHomepage(Model model) {
 
@@ -25,11 +25,11 @@ public class HomeController {
         return "customer/Home";
     }
 
-    // ===== THÊM HÀM MỚI (Xem tất cả tàu) =====
+
     @GetMapping("/trains/all")
     public String showAllTrains(Model model) {
         List<Train> trains = trainService.getAllTrains();
         model.addAttribute("trains", trains);
-        return "customer/all-trains"; // <-- File HTML MỚI
+        return "customer/all-trains";
     }
 }

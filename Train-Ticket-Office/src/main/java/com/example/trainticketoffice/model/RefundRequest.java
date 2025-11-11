@@ -19,19 +19,19 @@ public class RefundRequest extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Liên kết 1-1 với Vé (Booking)
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false, unique = true)
     private Booking booking;
 
     @Column(nullable = false, columnDefinition = "nvarchar(100)")
-    private String bankName; // Tên ngân hàng
+    private String bankName;
 
     @Column(nullable = false, columnDefinition = "nvarchar(50)")
-    private String bankAccountNumber; // Số tài khoản
+    private String bankAccountNumber;
 
     @Column(nullable = false, columnDefinition = "nvarchar(100)")
-    private String accountHolderName; // Tên chủ tài khoản
+    private String accountHolderName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

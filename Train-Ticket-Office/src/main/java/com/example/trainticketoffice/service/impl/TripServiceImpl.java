@@ -61,7 +61,6 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public Trip saveTrip(Trip trip) {
-        // ===== SỬA LOGIC KIỂM TRA TÀU =====
         if (trip.getTripId() == null) {
             Train train = trainRepository.findById(trip.getTrain().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid Train ID"));
@@ -70,10 +69,6 @@ public class TripServiceImpl implements TripService {
             if (train.getStatus() == TrainStatus.MAINTENANCE) {
                 throw new IllegalStateException("Tàu " + train.getCode() + " đang bảo trì.");
             }
-
-            // KHÔNG ĐẶT ON_TRIP NỮA. Tàu vẫn AVAILABLE cho đến khi chạy.
-            // train.setStatus(TrainStatus.ON_TRIP);
-            // trainRepository.save(train);
         }
 
         if(trip.getStatus() == null) {
@@ -82,7 +77,7 @@ public class TripServiceImpl implements TripService {
 
         return tripRepository.save(trip);
     }
-    // ===================================
+
 
     @Override
     @Transactional
@@ -140,7 +135,7 @@ public class TripServiceImpl implements TripService {
             case COMPLETED:
                 trip.setStatus(TripStatus.COMPLETED);
                 if (train != null) {
-                    train.setStatus(TrainStatus.AVAILABLE); // Tàu rảnh
+                    train.setStatus(TrainStatus.AVAILABLE);
                     trainRepository.save(train);
                 }
                 for (Booking booking : bookings) {
@@ -171,30 +166,23 @@ public class TripServiceImpl implements TripService {
                         ticketRepository.save(ticket);
                     }
                     Seat seat = booking.getSeat();
-                    seat.setStatus(SeatStatus.AVAILABLE); // Trả ghế
+                    seat.setStatus(SeatStatus.AVAILABLE);
                     seatRepository.save(seat);
                 }
                 break;
-
             case DELAYED:
                 trip.setStatus(TripStatus.DELAYED);
                 break;
-
             case IN_PROGRESS:
                 trip.setStatus(TripStatus.IN_PROGRESS);
                 if (train != null && train.getStatus() != TrainStatus.ON_TRIP) {
-                    train.setStatus(TrainStatus.ON_TRIP); // Tàu bận
+                    train.setStatus(TrainStatus.ON_TRIP);
                     trainRepository.save(train);
                 }
                 break;
-
-            // ===== SỬA LOGIC NÀY =====
             case UPCOMING:
                 trip.setStatus(TripStatus.UPCOMING);
-                // KHÔNG set Tàu thành ON_TRIP khi chuyến đi SẮP DIỄN RA
-                // (Tàu vẫn AVAILABLE)
                 break;
-            // =========================
         }
 
         tripRepository.save(trip);

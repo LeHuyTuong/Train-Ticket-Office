@@ -43,6 +43,7 @@ public class TripController {
     @Autowired
     private BookingRepository bookingRepository;
 
+
     private static final BigDecimal HOLIDAY_SURCHARGE_RATE = new BigDecimal("1.20");
 
     private boolean isHoliday(LocalDate date) {
@@ -177,6 +178,7 @@ public class TripController {
         Station startStation = startStationOpt.get();
         Station endStation = endStationOpt.get();
 
+        //Lấy danh sách chuyến đi
         List<Trip> availableTrips;
         if (date != null) {
             availableTrips = tripService.findTripsByRouteAndDate(routeOpt.get(0), date);
@@ -184,6 +186,7 @@ public class TripController {
             availableTrips = tripService.findTripsByRoute(routeOpt.get(0));
         }
 
+        // Lấy KM
         if (startStation.getDistanceKm() == null || endStation.getDistanceKm() == null) {
             modelData.put("errorMessage", "Lỗi cấu hình: Ga chưa có thông tin KM.");
             return modelData;
@@ -191,14 +194,17 @@ public class TripController {
         int distanceKm = Math.abs(endStation.getDistanceKm() - startStation.getDistanceKm());
         if (distanceKm == 0) distanceKm = 20;
 
+
         Map<Long, Long> availableVipCounts = new HashMap<>();
         Map<Long, Long> availableNormalCounts = new HashMap<>();
         Map<Long, BigDecimal> tripMinPrices = new HashMap<>();
 
         for (Trip trip : availableTrips) {
+            // Kiểm tra Lễ
             boolean isTripOnHoliday = isHoliday(trip.getDepartureTime().toLocalDate());
             BigDecimal currentSurchargeRate = isTripOnHoliday ? HOLIDAY_SURCHARGE_RATE : BigDecimal.ONE;
 
+            //Lấy các Seat ID đã bị đặt
             List<Long> bookedSeatIds = bookingRepository.findAllByTrip_TripIdAndStatusIn(
                             trip.getTripId(),
                             List.of(BookingStatus.BOOKED, BookingStatus.PAID, BookingStatus.COMPLETED)
@@ -210,6 +216,7 @@ public class TripController {
             long normalCount = 0;
             BigDecimal minPriceInTrip = null;
 
+            //Lặp qua các Toa -> Ghế để đếm và tính giá
             Train train = trip.getTrain();
             for (Carriage carriage : train.getCarriages()) {
                 SeatType seatType = carriage.getSeatType();
@@ -250,6 +257,7 @@ public class TripController {
 
     // (Các hàm /all, /list, /new, /edit, /save, /delete, /update-status giữ nguyên)
 
+
     @GetMapping("/all")
     public String showAllTrips(Model model) {
         List<Trip> allTrips = tripService.getAllTrips().stream()
@@ -285,6 +293,7 @@ public class TripController {
                 if (minPriceInTrip == null || finalPrice.compareTo(minPriceInTrip) < 0) {
                     minPriceInTrip = finalPrice;
                 }
+
                 for (Seat seat : carriage.getSeats()) {
                     if (!bookedSeatIds.contains(seat.getSeatId())) {
                         if (seatType.getName().toLowerCase().contains("vip")) {
@@ -305,6 +314,7 @@ public class TripController {
         model.addAttribute("tripMinPrices", tripMinPrices);
         return "trip/all-trips";
     }
+
 
     @GetMapping
     public String listTrips(Model model,

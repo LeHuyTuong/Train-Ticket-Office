@@ -11,6 +11,7 @@ import com.example.trainticketoffice.model.User;
 import com.example.trainticketoffice.repository.BookingRepository;
 import com.example.trainticketoffice.repository.RefundRequestRepository;
 import com.example.trainticketoffice.repository.SeatRepository;
+import com.example.trainticketoffice.service.AdminWalletService;
 import com.example.trainticketoffice.service.RefundService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,9 @@ public class RefundServiceImpl implements RefundService {
     private final BookingRepository bookingRepository;
     private final RefundRequestRepository refundRequestRepository;
     private final SeatRepository seatRepository;
+    private final AdminWalletService adminWalletService;
 
-    /**
-     * Khách hàng tạo yêu cầu
-     */
+
     @Override
     @Transactional
     public RefundRequest createRefundRequest(Long bookingId, User user, String bankName, String accountNumber, String accountHolder) {
@@ -37,27 +37,27 @@ public class RefundServiceImpl implements RefundService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy vé."));
 
-        // 1. Kiểm tra quyền sở hữu
+
         if (!booking.getUser().getId().equals(user.getId())) {
             throw new IllegalStateException("Bạn không có quyền hoàn vé này.");
         }
 
-        // 2. Kiểm tra trạng thái vé
+
         if (booking.getStatus() != BookingStatus.PAID) {
             throw new IllegalStateException("Chỉ có thể hoàn vé đã thanh toán.");
         }
 
-        // 3. Kiểm tra trạng thái chuyến đi
+
         if (booking.getTrip().getStatus() != TripStatus.UPCOMING) {
             throw new IllegalStateException("Không thể hoàn vé khi chuyến tàu đã chạy, bị hủy, hoặc đã hoàn thành.");
         }
 
-        // 4. Kiểm tra xem đã yêu cầu chưa
+
         if (refundRequestRepository.existsByBooking_BookingId(bookingId)) {
             throw new IllegalStateException("Bạn đã gửi yêu cầu hoàn vé cho vé này rồi.");
         }
 
-        // 5. Tạo yêu cầu
+
         RefundRequest refund = new RefundRequest();
         refund.setBooking(booking);
         refund.setBankName(bankName);
@@ -66,25 +66,20 @@ public class RefundServiceImpl implements RefundService {
         refund.setStatus(RefundStatus.PENDING);
         refund.setRequestedAt(LocalDateTime.now());
 
-        // 6. Cập nhật trạng thái Vé
         booking.setStatus(BookingStatus.PENDING_REFUND);
         bookingRepository.save(booking);
 
         return refundRequestRepository.save(refund);
     }
 
-    /**
-     * Admin lấy danh sách chờ duyệt
-     */
+    //Admin lấy danh sách chờ duyệt
     @Override
     public List<RefundRequest> getPendingRefunds() {
 
         return refundRequestRepository.findByStatusWithDetails(RefundStatus.PENDING); // <-- Dòng MỚI
     }
 
-    /**
-     * Admin duyệt
-     */
+    //Admin duyệt
     @Override
     @Transactional
     public void approveRefund(Long refundRequestId, User adminUser) {
@@ -95,18 +90,25 @@ public class RefundServiceImpl implements RefundService {
             throw new IllegalStateException("Yêu cầu này đã được xử lý.");
         }
 
-        // 1. Cập nhật Yêu cầu
+
         refund.setStatus(RefundStatus.APPROVED);
         refund.setProcessedAt(LocalDateTime.now());
-        // (Trong thực tế, ở đây sẽ có thêm trường processedBy = adminUser.getFullName())
         refundRequestRepository.save(refund);
 
-        // 2. Cập nhật Vé (Booking)
-        Booking booking = refund.getBooking();
-        booking.setStatus(BookingStatus.REFUNDED); // (Hoặc CANCELLED tùy bạn)
-        bookingRepository.save(booking);
 
-        // 3. Giải phóng Ghế (Seat)
+        Booking booking = refund.getBooking();
+        booking.setStatus(BookingStatus.REFUNDED);
+        bookingRepository.save(booking);
+        try {
+            adminWalletService.subtractFromBalance(booking.getPrice());
+        } catch (Exception e) {
+            System.err.println("LỖI NGHIÊM TRỌNG: Không thể trừ tiền ví Admin cho refund " + refundRequestId);
+            e.printStackTrace();
+
+        }
+        refund.setStatus(RefundStatus.APPROVED);
+        refund.setProcessedAt(LocalDateTime.now());
+        refundRequestRepository.save(refund);
         Seat seat = booking.getSeat();
         if (seat != null) {
             seat.setStatus(SeatStatus.AVAILABLE);
@@ -114,9 +116,7 @@ public class RefundServiceImpl implements RefundService {
         }
     }
 
-    /**
-     * Admin từ chối
-     */
+    //Admin từ chối
     @Override
     @Transactional
     public void rejectRefund(Long refundRequestId, User adminUser) {

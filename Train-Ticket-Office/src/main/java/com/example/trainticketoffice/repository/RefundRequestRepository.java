@@ -12,11 +12,8 @@ import java.util.List;
 @Repository
 public interface RefundRequestRepository extends JpaRepository<RefundRequest, Long> {
 
-    // (Giữ nguyên các hàm cũ)
     List<RefundRequest> findByStatus(RefundStatus status);
     boolean existsByBooking_BookingId(Long bookingId);
-
-    // ===== THÊM HÀM MỚI NÀY =====
     @Query("SELECT r FROM RefundRequest r " +
             "JOIN FETCH r.booking b " +
             "JOIN FETCH b.trip t " +
@@ -25,5 +22,4 @@ public interface RefundRequestRepository extends JpaRepository<RefundRequest, Lo
             "JOIN FETCH s.carriage " +
             "WHERE r.status = :status")
     List<RefundRequest> findByStatusWithDetails(@Param("status") RefundStatus status);
-    // ============================
 }

@@ -10,14 +10,7 @@ import java.util.Optional;
 
 public interface BookingService {
 
-    /**
-     * SỬA LẠI HOÀN TOÀN HÀM NÀY
-     * Nó sẽ nhận 1 BookingRequest chứa danh sách hành khách
-     */
     Order createOrder(BookingRequest bookingRequest, User user);
-
-    // (Xóa các hàm createOrder cũ)
-
     List<Booking> findAllBookings();
     List<Booking> findAllBookingsByUserId(Integer userId);
     Optional<Booking> findById(Long bookingId);

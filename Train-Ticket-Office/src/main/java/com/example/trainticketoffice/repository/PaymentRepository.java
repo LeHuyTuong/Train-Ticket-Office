@@ -9,7 +9,5 @@ import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByTransactionRef(String transactionRef);
-
-    // SỬA: Tìm theo Order
     List<Payment> findByOrder(Order order);
 }

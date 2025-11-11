@@ -31,7 +31,6 @@ public class CarriageServiceImpl implements CarriageService {
 
     @Override
     public Carriage saveCarriage(Carriage carriage) {
-        // (Có thể thêm logic kiểm tra trùng tên/vị trí ở đây nếu muốn)
         return carriageRepository.save(carriage);
     }
 

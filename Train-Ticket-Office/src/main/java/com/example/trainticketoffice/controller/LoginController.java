@@ -26,24 +26,16 @@ public class LoginController {
         try {
             User user = userService.getUser(email, password);
             if (user == null) {
-                // Nếu đăng nhập thất bại, quay lại trang login
                 return "redirect:/login";
             }
-
-            // Lưu thông tin user vào session
             session.setAttribute("userLogin", user);
-
-            // ===== PHÂN LUỒNG VỀ 2 TRANG CHỦ MỚI =====
             if (user.getRole() == User.Role.STAFF) {
-                // Nếu là STAFF, chuyển đến trang Dashboard của Admin
                 return "redirect:/admin/dashboard";
             } else {
-                // Nếu là CUSTOMER, chuyển đến trang chủ (homepage)
-                return "redirect:/"; // Đường dẫn trang chủ
+                return "redirect:/";
             }
 
         } catch (Exception e) {
-            // Xử lý nếu có lỗi xảy ra
             return "redirect:/login";
         }
     }

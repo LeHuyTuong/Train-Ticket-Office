@@ -31,14 +31,11 @@ public class SeatTypeServiceImpl implements SeatTypeService {
 
     @Override
     public SeatType saveSeatType(SeatType seatType) {
-        // (Bạn có thể thêm logic kiểm tra trùng tên ở đây nếu muốn)
         return seatTypeRepository.save(seatType);
     }
 
     @Override
     public void deleteSeatType(Long id) {
-        // (Nên thêm logic kiểm tra xem SeatType này có đang được Toa nào sử dụng không trước khi xóa)
-        // (DataIntegrityViolationException sẽ tự động ném ra nếu có Toa đang dùng)
         seatTypeRepository.deleteById(id);
     }
 }

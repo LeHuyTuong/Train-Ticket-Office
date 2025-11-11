@@ -18,6 +18,7 @@ import java.util.List;
 public class BookingRequest {
 
     private Long tripId;
+
     private List<PassengerInfo> passengers = new ArrayList<>();
 
     private String context;

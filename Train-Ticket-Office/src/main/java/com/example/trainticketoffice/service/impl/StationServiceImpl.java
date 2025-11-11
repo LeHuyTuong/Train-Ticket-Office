@@ -62,11 +62,7 @@ public class StationServiceImpl implements StationService {
             existingStation.setName(station.getName());
             existingStation.setCity(station.getCity());
             existingStation.setProvince(station.getProvince());
-
-            // ===== THÊM DÒNG NÀY =====
             existingStation.setDistanceKm(station.getDistanceKm());
-            // ========================
-
             existingStation.setStatus(station.getStatus());
 
             return stationRepository.save(existingStation);

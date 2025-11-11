@@ -38,6 +38,7 @@ public class DataInitializer implements CommandLineRunner {
     private final BookingRepository bookingRepository;
     private final OrderRepository orderRepository;
     private final SeatTypeRepository seatTypeRepository; // <-- (Logic Giá/KM)
+    private final AdminWalletService adminWalletService; // <-- THÊM MỚI
 
     // Các biến tạm
     private User customer;
@@ -56,7 +57,8 @@ public class DataInitializer implements CommandLineRunner {
                            TicketRepository ticketRepository, PaymentRepository paymentRepository,
                            CarriageRepository carriageRepository, BookingRepository bookingRepository,
                            OrderRepository orderRepository, RouteRepository routeRepository,
-                           SeatTypeRepository seatTypeRepository) {
+                           SeatTypeRepository seatTypeRepository,
+                           AdminWalletService adminWalletService) { // <-- THÊM THAM SỐ
         this.userService = userService;
         this.userRepository = userRepository;
         this.stationService = stationService;
@@ -73,6 +75,7 @@ public class DataInitializer implements CommandLineRunner {
         this.orderRepository = orderRepository;
         this.routeRepository = routeRepository;
         this.seatTypeRepository = seatTypeRepository;
+        this.adminWalletService = adminWalletService; // <-- THÊM DÒNG NÀY
     }
 
     @Override
@@ -82,6 +85,9 @@ public class DataInitializer implements CommandLineRunner {
         LocalDate today = LocalDate.now();
 
         try {
+            // Khởi tạo ví Admin trước
+            adminWalletService.initializeWallet(); // <-- THÊM DÒNG NÀY
+
             createUsers(today);
             createStations();
             createRoutes(); // Tạo 6 tuyến mẫu
@@ -315,7 +321,40 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        System.out.println("Total trips created: " + (DAYS_TO_GENERATE * 6));
+        // CẬP NHẬT VÍ ADMIN (GIẢ LẬP ĐÃ THANH TOÁN)
+        adminWalletService.addToBalance(payment1.getAmount());
+        System.out.println("Đã cộng " + payment1.getAmount() + " vào ví Admin.");
+
+
+        // --- ĐƠN HÀNG 2: (SE1, 1 vé B1) - CHƯA THANH TOÁN ---
+        BookingRequest request2 = new BookingRequest();
+        request2.setTripId(tripSE1.getTripId());
+        PassengerInfo passenger2 = new PassengerInfo();
+        passenger2.setSeatId(se1_normal_seat_B1.getSeatId());
+        passenger2.setPassengerName("Người Đi Cùng");
+        passenger2.setPhone(customer.getPhone());
+        passenger2.setEmail(customer.getEmail());
+        passenger2.setPassengerType("ADULT");
+        passenger2.setDob(LocalDate.of(1995, 1, 1)); // THÊM NGÀY SINH (ADULT)
+        passenger2.setPassengerIdCard("087654321"); // THÊM CCCD
+        request2.getPassengers().add(passenger2);
+
+        Order order2 = bookingService.createOrder(request2, customer);
+
+        // --- ĐƠN HÀNG 3: (SE3, 1 vé A1) - CHƯA THANH TOÁN ---
+        BookingRequest request3 = new BookingRequest();
+        request3.setTripId(tripSE3.getTripId());
+        PassengerInfo passenger3 = new PassengerInfo();
+        passenger3.setSeatId(se3_vip_seat_A1.getSeatId());
+        passenger3.setPassengerName(customer.getFullName());
+        passenger3.setPhone(customer.getPhone());
+        passenger3.setEmail(customer.getEmail());
+        passenger3.setPassengerType("ADULT");
+        passenger3.setDob(LocalDate.of(1990, 5, 15)); // THÊM NGÀY SINH (ADULT)
+        passenger3.setPassengerIdCard("012345678901"); // THÊM CCCD
+        request3.getPassengers().add(passenger3);
+
+        Order order3 = bookingService.createOrder(request3, customer);
     }
 
 }

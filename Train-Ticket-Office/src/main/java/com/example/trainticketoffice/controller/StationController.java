@@ -26,7 +26,7 @@ public class StationController {
         this.stationService = stationService;
     }
 
-    // ===== SỬA HÀM GET MAPPING CHÍNH =====
+
     @GetMapping
     public String listStations(Model model,
                                @RequestParam(value = "page", defaultValue = "1") int page,
@@ -46,7 +46,7 @@ public class StationController {
 
         return "station/list";
     }
-    // ===================================
+
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {

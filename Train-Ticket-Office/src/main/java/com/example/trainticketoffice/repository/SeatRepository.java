@@ -7,9 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, Long> {
-
-    /**
-     * Kiểm tra xem Số ghế (seatNumber) đã tồn tại trên Toa (carriage) này chưa.
-     */
     boolean existsByCarriageAndSeatNumber(Carriage carriage, String seatNumber);
 }

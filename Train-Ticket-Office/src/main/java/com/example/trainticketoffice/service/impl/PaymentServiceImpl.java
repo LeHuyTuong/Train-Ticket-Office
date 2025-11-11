@@ -9,6 +9,7 @@ import com.example.trainticketoffice.model.Payment;
 import com.example.trainticketoffice.repository.BookingRepository;
 import com.example.trainticketoffice.repository.OrderRepository;
 import com.example.trainticketoffice.repository.PaymentRepository;
+import com.example.trainticketoffice.service.AdminWalletService;
 import com.example.trainticketoffice.service.PaymentService;
 import com.example.trainticketoffice.util.VnpayUtils;
 import jakarta.servlet.http.HttpSession; // <-- THÊM IMPORT
@@ -32,8 +33,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
-    private final OrderRepository orderRepository;
 
+    private final OrderRepository orderRepository;
+    private final AdminWalletService adminWalletService;
     @Value("${vnpay.tmn-code}")
     private String tmnCode;
 
@@ -57,6 +59,15 @@ public class PaymentServiceImpl implements PaymentService {
                                            String orderType,
                                            String locale,
                                            String clientIp) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã " + orderId));
+        if (order.getStatus() == PaymentStatus.SUCCESS) {
+            throw new IllegalStateException("Đơn hàng này đã được thanh toán");
+        }
+        String resolvedIp = (clientIp == null || clientIp.isBlank()) ? "127.0.0.1" : clientIp;
+        // total from order
+        BigDecimal amount = order.getTotalPrice().setScale(0, RoundingMode.HALF_UP);
+        long amountValue = amount.multiply(BigDecimal.valueOf(100)).longValueExact();
 
         // 1. Tìm Order "chính" (đơn hàng cuối cùng được tạo)
         Order primaryOrder = orderRepository.findById(orderId)
@@ -95,11 +106,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         String txnRef = VnpayUtils.generateTxnRef();
 
-        // 5. Tạo 1 bản ghi Payment
+        //payment
         Payment payment = new Payment();
-        payment.setOrder(primaryOrder); // <-- Liên kết Payment với Order "chính"
-        payment.setUser(primaryOrder.getUser());
-        payment.setAmount(totalAmount); // <-- REFACTOR: Dùng TỔNG tiền của nhóm
+        payment.setOrder(order);
+        payment.setUser(order.getUser());
+        payment.setAmount(amount);
         payment.setStatus(PaymentStatus.PENDING);
         payment.setTransactionRef(txnRef);
         payment.setOrderInfo(resolvedOrderInfo);
@@ -134,9 +145,6 @@ public class PaymentServiceImpl implements PaymentService {
         return payUrl + "?" + query;
     }
 
-    /**
-     * REFACTOR THEO YÊU CẦU: Cập nhật TẤT CẢ Order trong Group và dọn dẹp Session
-     */
     @Override
     @Transactional
     public Payment handleVnpayReturn(Map<String, String> vnpayParams, HttpSession session) { // <-- SỬA SIGNATURE
@@ -168,8 +176,6 @@ public class PaymentServiceImpl implements PaymentService {
             paymentRepository.save(payment);
             return payment;
         }
-
-        // 3. Cập nhật thông tin Payment từ VNPay (Giữ nguyên logic)
         String responseCode = vnpayParams.get("vnp_ResponseCode");
         payment.setResponseCode(responseCode);
         payment.setBankCode(vnpayParams.get("vnp_BankCode"));
@@ -177,9 +183,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setVnpTransactionNo(vnpayParams.get("vnp_TransactionNo"));
         payment.setPayDate(VnpayUtils.parsePayDate(vnpayParams.get("vnp_PayDate")));
 
-        // 4. REFACTOR: Lấy Order "chính" từ Payment
-        Order primaryOrder = payment.getOrder();
-        String groupId = primaryOrder.getRoundTripGroupId();
+        Order order = payment.getOrder();
 
         // 5. REFACTOR: Chuẩn bị list các Order cần cập nhật
         List<Order> ordersToUpdate = new ArrayList<>();
@@ -195,30 +199,23 @@ public class PaymentServiceImpl implements PaymentService {
         if ("00".equals(responseCode)) {
             // 6.A. THANH TOÁN THÀNH CÔNG
             payment.setStatus(PaymentStatus.SUCCESS);
-
-            // REFACTOR: Cập nhật trạng thái TẤT CẢ Bookings và Orders trong nhóm
-            for(Order order : ordersToUpdate) {
-                order.setStatus(PaymentStatus.SUCCESS);
-                for(Booking booking : order.getBookings()) {
-                    booking.setStatus(BookingStatus.PAID);
-                    bookingRepository.save(booking);
-                }
+            order.setStatus(PaymentStatus.SUCCESS);
+            orderRepository.save(order);
+            for(Booking booking : order.getBookings()) {
+                booking.setStatus(BookingStatus.PAID);
+                bookingRepository.save(booking);
             }
-            orderRepository.saveAll(ordersToUpdate); // Lưu list order
-
-            // REFACTOR: Dọn dẹp Session (Theo yêu cầu)
-            session.removeAttribute("roundTripGroupId");
-            session.removeAttribute("roundTripNextLeg");
-
+            try {
+                adminWalletService.addToBalance(payment.getAmount());
+            } catch (Exception e) {
+                System.err.println("LỖI NGHIÊM TRỌNG: Không thể cộng tiền vào ví Admin cho giao dịch " + txnRef);
+                e.printStackTrace();
+            }
         } else {
             // 6.B. THANH TOÁN THẤT BẠI
             payment.setStatus(PaymentStatus.FAILED);
-
-            // REFACTOR: Cập nhật trạng thái TẤT CẢ Orders trong nhóm
-            for(Order order : ordersToUpdate) {
-                order.setStatus(PaymentStatus.FAILED);
-            }
-            orderRepository.saveAll(ordersToUpdate);
+            order.setStatus(PaymentStatus.FAILED);
+            orderRepository.save(order);
         }
 
         paymentRepository.save(payment);
