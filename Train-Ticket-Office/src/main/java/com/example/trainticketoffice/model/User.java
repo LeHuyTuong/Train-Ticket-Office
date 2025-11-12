@@ -2,6 +2,8 @@ package com.example.trainticketoffice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.io.Serializable;
 import java.time.LocalDate;
 
 @Data
@@ -11,7 +13,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Table(name = "users")
-public class User {
+public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -138,7 +138,6 @@
         <h2 class="page-title"><i class="bi bi-search"></i> Tìm Kiếm Chuyến Tàu</h2>
 
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
 
         <form th:action="@{/trips/search}" method="GET">
             <div class="row g-3">
