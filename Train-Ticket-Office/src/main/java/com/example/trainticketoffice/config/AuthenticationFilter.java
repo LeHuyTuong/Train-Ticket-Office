@@ -19,6 +19,7 @@ public class AuthenticationFilter implements Filter {
             "/login",
             "/error",
             "/register" // <-- THÊM MỚI
+            ,"/favicon.ico"
     );
 
     // 2. Các đường dẫn chỉ cần khớp TIỀN TỐ

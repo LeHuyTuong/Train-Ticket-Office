@@ -21,6 +21,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean addUser(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            return false; // Nếu tồn tại -> Trả về false
+        }
         return userRepository.save(user) != null;
     }
 
