@@ -1,221 +1,386 @@
-🚆 Train Ticket Office System
+# 🚆 Train Ticket Office System
 
-This is a web application project built with Java Spring Boot, simulating a complete train ticket management and booking system. The system supports two main user roles: CUSTOMER and STAFF, each with distinct business logic.
+> Full-stack web application built with **Java Spring Boot** that simulates a complete **train ticket management and booking system**.  
+> The system supports two main roles: **CUSTOMER** and **STAFF (Admin)**, each with dedicated business flows.
 
-The project integrates a full range of business flows, from searching, booking, and payment (via VNPay), to ticket management and refund/cancellation processing.
+The project covers the end-to-end lifecycle:  
+**Search → Booking → Payment (VNPay) → Ticket Management → Refund / Cancellation → Revenue Tracking**.
 
-🚀 Key Features
+---
 
-The system is divided into two main modules:
+## 📚 Table of Contents
 
-1. Customer Module
+1. [System Overview](#-system-overview)  
+2. [Feature Breakdown](#-feature-breakdown)  
+   - [Customer Module](#1-customer-module)  
+   - [Administrator / Staff Module](#2-administrator-staff-module)  
+3. [Technology Stack](#-technology-stack)  
+4. [Project Structure](#-project-structure-highlights)  
+5. [Key Business Flows](#-key-business-flows)  
+   - [Fare Calculation Flow](#1-fare-calculation-flow)  
+   - [Round-trip Booking Flow](#2-round-trip-booking-flow)  
+6. [Getting Started](#-getting-started)  
+   - [Prerequisites](#prerequisites)  
+   - [Clone & Setup](#1-clone-the-repository)  
+   - [Database Configuration](#2-configure-the-database)  
+   - [VNPay Configuration](#3-configure-vnpay)  
+   - [Run the Application](#4-run-the-application)  
+7. [Access URLs](#-access-urls)  
+8. [Sample Accounts](#-sample-accounts)
 
-Registration & Login: Manages customer accounts.
+---
 
-Trip Search:
+## 🌐 System Overview
 
-Searches for one-way and round-trip tickets between stations.
+This system provides:
 
-Displays search results including minimum prices and available seat counts.
+- A **customer-facing portal** to search trips, book tickets (one-way or round-trip), pay online, manage tickets, and request refunds.
+- An **admin-facing portal** to manage stations, routes, trains, carriages, seats, trips, refund approvals, and overall revenue.
 
-Booking Flow:
+The application is built using **Spring Boot + Thymeleaf** with **VNPay sandbox integration** for payment processing.
 
-Step 1 (Seat Selection): Displays an intuitive visual seat map. Seats are categorized by status: Sold, Held (awaiting payment), and Available.
+---
 
-Step 2 (Enter Information): A form for passenger details (Name, ID Card, Date of Birth) with age validation logic (Adult, Child, Infant, Senior) to apply automatic discounts.
+## 🧩 Feature Breakdown
 
-Step 3 (Order Creation): The system creates one or more Order objects (e.g., 2 Orders for a round-trip) and groups them using a roundTripGroupId.
+### 1. Customer Module
 
-Payment:
+#### 🔐 Registration & Login
 
-Integrated with the VNPay payment gateway.
+- Manage customer accounts with basic authentication.
+- Login is required to create bookings and manage tickets.
 
-Handles combined payments for round-trip orders (one-time payment for both legs).
+#### 🔍 Trip Search
 
-Automatically cancels a Booking if not paid within 15 minutes.
+- Search trips by:
+  - **Route** (origin station → destination station)
+  - **Travel type**: one-way or round-trip
+- Display:
+  - Minimum price per trip
+  - Available seat count
 
-Ticket Management:
+#### 🎟️ Booking Flow
 
-Customers can review all their booked tickets (/bookings).
+**Step 1 – Seat Selection**
 
-Cancel tickets (if in "Awaiting Payment" status).
+- Visual seat map per carriage.
+- Seat status classification:
+  - `Sold` – ticket already purchased
+  - `Held` – seat is reserved, awaiting payment
+  - `Available` – seat can be booked
 
-Refund Request:
+**Step 2 – Passenger Information**
 
-Customers can request a refund for paid tickets (status PAID).
+- Form includes:
+  - Full name
+  - ID Card
+  - Date of Birth
+- System derives **passenger type** (Adult / Child / Infant / Senior)  
+  → Used to apply **automatic discounts**.
 
-The request is moved to PENDING_REFUND status to await admin approval.
+**Step 3 – Order Creation**
 
-2. Administrator (Admin/Staff) Module
+- System creates:
+  - **1 Order** for one-way booking
+  - **2 Orders** for round-trip booking
+- Round-trip Orders are grouped via a shared `roundTripGroupId` (UUID).
 
-Dashboard: An overview panel displaying key management functions.
+#### 💳 Payment (VNPay)
 
-Station Management: Add/edit/delete train stations. Each station has a distanceKm attribute (KM from the origin station) used as a basis for price calculation.
+- Integrated with **VNPay Sandbox**.
+- Supports:
+  - **Single payment** for both legs in a round-trip (using `roundTripGroupId`).
+- Auto-cancellation:
+  - If payment is not completed within **15 minutes**, related bookings are cancelled.
 
-Route Management: Connects two Stations (origin, destination) to create a route.
+#### 🎫 Ticket Management (Customer)
 
-Seat Type Management: Defines seat categories and, most importantly, the price per KM (pricePerKm). E.g., "Soft Seat" (700 VND/km), "VIP Sleeper" (1100 VND/km).
+- View all bookings at `/bookings`.
+- Actions:
+  - **Cancel** ticket if status = `AWAITING_PAYMENT`.
+  - **Request refund** if status = `PAID` → moved to `PENDING_REFUND`.
 
-Train Management: Manages the list of train fleets (SE1, SE2...).
+#### 💸 Refund Request (Customer)
 
-Carriage Management: Add/edit/delete carriages, assign a carriage to a specific Train, and select its SeatType.
+- Customer can request a refund for paid tickets.
+- After request:
+  - Ticket moves from `PAID` → `PENDING_REFUND`.
+  - Awaiting approval/rejection by Admin.
 
-Seat Management: Create seats (A1, A2...) for a specific Carriage.
+---
 
-Trip Management:
+### 2. Administrator / Staff Module
 
-Creates trips by combining a Train (which train), a Route (where it's going), and departureTime/arrivalTime (when).
+#### 📊 Dashboard
 
-Admins can update trip statuses (Upcoming, In Progress, Completed, Cancelled).
+- Central view to navigate to:
+  - Stations, Routes, Trains, Carriages, Trips
+  - Refund Requests
+  - Revenue (AdminWallet)
 
-Refund Management:
+#### 🏙️ Station Management
 
-Admins see a list of pending refund requests (PENDING_REFUND).
+- Add / edit / delete **Stations**.
+- Each station has:
+  - `distanceKm`: distance from the origin station (used in fare calculation).
 
-Approve: The ticket status changes to REFUNDED, the seat is released back for sale (AVAILABLE), and the amount is deducted from the AdminWallet.
+#### 🛣️ Route Management
 
-Reject: The ticket status reverts to PAID.
+- Define **routes** by linking:
+  - `originStation` → `destinationStation`.
 
-Revenue Management: The system features an AdminWallet to log total revenue from successful payments and deduct money when approving refunds.
+#### 💺 Seat Type Management
 
-⚙️ Technology Stack
+- Configure **seat types** with:
+  - Name: e.g., `Soft Seat`, `VIP Sleeper`
+  - `pricePerKm`: base price per kilometer  
+    - Example:
+      - Soft Seat: `700 VND/km`
+      - VIP Sleeper: `1100 VND/km`
 
-Backend: Java 17, Spring Boot 3.5.5
+#### 🚆 Train Management
 
-Database: MySQL (JDBC) and Spring Data JPA (Hibernate)
+- Manage train fleets (e.g. `SE1`, `SE2`, ...).
 
-Frontend: Thymeleaf, Thymeleaf Layout Dialect
+#### 🚃 Carriage Management
 
-Styling: Bootstrap 5, Custom CSS (with backdrop-filter: blur effects)
+- Add / edit / delete **Carriages**.
+- Assign carriage to:
+  - A specific **Train**
+  - A specific **SeatType**.
 
-Payment: VNPay (sandbox) integration
+#### 🪑 Seat Management
 
-Build: Maven
+- Create seat codes (e.g. `A1`, `A2`, ...) inside a carriage.
 
-Other: Lombok
+#### 🧭 Trip Management
 
-📁 Project Structure (Highlights)
+- Define **Trips** as:
+  - Train + Route + departureTime + arrivalTime.
+- Manage trip status:
+  - `UPCOMING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`.
 
+#### 💵 Refund Management
+
+- View list of **pending refund requests** (`PENDING_REFUND`).
+- Actions:
+  - **Approve**:
+    - Ticket → `REFUNDED`
+    - Seat returned to `AVAILABLE`
+    - Amount deducted from **AdminWallet**
+  - **Reject**:
+    - Ticket status reverts to `PAID`.
+
+#### 💰 Revenue Management (AdminWallet)
+
+- Logs:
+  - Revenue from successful payments.
+  - Deduction for approved refunds.
+- Acts as a simple **wallet ledger** for the administrator side.
+
+---
+
+## ⚙️ Technology Stack
+
+- **Backend**:  
+  - Java 17  
+  - Spring Boot 3.5.5  
+  - Spring Web, Spring Data JPA (Hibernate)  
+- **Database**:  
+  - MySQL (JDBC)  
+- **Frontend**:  
+  - Thymeleaf  
+  - Thymeleaf Layout Dialect  
+- **Styling**:  
+  - Bootstrap 5  
+  - Custom CSS (including `backdrop-filter: blur` effects)  
+- **Payment**:  
+  - VNPay (Sandbox)  
+- **Build Tool**:  
+  - Maven  
+- **Other**:  
+  - Lombok  
+
+---
+
+## 📁 Project Structure (Highlights)
+
+```text
 /src/main/
 ├── java/com/example/trainticketoffice/
-│   ├── common/         # (Enums: BookingStatus, TripStatus, etc.)
-│   ├── config/         # (AuthenticationFilter, DataInitializer)
-│   ├── controller/     # (Separated admin and customer logic)
+│   ├── common/         # Enums: BookingStatus, TripStatus, etc.
+│   ├── config/         # AuthenticationFilter, DataInitializer, etc.
+│   ├── controller/     # Separated admin and customer controllers
 │   │   ├── AdminController.java
 │   │   ├── AdminRefundController.java
-│   │   ├── BookingController.java  # (Main booking logic)
-│   │   ├── PaymentController.java  # (VNPay logic)
-│   │   ├── RefundController.java   # (Customer refund logic)
+│   │   ├── BookingController.java      # Main booking logic
+│   │   ├── PaymentController.java      # VNPay integration
+│   │   ├── RefundController.java       # Customer refund logic
 │   │   ├── StationController.java
 │   │   ├── TrainController.java
 │   │   ├── TripController.java
 │   │   └── ...
-│   ├── model/          # (Entities: User, Train, Trip, Booking, Order...)
-│   ├── repository/     # (JpaRepositories)
-│   ├── service/        # (Interfaces)
-│   │   └── impl/       # (Service Implementations)
+│   ├── model/          # Entities: User, Train, Trip, Booking, Order, ...
+│   ├── repository/     # JpaRepositories
+│   ├── service/        # Service interfaces
+│   │   └── impl/       # Service implementations
 │   │       ├── BookingServiceImpl.java
 │   │       ├── PaymentServiceImpl.java
 │   │       └── TripServiceImpl.java
-│   └── util/           # (VnpayUtils.java)
+│   └── util/           # VnpayUtils.java
 │
 └── resources/
-    ├── static/         # (CSS, Images)
-    ├── templates/      # (Thymeleaf HTML files)
+    ├── static/         # CSS, Images
+    ├── templates/      # Thymeleaf HTML templates
     │   ├── admin/
     │   ├── customer/
-    │   ├── fragments/  # (Shared layouts)
-    │   ├── payment/    # (Payment forms, invoice)
+    │   ├── fragments/  # Shared layouts
+    │   ├── payment/    # Payment forms, invoice
     │   ├── refund/
-    │   ├── ticket/     # (Seat map, passenger form)
+    │   ├── ticket/     # Seat map, passenger form
     │   └── ...
-    └── application.properties # (DB & VNPay Config)
+    └── application.properties  # DB & VNPay configuration
+```
 
+---
 
-📈 Key Business Flows
+## 📈 Key Business Flows
 
-1. Fare Calculation Flow
+### 1. Fare Calculation Flow
 
-The ticket price is calculated automatically based on several factors:
+Ticket price is calculated automatically based on:
 
-Distance: distanceKm (from the Station).
+- **Distance**: distanceKm (from Station configuration)
+- **Base Rate**: pricePerKm (from SeatType)
+- **Surcharge**: `HOLIDAY_SURCHARGE_RATE` (e.g. 1.2) if departure date is a configured public holiday
+- **Discount**: based on passengerType (Child, Senior, etc.)
 
-Base Rate: pricePerKm (from the carriage's SeatType).
+**Formula:**
 
-Surcharge: HOLIDAY_SURCHARGE_RATE (e.g., 1.2) if the departure date is a public holiday (defined in BookingServiceImpl).
+```
+Price = distanceKm * pricePerKm * Surcharge * DiscountRate
+```
 
-Discount: A percentage discount (e.g., for Children, Seniors) is applied based on the passengerType from the info step.
+Where:
+- `Surcharge` = 1.0 or holiday multiplier (e.g. 1.2)
+- `DiscountRate` = e.g. 0.8 for Child, 1.0 for Adult, etc.
 
-Simple Formula: Price = (distanceKm * pricePerKm * Surcharge) * %Discount
+---
 
-2. Round-Trip Booking Flow
+### 2. Round-trip Booking Flow
 
-A customer selects "Round Trip" and searches.
+1. Customer selects **Round Trip** and performs a search.
+2. System stores return leg data (RoundTripInfo) in HttpSession.
+3. Customer chooses ticket for the **Outbound leg** (`context="outbound"`).
+4. **BookingController:**
+   - Creates Order 1
+   - Generates `roundTripGroupId` (UUID) and stores in session.
+5. System redirects to search results for the **Return leg**.
+6. Customer selects ticket for the **Return leg** (`context="inbound"`).
+7. **BookingController:**
+   - Creates Order 2
+   - Reuses the same `roundTripGroupId`.
+8. Customer is redirected to the **payment page**.
+9. **PaymentController:**
+   - Detects `roundTripGroupId`
+   - Aggregates both orders
+   - Processes one VNPay payment for the total amount.
 
-The system saves the return leg info (RoundTripInfo) into the HttpSession.
+---
 
-The customer selects a ticket for the Outbound leg (context="outbound").
+## 🚀 Getting Started
 
-BookingController creates Order 1 with a new roundTripGroupId (UUID).
+### Prerequisites
 
-The system redirects the customer back to the search results for the Return leg.
+- JDK 17+
+- MySQL 8.x
+- Maven 3.8+
+- VNPay Sandbox account (TMN code & Secret key)
 
-The customer selects a ticket for the Return leg (context="inbound").
+### 1. Clone the Repository
 
-BookingController creates Order 2 using the same roundTripGroupId from the session.
-
-The customer is sent to the payment page. PaymentController sees the roundTripGroupId and calculates the total price for both Order 1 and Order 2.
-
-The customer pays a single time via VNPay for both orders.
-
-🚀 How to Run the Project
-
-Clone the repository:
-
+```bash
 git clone [YOUR_REPO_URL]
 cd Train-Ticket-Office
+```
 
+### 2. Configure the Database
 
-Configure the Database:
+Open MySQL Workbench (or your DB client).
 
-Open MySQL Workbench or your DB manager and create a new schema, e.g., core_tto.
+Create a new schema:
 
-Open src/main/resources/application.properties.
+```sql
+CREATE DATABASE core_tto CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-Update spring.datasource.url, spring.datasource.username, and spring.datasource.password to match your MySQL configuration.
+Update your DB credentials in `src/main/resources/application.properties`:
 
-Configure VNPay:
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/core_tto
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.jpa.hibernate.ddl-auto=create-drop
+```
 
-In application.properties, replace the vnpay.tmn-code and vnpay.secret-key values with your own VNPay sandbox credentials.
+⚠️ For production, change `ddl-auto` to `update` or `validate`.
 
-Ensure vnpay.return-url is set to http://localhost:8080/payments/vnpay-return (or your application's port).
+### 3. Configure VNPay
 
-Run the application:
+Add the following in `application.properties`:
 
-Open the project in your IDE (IntelliJ/Eclipse).
+```properties
+vnpay.tmn-code=YOUR_VNPAY_TMN_CODE
+vnpay.secret-key=YOUR_VNPAY_SECRET_KEY
+vnpay.return-url=http://localhost:8080/payments/vnpay-return
+```
 
-Run the TrainTicketOfficeApplication.java file.
+Adjust the return URL if running on a different port or context path.
 
-The system will automatically create the tables (due to spring.jpa.hibernate.ddl-auto=create-drop) and add sample data (from DataInitializer.java).
+### 4. Run the Application
 
-Access:
+Run via IDE or Maven:
 
-Customer Homepage: http://localhost:8080/
+**Using IDE:**
+```
+Run TrainTicketOfficeApplication.java as a Spring Boot app
+```
 
-Login Page: http://localhost:8080/login
+**Using CLI:**
+```bash
+mvn spring-boot:run
+```
 
-👨‍💻 Sample Accounts
+On startup, the system will:
+- Auto-generate tables (via JPA)
+- Insert demo data via `DataInitializer.java`
 
-These accounts are automatically created by DataInitializer.java:
+---
 
-Admin (STAFF):
+## 🌍 Access URLs
 
+- **Customer Homepage:**  [http://localhost:8080/](http://localhost:8080/)
+- **Login Page:**  [http://localhost:8080/login](http://localhost:8080/login)
+
+(Admin features are accessible post-login as STAFF.)
+
+---
+
+## 👨‍💻 Sample Accounts
+
+### Admin / Staff
+```
 Email: staff@example.com
-
 Password: password123
+```
 
-Customer (CUSTOMER):
-
+### Customer
+```
 Email: customer@example.com
-
 Password: password123
+```
+
+---
+
+If you need a section for screenshots, API docs, or known issues, it can be appended later for demo or submission purposes.
+
