@@ -1,4 +1,4 @@
-# 🚆 Train Ticket Office System
+<img width="1859" height="894" alt="image" src="https://github.com/user-attachments/assets/bc63179e-f0a0-440c-a7a6-0f818c570ad2" /># 🚆 Train Ticket Office System
 
 > Full-stack web application built with **Java Spring Boot** that simulates a complete **train ticket management and booking system**.  
 > The system supports two main roles: **CUSTOMER** and **STAFF (Admin)**, each with dedicated business flows.
@@ -154,6 +154,8 @@ The application is built using **Spring Boot + Thymeleaf** with **VNPay sandbox 
 - Create seat codes (e.g. `A1`, `A2`, ...) inside a carriage.
 
 #### 🧭 Trip Management
+- Designed the trip and seat querying strategy to handle ~36,000 seat records in the database without performance issues by using pagination instead of loading everything at once.
+- Implemented paging (e.g. 10 trips per page) with Spring Data JPA `Pageable`, so that each search request only retrieves a small, relevant subset of trips and their seats, reducing response time and payload size.
 
 - Define **Trips** as:
   - Train + Route + departureTime + arrivalTime.
@@ -360,7 +362,16 @@ On startup, the system will:
 ## 🌍 Access URLs
 
 - **Customer Homepage:**  [http://localhost:8080/](http://localhost:8080/)
+<img width="1848" height="890" alt="image" src="https://github.com/user-attachments/assets/3faecf78-ce24-4b63-a3f0-f713bf0919b5" />
+<img width="1865" height="895" alt="image" src="https://github.com/user-attachments/assets/6970ee6b-b629-48fe-8c1f-a06533745602" />
+<img width="1822" height="892" alt="image" src="https://github.com/user-attachments/assets/394028f1-ce51-4e78-81a9-503c2639126a" />
+
 - **Login Page:**  [http://localhost:8080/login](http://localhost:8080/login)
+<img width="1859" height="894" alt="image" src="https://github.com/user-attachments/assets/9400b21b-45c7-4b0a-9bf4-c056d4a59bc3" />
+<img width="1864" height="893" alt="image" src="https://github.com/user-attachments/assets/e7204991-6806-4190-a353-190ae158e275" />
+<img width="1863" height="888" alt="image" src="https://github.com/user-attachments/assets/ff0d23b5-e234-4d3a-bbac-8a0f41298b1d" />
+<img width="1843" height="889" alt="image" src="https://github.com/user-attachments/assets/ce5c5abd-ad0a-4b96-9cd9-39bf5d9506fc" />
+<img width="1865" height="894" alt="image" src="https://github.com/user-attachments/assets/ffe5e4c8-81b2-4838-b679-8b4f57411bda" />
 
 (Admin features are accessible post-login as STAFF.)
 
@@ -383,4 +394,5 @@ Password: password123
 ---
 
 If you need a section for screenshots, API docs, or known issues, it can be appended later for demo or submission purposes.
+
 
